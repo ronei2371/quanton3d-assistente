@@ -1,0 +1,8 @@
+
+services:
+- type:web
+name: quanton3d.bot
+env: python
+buildcommand: ""
+startcomamand/; "gunicorn app:app --bind 0.0.0.0:$port -- workers 2 --threads 4 --timeout 120"
+

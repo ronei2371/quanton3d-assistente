@@ -1,0 +1,16 @@
+# Arquivos Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ambiente virtual
+.env
+.venv
+
+# Banco de dados local
+chat.db
+
+# Uploads de usuários
+static/uploads/*
+!static/uploads/.gitkeep
