@@ -1,16 +1,30 @@
-# Arquivos Python
+﻿# Python
 __pycache__/
-*.pyc
+*.py[cod]
 *.pyo
 *.pyd
+*.so
+*.egg-info/
+dist/
+build/
 
-# Ambiente virtual
+# Virtual env
+.venv/
+env/
+venv/
+
+# Editores / SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# App data
+*.db
+instance/
+data/
+
+# Segredos
 .env
-.venv
 
-# Banco de dados local
-chat.db
-
-# Uploads de usuários
-static/uploads/*
-!static/uploads/.gitkeep
+setkey.ps1

@@ -1,164 +1,256 @@
-import os
-import sqlite3
-import base64
-import time
-import re
-from flask import Flask, request, jsonify, render_template
+import os, sqlite3, base64, time, re
+from flask import Flask, request, jsonify, render_template, Response
 from openai import OpenAI
+import httpx
 
-# ===== Config OpenAI via variável de ambiente =====
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
 if not OPENAI_API_KEY:
-    raise RuntimeError(
-        "OPENAI_API_KEY não definida. No painel da Render, adicione como Environment Variable."
-    )
-client = OpenAI(api_key=OPENAI_API_KEY)
+    raise RuntimeError("OPENAI_API_KEY não definida.")
+client = OpenAI(api_key=OPENAI_API_KEY, http_client=httpx.Client())
 
-# ===== Caminhos / Flask =====
 BASE_DIR = os.path.dirname(__file__)
-DB_PATH = os.getenv("DB_PATH", os.path.join(BASE_DIR, "chat.db"))  # Render usa /data/chat.db
+DB_PATH = os.getenv("DB_PATH", os.path.join(BASE_DIR, "chat.db"))
 app = Flask(__name__, template_folder="templates", static_folder="static")
 
-# ===== Util: normalização de telefone =====
+# ----- utils -----
 def norm_phone(s: str) -> str:
     return re.sub(r"\D+", "", (s or ""))[:15]
 
 def migrate_phone_if_needed(raw_phone: str, phone_norm: str):
-    if not raw_phone or raw_phone == phone_norm:
-        return
+    if not raw_phone or raw_phone == phone_norm: return
     with sqlite3.connect(DB_PATH) as conn:
         c = conn.cursor()
-        c.execute(
-            "UPDATE history SET phone=? WHERE phone=? AND phone!=?",
-            (phone_norm, raw_phone, phone_norm)
-        )
+        c.execute("UPDATE history SET phone=? WHERE phone=? AND phone!=?", (phone_norm, raw_phone, phone_norm))
+        c.execute("UPDATE profile SET phone=? WHERE phone=? AND phone!=?", (phone_norm, raw_phone, phone_norm))
         conn.commit()
 
-# ===== Banco de dados =====
 def init_db():
-    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True) if os.path.dirname(DB_PATH) else None
+    d = os.path.dirname(DB_PATH)
+    if d: os.makedirs(d, exist_ok=True)
     with sqlite3.connect(DB_PATH) as conn:
         c = conn.cursor()
-        c.execute("""
-            CREATE TABLE IF NOT EXISTS history (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                phone TEXT NOT NULL,
-                role TEXT NOT NULL,
-                content TEXT NOT NULL,
-                timestamp REAL NOT NULL
-            )
-        """)
+        c.execute("""CREATE TABLE IF NOT EXISTS history(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            phone TEXT NOT NULL, role TEXT NOT NULL, content TEXT NOT NULL, timestamp REAL NOT NULL)""")
         c.execute("CREATE INDEX IF NOT EXISTS idx_history_phone ON history(phone)")
+        c.execute("""CREATE TABLE IF NOT EXISTS profile(
+            phone TEXT PRIMARY KEY, story TEXT NOT NULL, updated_at REAL NOT NULL)""")
         conn.commit()
+init_db()
 
 def save_message(phone_norm, role, content):
     with sqlite3.connect(DB_PATH) as conn:
-        c = conn.cursor()
-        c.execute(
-            "INSERT INTO history (phone, role, content, timestamp) VALUES (?, ?, ?, ?)",
-            (phone_norm, role, content, time.time())
-        )
+        conn.execute("INSERT INTO history(phone,role,content,timestamp) VALUES(?,?,?,?)",
+                     (phone_norm, role, content, time.time()))
         conn.commit()
 
-def load_history(phone_norm):
+def load_history(phone_norm, order="ASC"):
     with sqlite3.connect(DB_PATH) as conn:
         c = conn.cursor()
-        c.execute(
-            "SELECT role, content, timestamp FROM history WHERE phone=? ORDER BY timestamp ASC",
-            (phone_norm,)
-        )
+        if order.upper()=="DESC":
+            c.execute("SELECT role,content,timestamp FROM history WHERE phone=? ORDER BY timestamp DESC",(phone_norm,))
+        else:
+            c.execute("SELECT role,content,timestamp FROM history WHERE phone=? ORDER BY timestamp ASC",(phone_norm,))
         rows = c.fetchall()
-    return [{"role": r, "content": ct, "ts": ts} for (r, ct, ts) in rows if r != "system"]
+    return [{"role":r,"content":ct,"ts":ts} for (r,ct,ts) in rows if r!="system"]
 
-# ===== Rotas =====
+def clamp_story_for_qa(story: str, limit_chars: int = 9000) -> str:
+    """Evita 429/TPM cortando textos enormes: mantém começo e fim."""
+    s = story or ""
+    if len(s) <= limit_chars:
+        return s
+    head = s[:int(limit_chars*0.65)]
+    tail = s[-int(limit_chars*0.25):]
+    return head + "\n\n[trecho intermediário omitido]\n\n" + tail
+
+def sanitize_response(text: str) -> str:
+    # remove cabeçalhos markdown "### Título"
+    text = re.sub(r'(^|\n)#{1,6}\s+', r'\1', text)
+    return text.strip()
+
+# ----- rotas -----
 @app.route("/")
-def index():
-    return render_template("index.html")
+def index(): return render_template("index.html")
 
-@app.route("/healthz")
-def healthz():
-    try:
-        with sqlite3.connect(DB_PATH) as conn:
-            conn.execute("SELECT 1")
-        return "ok", 200
-    except Exception as e:
-        return f"db error: {e}", 500
-
-@app.route("/history", methods=["GET"])
+@app.route("/history")
 def history():
     raw = (request.args.get("phone") or "").strip()
     phone = norm_phone(raw)
-    if not phone:
-        return jsonify([])
+    if not phone: return jsonify([])
     migrate_phone_if_needed(raw, phone)
-    msgs = load_history(phone)
-    return jsonify(msgs)
+    return jsonify(load_history(phone, order="DESC"))
+
+@app.route("/history_export")
+def history_export():
+    raw = (request.args.get("phone") or "").strip()
+    phone = norm_phone(raw)
+    if not phone:
+        return Response("Telefone obrigatório", 400, mimetype="text/plain; charset=utf-8")
+    migrate_phone_if_needed(raw, phone)
+    msgs = load_history(phone, order="ASC")
+    now = time.strftime("%Y-%m-%d %H:%M:%S")
+    lines = [f"Histórico — Tel: {phone}", f"Exportado em: {now}", "-"*60]
+    for m in msgs:
+        ts = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(m["ts"]))
+        role = "USUÁRIO" if m["role"]=="user" else "ASSISTENTE"
+        lines.append(f"[{ts}] {role}:\n{(m['content'] or '').replace('\r\n','\n')}\n")
+    text = "\n".join(lines)
+    fname = f"historico_{phone}_{time.strftime('%Y%m%d_%H%M%S')}.txt"
+    return Response(text, headers={"Content-Disposition": f'attachment; filename="{fname}"'},
+                    mimetype="text/plain; charset=utf-8")
+
+@app.route("/profile", methods=["GET"])
+def get_profile():
+    raw = (request.args.get("phone") or "").strip()
+    phone = norm_phone(raw)
+    if not phone: return jsonify({"story": ""})
+    migrate_phone_if_needed(raw, phone)
+    with sqlite3.connect(DB_PATH) as conn:
+        row = conn.execute("SELECT story FROM profile WHERE phone=?", (phone,)).fetchone()
+    return jsonify({"story": (row[0] if row else "")})
+
+@app.route("/profile", methods=["POST"])
+def put_profile():
+    raw = (request.form.get("phone") or "").strip()
+    story = (request.form.get("story") or "").strip()
+    phone = norm_phone(raw)
+    if not phone: return jsonify({"error":"Número de telefone é obrigatório"}), 400
+    if not story: return jsonify({"error":"Cole/escreva a história antes de salvar"}), 400
+    migrate_phone_if_needed(raw, phone)
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute("""INSERT INTO profile(phone,story,updated_at) VALUES(?,?,?)
+                        ON CONFLICT(phone) DO UPDATE SET story=excluded.story, updated_at=excluded.updated_at""",
+                     (phone, story, time.time()))
+        conn.commit()
+    return jsonify({"ok": True})
+
+@app.route("/summary", methods=["POST"])
+def summary():
+    raw = (request.form.get("phone") or "").strip()
+    phone = norm_phone(raw)
+    if not phone: return jsonify({"error":"Número de telefone é obrigatório"}), 400
+    with sqlite3.connect(DB_PATH) as conn:
+        row = conn.execute("SELECT story FROM profile WHERE phone=?", (phone,)).fetchone()
+    if not row or not (row[0] or "").strip():
+        return jsonify({"error":"Nenhuma história salva para este telefone."}), 404
+    story = clamp_story_for_qa(row[0], 7000)
+    out = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role":"system","content":"Resuma com carinho (3-5 linhas), PT-BR, tom amoroso; não invente."},
+            {"role":"user","content":f"Resuma brevemente:\n\n{story}"}
+        ],
+        temperature=0.3, max_tokens=160
+    )
+    return jsonify({"summary": sanitize_response(out.choices[0].message.content)})
+
+@app.route("/story_export")
+def story_export():
+    raw = (request.args.get("phone") or "").strip()
+    phone = norm_phone(raw)
+    if not phone:
+        return Response("Telefone obrigatório", 400, mimetype="text/plain; charset=utf-8")
+    with sqlite3.connect(DB_PATH) as conn:
+        row = conn.execute("SELECT story,updated_at FROM profile WHERE phone=?", (phone,)).fetchone()
+    if not row or not (row[0] or "").strip():
+        return Response("Nenhuma história salva.", 404, mimetype="text/plain; charset=utf-8")
+    story, upd = row[0], row[1]
+    upd_h = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(upd)) if upd else "N/D"
+    text = "\n".join([f"Nossa História — Tel: {phone}", f"Última atualização: {upd_h}", "-"*60, story])
+    fname = f"minha_historia_{phone}_{time.strftime('%Y%m%d_%H%M%S')}.txt"
+    return Response(text, headers={"Content-Disposition": f'attachment; filename="{fname}"'},
+                    mimetype="text/plain; charset=utf-8")
+
+@app.route("/story_ask", methods=["POST"])
+def story_ask():
+    raw = (request.form.get("phone") or "").strip()
+    question = (request.form.get("question") or "").strip()
+    phone = norm_phone(raw)
+    if not phone: return jsonify({"error":"Número de telefone é obrigatório"}), 400
+    if not question: return jsonify({"error":"Escreva sua pergunta."}), 400
+    with sqlite3.connect(DB_PATH) as conn:
+        row = conn.execute("SELECT story FROM profile WHERE phone=?", (phone,)).fetchone()
+    if not row or not (row[0] or "").strip():
+        return jsonify({"error":"Nenhuma história salva. Cole/Salve sua história na página principal."}), 404
+
+    story_snippet = clamp_story_for_qa(row[0], 9000)
+    out = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role":"system","content":
+             "Responda SOMENTE com base na história fornecida. "
+             "Se a resposta não estiver no texto, responda exatamente: "
+             "'Não encontrei isso na história. Se quiser, acrescente mais detalhes e pergunte novamente.' — Nhor "
+             "Tom afetuoso, claro, PT-BR."},
+            {"role":"user","content":f"História (trecho):\n{story_snippet}\n\nPergunta: {question}"}
+        ],
+        temperature=0.2, max_tokens=280
+    )
+    answer = sanitize_response(out.choices[0].message.content)
+    return jsonify({"answer": answer})
 
 @app.route("/chat", methods=["POST"])
 def chat():
-    # Recebe multipart/form-data (FormData do front)
-    form = request.form
-    raw_phone = (form.get("phone") or "").strip()
+    f = request.form
+    raw_phone = (f.get("phone") or "").strip()
     phone = norm_phone(raw_phone)
-    problem = (form.get("problem") or "").strip()
-    resin = (form.get("resin") or "Não informado").strip()
-    printer = (form.get("printer") or "Não informado").strip()
+    problem = (f.get("problem") or "").strip()
+    resin = (f.get("resin") or "").strip()
+    printer = (f.get("printer") or "").strip()
 
-    if not phone:
-        return jsonify({"error": "Número de telefone é obrigatório"}), 400
+    if not phone: return jsonify({"error":"Número de telefone é obrigatório"}), 400
     if not problem and "images" not in request.files:
-        return jsonify({"error": "Descreva o problema ou envie imagens"}), 400
-
+        return jsonify({"error":"Descreva o problema ou envie imagens"}), 400
     migrate_phone_if_needed(raw_phone, phone)
 
-    # Imagens (até 5, 3MB) — aqui só contabilizamos; se quiser enviar ao modelo como base64, dá pra evoluir
-    images_count = 0
+    # imagens
+    image_parts = []
     if "images" in request.files:
         files = request.files.getlist("images")
-        for f in files[:5]:
-            data = f.read()
-            if not data or len(data) > 3 * 1024 * 1024:
-                continue
-            images_count += 1
-            # Para enviar as imagens à IA:
-            # data_url = "data:image/jpeg;base64," + base64.b64encode(data).decode("utf-8")
-            # (montar mensagens multimodais se quiser usar GPT-4o com visão)
+        for img in files[:5]:
+            data = img.read()
+            if not data or len(data) > 3*1024*1024: continue
+            mime = (img.mimetype or "image/jpeg").lower()
+            if mime not in ("image/jpeg","image/png","image/webp"): mime = "image/jpeg"
+            url = f"data:{mime};base64," + base64.b64encode(data).decode("utf-8")
+            image_parts.append({"type":"image_url", "image_url":{"url":url, "detail":"high"}})
 
-    # Contexto
-    history_msgs = load_history(phone)
+    hist = load_history(phone, order="ASC")
+
     sys_prompt = (
-        "Você é o assistente QUANTON3D®, especialista em impressão 3D de resina (SLA/DLP/LCD). "
-        "Responda em português (Brasil), com diagnóstico passo a passo, causas prováveis e ações práticas. "
-        "Se faltarem dados, peça somente o essencial."
+        "Você é o assistente QUANTON3D®, especialista em impressão 3D de resina. "
+        "Regras de marca e estilo (siga à risca):\n"
+        "1) Nunca insinuar defeito em produtos QUANTON3D ou de qualquer marca. Use linguagem neutra: "
+        "verificar validade/armazenamento/contaminação/temperatura.\n"
+        "2) Não usar 'compare com especificações da QUANTON3D'. Preferir: 'verifique as especificações do arquivo "
+        "do modelo ou do fabricante'.\n"
+        "3) Não sugerir trocar de marca. Foque em diagnóstico universal (exposição, nivelamento, alinhamento, suporte, "
+        "lavagem/pós-cura, temperatura/umidade, firmware, plataforma etc.).\n"
+        "4) Estilo: técnico, gentil e direto. Sem cabeçalhos markdown. Use 1), 2), 3) e bullets '-'.\n"
+        "5) Encerramento: 'Conte com o time QUANTON3D; seguimos com você até dar certo.'"
     )
-    messages = [{"role": "system", "content": sys_prompt}]
-    for m in history_msgs:
+
+    messages = [{"role":"system","content": sys_prompt}]
+    for m in hist:
         messages.append({"role": m["role"], "content": m["content"]})
 
-    user_msg = f"Problema: {problem}\nResina: {resin}\nImpressora: {printer}"
-    if images_count:
-        user_msg += f"\nImagens anexadas: {images_count}"
+    lines = [f"Problema: {problem}"] if problem else []
+    if resin:   lines.append(f"Resina: {resin}")
+    if printer: lines.append(f"Impressora: {printer}")
+    user_content = [{"type":"text","text":"\n".join(lines) or "Avalie as imagens."}]
+    user_content.extend(image_parts)
+    messages.append({"role":"user","content": user_content})
 
-    messages.append({"role": "user", "content": user_msg})
-    save_message(phone, "user", user_msg)
+    saved = "\n".join(lines) if lines else "Imagens enviadas."
+    if image_parts: saved += f"\n(Imagens anexadas: {len(image_parts)})"
+    save_message(phone, "user", saved)
 
-    # Chamada modelo
-    try:
-        completion = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=messages,
-            temperature=0.4,
-            max_tokens=800
-        )
-        reply = completion.choices[0].message.content.strip()
-    except Exception as e:
-        save_message(phone, "assistant", f"[Falha na IA] {e}")
-        return jsonify({"error": str(e)}), 500
-
+    out = client.chat.completions.create(
+        model="gpt-4o-mini", messages=messages, temperature=0.4, max_tokens=900
+    )
+    reply = sanitize_response(out.choices[0].message.content)
     save_message(phone, "assistant", reply)
     return jsonify({"reply": reply})
 
-# ===== Main local (Render usa o Procfile/ Gunicorn) =====
 if __name__ == "__main__":
-    init_db()
     app.run(host="0.0.0.0", port=5000, debug=True)

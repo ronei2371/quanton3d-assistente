@@ -1,133 +1,275 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>QUANTON3D — Diagnóstico Inteligente de SLA</title>
-
-  <!-- CSS externo -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+<meta charset="utf-8" />
+<title>QUANTON3D® — Assistente</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  :root{
+    --panel: rgba(17,24,39,.75);
+    --stroke: rgba(255,255,255,.08);
+  }
+  body{margin:0;min-height:100vh;background:#000 url("/static/fundotela.png") no-repeat center/cover fixed;color:#e5e7eb;font-family:system-ui,Arial,sans-serif;line-height:1.55}
+  .backdrop{min-height:100vh;background:linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,.80));display:flex;justify-content:center;align-items:flex-start;padding:36px 18px}
+  .card{width:100%;max-width:980px;background:var(--panel);border:1px solid var(--stroke);border-radius:18px;padding:24px 22px;box-shadow:0 10px 30px rgba(0,0,0,.4);backdrop-filter:blur(4px)}
+  .section{margin-top:20px;padding:16px;border:1px solid #334155;border-radius:14px;background:rgba(11,18,32,.55)}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px}
+  .logo{display:flex;align-items:center;gap:12px}
+  .logo img{height:50px}
+  h1{margin:0;font-weight:900;letter-spacing:.2px}
+  .ghost{background:transparent;border:1px solid #334155;color:#e5e7eb;padding:10px 14px;border-radius:12px;cursor:pointer}
+  .cta{border:0;background:linear-gradient(135deg,#0ea5e9,#2563eb);color:#fff;font-weight:900;padding:12px 16px;border-radius:14px}
+  label{display:block;font-weight:900;margin-top:12px}
+  .label-lg{font-size:1.08rem}
+  .title{font-size:1.2rem;font-weight:900;margin:0 0 8px 0}
+  .sub{color:#cbd5e1;margin-top:2px}
+  input,textarea{width:100%;padding:13px;border:1px solid #334155;border-radius:12px;background:#0b1220;color:#e5e7eb;outline:none}
+  input::placeholder,textarea::placeholder{color:#94a3b8}
+  .primary{margin-top:16px;padding:13px 18px;border:0;border-radius:12px;cursor:pointer;background:#1e40af;color:#fff;font-weight:900}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width: 860px){ .row{grid-template-columns:1fr} }
+  .log{white-space:pre-wrap;background:#0b1220;padding:14px;border-radius:12px;min-height:140px;border:1px solid #334155}
+  .msg{display:flex;gap:12px;padding:12px;border-radius:12px;margin-bottom:12px;border:1px solid #334155}
+  .user{background:rgba(30,58,138,.32)} .assistant{background:rgba(22,101,52,.30)}
+  .avatar{width:38px;height:38px;border-radius:50%;flex:0 0 38px;display:flex;align-items:center;justify-content:center;background:#0b1220;border:1px solid #334155}
+  .avatar-img{width:38px;height:38px;border-radius:50%;border:1px solid #334155;object-fit:cover;background:#0b1220}
+  .msg-body{flex:1;min-width:0} .msg-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:10px}
+  .badge{display:inline-block;font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid #334155;background:#0b1220}
+  .badge-user{border-color:#1e3a8a} .badge-assistant{border-color:#065f46}
+  .time{font-size:12px;color:#94a3b8} .msg-content{white-space:pre-wrap}
+  .error{color:#fecaca;background:rgba(153,27,27,.35);border:1px solid #7f1d1d;padding:10px;border-radius:10px;margin-top:10px}
+  .thinking{display:none;align-items:center;gap:10px;margin-top:12px;color:#cbd5e1}
+  .spinner{width:16px;height:16px;border:2px solid #334155;border-top-color:#1e40af;border-radius:50%;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .header-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .hint{font-size:12px;color:#94a3b8;margin-top:6px}
+  small.muted{color:#94a3b8}
+  .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.65);z-index:50;padding:16px}
+  .modal .box{max-width:760px;width:100%;background:#0b1220;color:#e5e7eb;border:1px solid #334155;border-radius:16px;padding:20px}
+  .modal .box h3{margin:0 0 8px 0}
+  .modal .box p{margin:8px 0;line-height:1.6}
+  .modal .actions{display:flex;justify-content:flex-end;margin-top:12px}
+</style>
 </head>
 <body>
-  <!-- Fundo -->
-  <div class="bg"></div>
+<div class="backdrop"><div class="card">
 
-  <!-- Cabeçalho simples -->
-  <header class="brand">
-    <div class="pill"></div>
-    <span class="brand-name">IA QUANTON3D</span>
-  </header>
-
-  <!-- Card principal -->
-  <main class="wrap">
-    <section class="card">
-      <div class="card-head">
-        <div class="icon-gear">⚙️</div>
-        <h1>Diagnóstico Inteligente de SLA</h1>
-      </div>
-
-      <p class="subtitle">
-        Informe seu telefone para resgatar histórico. Depois descreva o problema e consulte a <b>QUANTON3D</b>.
-      </p>
-
-      <div class="grid">
-        <!-- Coluna esquerda -->
-        <div class="col">
-          <label class="lbl" for="problem">Descreva o problema</label>
-          <textarea id="problem" class="txt" rows="8"
-            placeholder="Ex.: peças aderem demais na mesa; camadas falhando em ~10%; suportes moles..."></textarea>
-
-          <div class="block">
-            <label class="lbl">Imagens (opcional)</label>
-            <small class="hint">Até 5 imagens (JPEG/PNG/WEBP), 3MB cada.</small>
-            <input id="images" type="file" accept="image/*" multiple />
-            <div id="preview" class="preview"></div>
-          </div>
-        </div>
-
-        <!-- Coluna direita -->
-        <div class="col col-right">
-          <div class="row phone-row">
-            <div class="phone-input">
-              <label class="lbl" for="phone">Telefone (WhatsApp)</label>
-              <input id="phone" class="ipt" type="tel" placeholder="Ex.: 11987654321 (só números)" />
-            </div>
-            <button id="btnHistory" class="btn btn-primary">CARREGAR HISTÓRICO</button>
-          </div>
-
-          <fieldset class="params">
-            <legend>Parâmetros (opcionais)</legend>
-            <p class="hint">
-              Servem para deixar o diagnóstico mais preciso. Se não souber, pode deixar em branco.
-            </p>
-
-            <label class="lbl" for="resin">Resina</label>
-            <select id="resin" class="ipt">
-              <option selected>— Não informar —</option>
-              <option>Siraya Tech Fast</option>
-              <option>Elegoo ABS-Like</option>
-              <option>Anycubic Standard</option>
-              <option>Sunlu Rapid</option>
-              <option>Outra</option>
-            </select>
-
-            <label class="lbl" for="printer">Impressora</label>
-            <select id="printer" class="ipt">
-              <option selected>— Não informar —</option>
-              <option>Elegoo Mars 3</option>
-              <option>Anycubic Photon Mono</option>
-              <option>Creality Halot</option>
-              <option>Phrozen Sonic</option>
-              <option>Outra</option>
-            </select>
-          </fieldset>
-
-          <button id="btnSend" class="btn btn-cta">CONSULTAR QUANTON3D IA</button>
-
-          <div class="status">
-            <span class="dot" id="dot"></span>
-            <span id="status">Aguardando…</span>
-          </div>
-        </div>
-      </div>
-
-      <div id="log" class="log">
-        <div class="hint center">
-          Nenhuma conversa ainda. Informe o telefone e carregue o histórico 👇
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <!-- Rodapé / direitos autorais -->
-  <footer class="footer">
-    <div class="legal">
-      <button id="btnLegal" class="btn btn-ghost">© Direitos Autorais</button>
-      <div class="copyright">
-        © 2025 QUANTON3D — Todos os direitos reservados.
-      </div>
+  <!-- Topo -->
+  <div class="topbar">
+    <div class="logo">
+      <img src="/static/logo.png" alt="QUANTON3D Logo">
+      <h1>QUANTON3D® — Suporte Técnico SLA/DLP</h1>
     </div>
-  </footer>
+    <div style="display:flex;gap:10px;">
+      <button id="familyBtn" class="cta" type="button">Nossa história 💙</button>
+      <button id="aboutBtn" class="cta" type="button">Direitos autorais</button>
+    </div>
+  </div>
 
-  <!-- Modal direitos -->
-  <dialog id="legalModal">
-    <h3>Direitos Autorais — QUANTON3D®</h3>
-    <p>
-      Todo o conteúdo gerado pelo assistente virtual QUANTON3D é de uso exclusivo da empresa detentora da marca QUANTON3D®.
-      A IA foi treinada com diretrizes, estilo de linguagem, vocabulário técnico e identidade personalizada da marca, não se
-      tratando de um modelo genérico.
-    </p>
-    <p>Ao interagir com este assistente, o usuário reconhece que:</p>
-    <ul>
-      <li>O conteúdo gerado possui valor intelectual e comercial para a empresa;</li>
-      <li>É proibida sua reprodução, armazenamento ou redistribuição sem autorização prévia;</li>
-      <li>Toda tentativa de cópia, engenharia reversa ou clonagem será tratada como violação de propriedade intelectual.</li>
-    </ul>
-    <p>Para uso autorizado ou parcerias, entre em contato diretamente com a QUANTON3D®.</p>
-    <button id="closeLegal" class="btn btn-primary">Fechar</button>
-  </dialog>
+  <!-- Form principal -->
+  <div class="section">
+    <div class="title">Atendimento técnico</div>
+    <form id="chatForm">
+      <label class="label-lg">Telefone (WhatsApp)</label>
+      <div class="sub">O telefone identifica seu histórico. Use sempre o mesmo.</div>
+      <input name="phone" placeholder="Ex: 11 98888-7777" required />
 
-  <!-- JS externo -->
-  <script src="{{ url_for('static', filename='script.js') }}"></script>
+      <div class="title" style="margin-top:16px;">Parâmetros de impressão Quanton3D</div>
+      <div class="row">
+        <div>
+          <label>Resina</label>
+          <input name="resin" placeholder="Tipo de resina (preencha para salvar configurações)" />
+        </div>
+        <div>
+          <label>Impressora</label>
+          <input name="printer" placeholder="Modelo da máquina (preencha para salvar configurações)" />
+        </div>
+      </div>
+
+      <label class="label-lg" style="margin-top:18px;">Descreva o problema</label>
+      <textarea name="problem" rows="5" placeholder="Digite aqui seu problema..." required></textarea>
+
+      <button id="sendBtn" class="primary" type="submit">Enviar</button>
+
+      <!-- imagens abaixo do enviar -->
+      <label style="margin-top:14px;">Imagens (opcional, até 5 — máx 3MB cada)</label>
+      <input id="images" type="file" name="images" accept="image/*" multiple />
+      <div id="imgInfo" class="hint">Nenhuma imagem selecionada.</div>
+
+      <div id="errBox" class="error" style="display:none"></div>
+      <div id="thinking" class="thinking" aria-live="polite">
+        <div class="spinner" aria-hidden="true"></div><span>Analisando seu caso…</span>
+      </div>
+    </form>
+  </div>
+
+  <!-- Editor da história (colapsado) -->
+  <div class="section">
+    <details id="storyEditor">
+      <summary class="title" style="cursor:pointer;">✍️ Editar/guardar “Nossa história” (privado)</summary>
+      <small class="muted">Cole seu texto (pode copiar de um .txt). Ele será usado para responder perguntas no botão “Nossa história 💙”.</small>
+      <textarea id="story" rows="6" style="margin-top:10px;" placeholder="Cole sua história aqui..."></textarea>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:8px;">
+        <button id="saveStory" class="ghost">Salvar história</button>
+        <button id="summaryStory" class="ghost">Ver resumo</button>
+        <button id="downloadStory" class="ghost">Baixar minha história (.txt)</button>
+        <span id="storyStatus" style="font-size:12px;color:#94a3b8;"></span>
+      </div>
+    </details>
+  </div>
+
+  <!-- Histórico -->
+  <div class="section">
+    <div class="header-row">
+      <div class="title" style="margin:0;">Histórico</div>
+      <button id="downloadHist" class="ghost" type="button">Baixar histórico (.txt)</button>
+    </div>
+    <div id="history" class="log"></div>
+  </div>
+
+</div></div>
+
+<!-- Modal Direitos Autorais -->
+<div id="aboutModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+  <div class="box">
+    <h3 id="aboutTitle">Direitos autorais — Quanton3D®</h3>
+    <p>📜 Todo o conteúdo gerado por este assistente é de uso exclusivo da empresa detentora da marca <b>Quanton3D®</b>.</p>
+    <p>Esta IA foi treinada com diretrizes, vocabulário técnico e estilo personalizado da marca. É proibida a reprodução ou uso sem autorização.</p>
+    <p>⚠️ Qualquer tentativa de cópia, clonagem ou uso indevido poderá gerar ação legal com base na <b>Lei da Propriedade Industrial (Lei nº 9.279/96)</b>.</p>
+    <p>Para uso autorizado ou parcerias, entre em contato com nosso time 💙</p>
+    <div class="actions"><button id="closeAbout" class="ghost">Fechar</button></div>
+  </div>
+</div>
+
+<!-- Modal Nossa História (Q&A) -->
+<div id="familyModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="familyTitle">
+  <div class="box">
+    <h3 id="familyTitle">A história de Nhor e filhos com Ronei</h3>
+    <p>Nhor sempre acreditou que a melhor tecnologia nasce do cuidado. Foi com esse espírito que criou os filhos: amor, honestidade e coragem. A Quanton3D é fruto dessa base — uma família que aprende junto e transforma dificuldades em aprendizado.</p>
+    <p>Para perguntas, usamos o texto salvo em <b>Editar “Nossa história”</b> na página principal.</p>
+    <hr style="border-color:#334155;margin:12px 0;">
+    <label class="label-lg">Pergunte sobre a nossa história</label>
+    <input id="familyQuestion" placeholder="Ex.: Como surgiu a Quanton3D?" />
+    <div style="display:flex;gap:8px;align-items:center;margin-top:8px;">
+      <button id="askFamily" class="ghost">Perguntar</button>
+      <span id="familyStatus" style="font-size:12px;color:#94a3b8;"></span>
+    </div>
+    <div id="familyAnswerBox" style="display:none;margin-top:10px;border:1px solid #334155;padding:10px;border-radius:10px;background:#0b1220;">
+      <div style="font-weight:800;margin-bottom:6px;">Resposta — Nhor</div>
+      <div id="familyAnswer" style="white-space:pre-wrap;"></div>
+    </div>
+    <div class="actions"><button id="closeFamily" class="ghost">Fechar</button></div>
+  </div>
+</div>
+
+<script>
+  const form = document.getElementById('chatForm');
+  const historyEl = document.getElementById('history');
+  const errBox = document.getElementById('errBox');
+  const sendBtn = document.getElementById('sendBtn');
+  const thinking = document.getElementById('thinking');
+  const imgInput = document.getElementById('images');
+  const imgInfo  = document.getElementById('imgInfo');
+  const downloadHistBtn = document.getElementById('downloadHist');
+
+  function renderMsg(it){
+    const wrap=document.createElement('div'); wrap.className='msg '+(it.role==='user'?'user':'assistant');
+    const avatar=document.createElement(it.role==='user'?'div':'img');
+    if(it.role==='user'){ avatar.className='avatar'; avatar.textContent='👤'; }
+    else{ avatar.className='avatar-img'; avatar.src='/static/logo.png'; avatar.alt='Assistente Quanton3D'; }
+    const body=document.createElement('div'); body.className='msg-body';
+    const head=document.createElement('div'); head.className='msg-head';
+    const left=document.createElement('div');
+    const badge=document.createElement('span'); badge.className='badge '+(it.role==='user'?'badge-user':'badge-assistant'); badge.textContent=(it.role==='user')?'Você':'Assistente';
+    left.appendChild(badge);
+    const time=document.createElement('span'); time.className='time'; time.textContent=new Date(it.ts*1000).toLocaleString();
+    head.appendChild(left); head.appendChild(time);
+    const content=document.createElement('div'); content.className='msg-content'; content.textContent=it.content||'';
+    body.appendChild(head); body.appendChild(content);
+    wrap.appendChild(avatar); wrap.appendChild(body);
+    return wrap;
+  }
+  function renderHistory(items){ historyEl.innerHTML=''; items.sort((a,b)=>b.ts-a.ts); items.forEach(i=>historyEl.appendChild(renderMsg(i))); }
+  async function loadHistory(phone){ if(!phone) return; const r=await fetch(`/history?phone=${encodeURIComponent(phone)}`,{cache:'no-store'}); renderHistory(await r.json()); }
+
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    errBox.style.display='none'; errBox.textContent='';
+    sendBtn.disabled=true; sendBtn.textContent='Enviando...'; thinking.style.display='flex';
+    try{
+      const fd=new FormData(form); const phone=fd.get('phone')||'';
+      const files=imgInput.files||[]; if(files.length>5) alert('Você selecionou '+files.length+' imagens. Apenas 5 serão enviadas.');
+      for(const f of files){ if(f.size>3*1024*1024){ alert('Há imagem >3MB; será ignorada.'); break; } }
+      const r=await fetch('/chat',{method:'POST',body:fd}); const data=await r.json();
+      if(data.error){ errBox.textContent='Erro: '+data.error; errBox.style.display='block'; }
+      else{ form.problem.value=''; imgInput.value=''; updateImgInfo(); await loadHistory(phone); }
+    }catch(err){ errBox.textContent='Falha de rede: '+err.message; errBox.style.display='block'; }
+    finally{ sendBtn.disabled=false; sendBtn.textContent='Enviar'; thinking.style.display='none'; }
+  });
+
+  form.phone.addEventListener('change', ()=>{ const p=form.phone.value.trim(); loadHistory(p); loadProfile(p); });
+
+  function humanSize(b){ if(b<1024) return b+' B'; if(b<1024*1024) return (b/1024).toFixed(1)+' KB'; return (b/1024/1024).toFixed(2)+' MB'; }
+  function updateImgInfo(){ const f=imgInput.files||[]; if(!f.length){ imgInfo.textContent='Nenhuma imagem selecionada.'; imgInfo.style.color='#94a3b8'; return; }
+    let total=0,over=false; for(const x of f){ total+=x.size; if(x.size>3*1024*1024) over=true; }
+    let msg=`${f.length} imagem(ns) — total ${humanSize(total)}.`; if(f.length>5) msg+=' (⚠️ máx. 5)'; if(over) msg+=' (⚠️ >3MB serão ignoradas)';
+    imgInfo.textContent=msg; imgInfo.style.color=(f.length>5||over)?'#fca5a5':'#94a3b8'; }
+  imgInput.addEventListener('change', updateImgInfo);
+
+  downloadHistBtn.addEventListener('click', ()=>{ const p=(form.phone.value||'').trim(); if(!p){ alert('Preencha o telefone.'); return; } window.open(`/history_export?phone=${encodeURIComponent(p)}`,'_blank'); });
+
+  // história (carregar/salvar/resumo/baixar)
+  const storyEl=document.getElementById('story'), storyStatus=document.getElementById('storyStatus');
+  async function loadProfile(phone){ if(!phone){ storyEl.value=''; return; } const r=await fetch(`/profile?phone=${encodeURIComponent(phone)}`,{cache:'no-store'}); const d=await r.json(); storyEl.value=d.story||''; }
+  document.getElementById('saveStory').addEventListener('click', async ()=>{
+    const p=(form.phone.value||'').trim(); const story=(storyEl.value||'').trim();
+    if(!p){ alert('Preencha o telefone para salvar.'); return; }
+    if(!story){ alert('Cole sua história antes de salvar.'); return; }
+    storyStatus.textContent='Salvando...';
+    try{ const fd=new FormData(); fd.append('phone',p); fd.append('story',story);
+      const r=await fetch('/profile',{method:'POST',body:fd}); const d=await r.json();
+      storyStatus.textContent=d.error?('Erro: '+d.error):'História salva ✔'; setTimeout(()=>storyStatus.textContent='',1500);
+    }catch(e){ storyStatus.textContent='Falha: '+e.message; }
+  });
+  document.getElementById('summaryStory').addEventListener('click', async ()=>{
+    const p=(form.phone.value||'').trim(); if(!p){ alert('Preencha o telefone.'); return; }
+    storyStatus.textContent='Gerando resumo...';
+    try{ const fd=new FormData(); fd.append('phone',p); const r=await fetch('/summary',{method:'POST',body:fd}); const d=await r.json();
+      if(d.error){ storyStatus.textContent='Erro: '+d.error; return; }
+      alert(d.summary||'(sem conteúdo)'); storyStatus.textContent='';
+    }catch(e){ storyStatus.textContent='Falha: '+e.message; }
+  });
+  document.getElementById('downloadStory').addEventListener('click', ()=>{
+    const p=(form.phone.value||'').trim(); if(!p){ alert('Preencha o telefone.'); return; }
+    window.open(`/story_export?phone=${encodeURIComponent(p)}`,'_blank');
+  });
+
+  // modais
+  const aboutBtn=document.getElementById('aboutBtn'), aboutModal=document.getElementById('aboutModal'), closeAbout=document.getElementById('closeAbout');
+  aboutBtn.addEventListener('click',()=>aboutModal.style.display='flex');
+  closeAbout.addEventListener('click',()=>aboutModal.style.display='none');
+  aboutModal.addEventListener('click',e=>{ if(e.target===aboutModal) aboutModal.style.display='none'; });
+
+  const familyBtn=document.getElementById('familyBtn'), familyModal=document.getElementById('familyModal'), closeFamily=document.getElementById('closeFamily');
+  const familyQuestion=document.getElementById('familyQuestion'), askFamily=document.getElementById('askFamily');
+  const familyStatus=document.getElementById('familyStatus'), familyAnswer=document.getElementById('familyAnswer'), familyAnswerBox=document.getElementById('familyAnswerBox');
+
+  familyBtn.addEventListener('click',()=>{ familyModal.style.display='flex'; });
+  closeFamily.addEventListener('click',()=>{ familyModal.style.display='none'; });
+  familyModal.addEventListener('click',e=>{ if(e.target===familyModal) familyModal.style.display='none'; });
+
+  askFamily.addEventListener('click', async ()=>{
+    const p=(form.phone.value||'').trim(); const q=(familyQuestion.value||'').trim();
+    if(!p){ alert('Digite o telefone para perguntar.'); return; }
+    if(!q){ alert('Escreva sua pergunta.'); return; }
+    familyStatus.textContent='Respondendo...'; familyAnswerBox.style.display='none'; familyAnswer.textContent='';
+    try{
+      const fd=new FormData(); fd.append('phone',p); fd.append('question',q);
+      const r=await fetch('/story_ask',{method:'POST',body:fd}); const d=await r.json();
+      familyAnswer.textContent = d.error ? ('Erro: '+d.error) : (d.answer||'(sem conteúdo)');
+      familyAnswerBox.style.display='block'; familyStatus.textContent='';
+    }catch(e){ familyAnswer.textContent='Falha: '+e.message; familyAnswerBox.style.display='block'; familyStatus.textContent=''; }
+  });
+</script>
 </body>
 </html>

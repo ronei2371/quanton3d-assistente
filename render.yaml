@@ -1,8 +1,20 @@
-
-services:
-- type:web
-name: quanton3d.bot
-env: python
-buildcommand: ""
-startcomamand/; "gunicorn app:app --bind 0.0.0.0:$port -- workers 2 --threads 4 --timeout 120"
-
+﻿services:
+  - type: web
+    name: quanton3d-assistente
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --workers=2 --threads=8 --timeout=120
+    autoDeploy: true
+    healthCheckPath: /healthz
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false   # você preenche no painel
+      - key: DB_PATH
+        value: /data/chat.db
+      - key: PYTHON_VERSION
+        value: 3.11.9
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 1
