@@ -38,6 +38,10 @@ def init_db():
         conn.commit()
 init_db()
 
+@app.route("/healthz")
+def healthz():
+    return "ok", 200
+
 def save_message(phone_norm, role, content):
     with sqlite3.connect(DB_PATH) as conn:
         conn.execute("INSERT INTO history(phone,role,content,timestamp) VALUES(?,?,?,?)",
