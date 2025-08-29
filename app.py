@@ -1,13 +1,18 @@
-# app.py — v2025-08-29f (OpenAI 1.x, sem proxies, visão por imagens, protocolo LCD)
-import os
-import uuid
-import re
-from flask import Flask, request, render_template, jsonify, send_from_directory, url_for
-from openai import OpenAI
+# app.py
+# Quanton3D Assistente – v2025-08-29g
+# Flask + OpenAI (SDK 1.x), compat Python 3.13, visão por imagens
+# Retorno padronizado: {"ok": True, "reply": "...", "answer": "..."} (ambos)
+# Limite de upload: 5 imagens JPG/PNG/WEBP até 3MB cada
 
-# --- Compat: Python 3.13 removeu imghdr; implemento mínimo (jpeg/png/webp)
+import os
+import re
+import uuid
+import base64
+from flask import Flask, render_template, request, jsonify, send_from_directory, url_for
+
+# --- Compat: Python 3.13 removeu imghdr; recriamos o suficiente (JPEG/PNG/WEBP)
 try:
-    import imghdr  # ainda existe até 3.12
+    import imghdr  # ok até 3.12
 except ModuleNotFoundError:
     class imghdr:  # compat simples
         @staticmethod
@@ -19,37 +24,38 @@ except ModuleNotFoundError:
             if not isinstance(h, (bytes, bytearray)):
                 return None
             head = h[:16]
-            if head.startswith(b"\xFF\xD8\xFF"):
+            if head.startswith(b"\xFF\xD8\xFF"):                 # JPEG
                 return "jpeg"
-            if head.startswith(b"\x89PNG\r\n\x1a\n"):
+            if head.startswith(b"\x89PNG\r\n\x1a\n"):           # PNG
                 return "png"
-            if head[:4] == b"RIFF" and head[8:12] == b"WEBP":
+            if head[:4] == b"RIFF" and head[8:12] == b"WEBP":   # WEBP
                 return "webp"
             return None
 
-APP_VERSION = "2025-08-29f"
+APP_VERSION = "2025-08-29g"
 
 # --- Flask
 app = Flask(__name__, template_folder="templates", static_folder="static")
-app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024  # 20 MB total por requisição
+app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024  # 20MB total (segurança)
 
-# Diretório de uploads (disco efêmero no Render, mas acessível durante a execução)
+# Pasta pública/efêmera para uploads
 UPLOAD_DIR = os.path.join(os.getcwd(), "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# Remove proxies do ambiente (evita conflito com SDK novo)
+# Remove proxies do ambiente (evita interferência no SDK novo)
 for k in ("HTTP_PROXY", "http_proxy", "HTTPS_PROXY", "https_proxy"):
     os.environ.pop(k, None)
 
-# --- Config OpenAI por variáveis de ambiente
-OPENAI_API_KEY   = os.getenv("OPENAI_API_KEY", "")
-MODEL            = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
-TEMP             = float(os.getenv("OPENAI_TEMPERATURE", "0.2"))
-SEED             = int(os.getenv("OPENAI_SEED", "123"))
+# -------- Config OpenAI pelo ambiente --------
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+MODEL_NAME     = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+TEMPERATURE    = float(os.getenv("OPENAI_TEMPERATURE", "0.2"))
+SEED           = int(os.getenv("OPENAI_SEED", "123"))
 
-client = OpenAI(api_key=OPENAI_API_KEY)  # Sem proxies aqui!
+from openai import OpenAI
+client = OpenAI(api_key=OPENAI_API_KEY)
 
-# --- Prompts
+# --- Sistema (tom) do assistente
 ASSISTANT_SYSTEM = """
 Você é técnico de campo da Quanton3D. Estilo: direto de oficina, frases curtas, passo-a-passo.
 
@@ -69,51 +75,38 @@ PROTOCOLO-LCD (quando for LCD ou houver foto da tela acesa):
 5) Concluir objetivamente: difusor/LED x LCD x reflexo/ângulo. Evite generalidades.
 
 PROTOCOLO-GERAL (outros casos):
-- Checar adesão, nivelamento, tempos de exposição, suportes, estado do FEP, velocidades.
-- Depois resina (validades/armazenamento) e temperatura ambiente.
+- Checar adesão/nivelamento/exposição/suportes/FEP/velocidades; depois resina e temperatura ambiente.
 """
 
-SYSTEM_PROMPT = (
-    "Você é o Assistente Técnico Quanton3D para impressoras SLA/DLP.\n"
-    "Responda em português do Brasil, prático e educado.\n"
-    "Modo Certeiro: se faltar informação crítica, faça APENAS 1 pergunta objetiva e pare.\n"
-    "Quando houver imagem, descreva o que observa e relacione com o defeito.\n"
-    "Quando o escopo indicar 'lcd', priorize os testes (papel branco, grade, limpeza, difusor/backlight).\n"
-)
-
-# --- Utilidades
-ALLOWED_EXTS = {"jpg", "jpeg", "png", "webp"}
-
+# -------- Utilidades --------
 def allowed_file(filename: str) -> bool:
     ext = (filename.rsplit(".", 1)[-1] if "." in filename else "").lower()
-    return ext in ALLOWED_EXTS
+    return ext in {"jpg", "jpeg", "png", "webp"}
 
-def save_uploads(files):
-    """Salva até 5 imagens (máx 3MB cada) e retorna URLs públicas."""
-    urls = []
-    for f in files[:5]:
-        if not f or f.filename == "":
-            continue
-        if not allowed_file(f.filename):
-            continue
-        # valida tipo real
-        head = f.stream.read(16)
-        f.stream.seek(0)
-        kind = imghdr.what(None, h=head)
-        if kind not in {"jpeg", "png", "webp"}:
-            continue
-        # valida tamanho
-        size_hint = f.content_length or 0
-        if size_hint and size_hint > 3 * 1024 * 1024:
-            continue
-        safe = re.sub(r"[^a-zA-Z0-9_.-]", "_", f.filename)
-        fname = f"{uuid.uuid4().hex}_{safe}"
-        path = os.path.join(UPLOAD_DIR, fname)
-        f.save(path)
-        urls.append(url_for("get_upload", fname=fname, _external=True))
-    return urls
+def _read_validate_image(fs):
+    """
+    Lê o arquivo em memória, valida tipo e tamanho.
+    Retorna (data_url, size) ou (None, 0).
+    """
+    try:
+        data = fs.read()
+    except Exception:
+        data = b""
+    if not data:
+        return None, 0
 
-# --- Rotas básicas
+    kind = imghdr.what(None, h=data)
+    if kind not in {"jpeg", "png", "webp"}:
+        raise ValueError("Formato inválido. Envie JPG, PNG ou WEBP.")
+
+    if len(data) > 3 * 1024 * 1024:
+        raise ValueError("Imagem excede 3MB.")
+
+    mime = {"jpeg": "image/jpeg", "png": "image/png", "webp": "image/webp"}[kind]
+    b64  = base64.b64encode(data).decode("utf-8")
+    return f"data:{mime};base64,{b64}", len(data)
+
+# -------- Rotas --------
 @app.get("/")
 def index():
     return render_template("index.html", app_version=APP_VERSION)
@@ -127,70 +120,95 @@ def diag():
     return jsonify({
         "openai_key_set": bool(OPENAI_API_KEY),
         "version": APP_VERSION,
-        "model": MODEL,
-        "temperature": TEMP,
+        "model": MODEL_NAME,
+        "temperature": TEMPERATURE,
         "seed": SEED
     }), 200
 
-# arquivos estáticos de upload
 @app.get("/uploads/<path:fname>")
 def get_upload(fname):
     return send_from_directory(UPLOAD_DIR, fname)
 
-# (opcional) estáticos do /static
-@app.get("/static/<path:filename>")
-def static_files(filename):
-    return send_from_directory(app.static_folder, filename)
-
-# --- Chat (form principal)
 @app.post("/chat")
 def chat():
     try:
         phone   = (request.form.get("phone")   or "").strip()
-        scope   = (request.form.get("scope")   or "desconhecido").strip()
         resin   = (request.form.get("resin")   or "").strip()
         printer = (request.form.get("printer") or "").strip()
         problem = (request.form.get("problem") or "").strip()
+        scope   = (request.form.get("scope")   or "").strip()
 
         if not phone:
-            return jsonify({"ok": False, "error": "Informe o telefone."}), 400
+            msg = "Informe o telefone."
+            return jsonify({"ok": False, "error": msg, "answer": msg}), 200
         if not problem:
-            return jsonify({"ok": False, "error": "Descreva o problema."}), 400
+            msg = "Descreva o problema."
+            return jsonify({"ok": False, "error": msg, "answer": msg}), 200
 
-        image_urls = save_uploads(request.files.getlist("photos")) if "photos" in request.files else []
+        # Aceita 'images' (padrão do front) e 'photos' (retrocompatibilidade)
+        files = []
+        if "images" in request.files:
+            files = request.files.getlist("images")
+        elif "photos" in request.files:
+            files = request.files.getlist("photos")
 
-        # Texto do usuário
+        images_dataurls, total_bytes = [], 0
+        for i, fs in enumerate(files[:5]):
+            if not fs or not fs.filename:
+                continue
+            if not allowed_file(fs.filename):
+                msg = f"Imagem {i+1}: formato inválido."
+                return jsonify({"ok": False, "error": msg, "answer": msg}), 200
+
+            dataurl, size = _read_validate_image(fs)
+            if dataurl:
+                images_dataurls.append(dataurl)
+                total_bytes += size
+
+        app.logger.info(f"/chat phone={phone} imgs={len(images_dataurls)} bytes={total_bytes}")
+
+        # LCD hint
+        lcd_hint = ("lcd" in problem.lower()) or ("tela" in problem.lower()) or bool(images_dataurls)
+
         user_text = (
-            f"Escopo informado: {scope}\n"
+            f"Telefone: {phone}\n"
             f"Resina: {resin or '-'}\n"
             f"Impressora: {printer or '-'}\n"
-            f"Problema: {problem or '-'}\n"
-            f"Telefone: {phone or '-'}"
+            f"Escopo informado: {scope or ('lcd' if lcd_hint else 'geral')}\n"
+            f"Problema: {problem}\n"
+            "Contexto: suporte técnico Quanton3D (SLA/DLP)."
         )
 
-        # Conteúdo multimodal
         content = [{"type": "text", "text": user_text}]
-        for u in image_urls:
-            content.append({"type": "image_url", "image_url": {"url": u}})
+        for url_data in images_dataurls:
+            content.append({"type": "image_url", "image_url": {"url": url_data}})
 
-        # Chamada OpenAI
+        messages = [
+            {"role": "system", "content": ASSISTANT_SYSTEM},
+            {"role": "user",   "content": content},
+        ]
+
         resp = client.chat.completions.create(
-            model=MODEL,
-            temperature=TEMP,
+            model=MODEL_NAME,
+            temperature=TEMPERATURE,
             seed=SEED,
-            messages=[
-                {"role": "system", "content": ASSISTANT_SYSTEM},
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user",   "content": content},
-            ],
+            messages=messages,
         )
         reply = (resp.choices[0].message.content or "").strip()
-        return jsonify({"ok": True, "reply": reply, "images": len(image_urls)}), 200
+
+        # Devolve as duas chaves para o front não dar "undefined"
+        return jsonify({"ok": True, "reply": reply, "answer": reply, "images": len(images_dataurls)}), 200
 
     except Exception as e:
         app.logger.exception("erro no /chat")
-        return jsonify({"ok": False, "error": str(e)}), 500
+        # 200 para o front exibir a string em vez de "undefined"
+        return jsonify({"ok": False, "error": str(e), "answer": f"Erro: {e}"}), 200
+
+# Estáticos (logo etc.)
+@app.get("/static/<path:filename>")
+def static_files(filename):
+    return send_from_directory(app.static_folder, filename)
 
 if __name__ == "__main__":
-    # Para rodar localmente
+    # Para rodar localmente: python app.py
     app.run(host="0.0.0.0", port=5000, debug=True)
