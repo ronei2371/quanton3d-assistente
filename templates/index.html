@@ -13,7 +13,7 @@
     .card{background:var(--panel);border:1px solid var(--stroke);border-radius:14px;padding:16px}
     .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     label{display:block;font-weight:700;margin:10px 0 6px}
-    input,textarea,select{width:100%;padding:12px;border-radius:10px;border:1px solid var(--stroke);background:#0b1019;color:var(--ink)}
+    input,textarea{width:100%;padding:12px;border-radius:10px;border:1px solid var(--stroke);background:#0b1019;color:var(--ink)}
     textarea{min-height:110px;resize:vertical}.hint{color:var(--muted);font-size:12px;margin-top:6px}
     .btn{cursor:pointer;border:1px solid var(--stroke);background:#122037;color:#fff;border-radius:12px;padding:12px 16px;font-weight:800}
     .btn[disabled]{opacity:.6;cursor:not-allowed}.btn-brand{background:linear-gradient(135deg,#3aa0ff,#2b68ff)}
@@ -27,7 +27,7 @@
 </head>
 <body>
 <header>
-  <img src="/static/logo.png" alt="QUANTON3D" onerror="this.style.display='none'">
+  <img src="{{ url_for('static', filename='logo.png') }}" alt="QUANTON3D" onerror="this.style.display='none'">
   <h1>QUANTON3D® — Suporte Técnico SLA/DLP</h1>
   <span class="pill">v {{ app_version }}</span>
   <span style="flex:1"></span>
@@ -100,7 +100,7 @@ function prependMsg(html){
   div.innerHTML = html;
   msgs.prepend(div);
 }
-function me(text){ prependMsg(`<div class="me"><b>Você</b>:<br>${text.replaceAll('\n','<br>')}</div>`); }
+function me(text){ prependMsg(`<div class="me"><b>Você</b>:<br>${(text||"(sem descrição)").replaceAll('\n','<br>')}</div>`); }
 function bot(text){ prependMsg(`<b>Assistente</b>:<br>${text.replaceAll('\n','<br>')}`); }
 
 form.addEventListener('submit', async (ev)=>{
@@ -112,7 +112,7 @@ form.addEventListener('submit', async (ev)=>{
   for (const f of files){ if (f.size > 3*1024*1024){ alert("Cada imagem deve ter até 3MB."); return; } }
 
   const fd = new FormData(form);
-  me(form.problem.value || "(sem descrição)");
+  me(form.problem.value);
 
   sendBtn.disabled = true; sendBtn.textContent = "Enviando...";
   try{

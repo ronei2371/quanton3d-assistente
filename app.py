@@ -1,12 +1,14 @@
 import os, base64
+from flask import Flask, render_template, request, jsonify, send_from_directory
+from openai import OpenAI
+
+# --- Compat: Python 3.13 removeu imghdr; recriamos o suficiente (JPEG/PNG/WEBP)
 try:
-    import imghdr  # presente até Python 3.12
+    import imghdr  # ok até 3.12
 except ModuleNotFoundError:
-    # Compat para Python 3.13+: recria imghdr.what() só p/ JPG, PNG e WEBP
-    class imghdr:  # noqa: N801 (nome igual ao módulo antigo)
+    class imghdr:  # compat simples
         @staticmethod
         def what(file=None, h=None):
-            # Aceita tanto bytes (h) quanto um file-like (file)
             if h is None and hasattr(file, "read"):
                 pos = file.tell()
                 h = file.read(16)
@@ -14,26 +16,29 @@ except ModuleNotFoundError:
             if not isinstance(h, (bytes, bytearray)):
                 return None
             head = h[:16]
-            # JPEG
-            if head.startswith(b"\xFF\xD8\xFF"):
+            if head.startswith(b"\xFF\xD8\xFF"):                 # JPEG
                 return "jpeg"
-            # PNG
-            if head.startswith(b"\x89PNG\r\n\x1a\n"):
+            if head.startswith(b"\x89PNG\r\n\x1a\n"):           # PNG
                 return "png"
-            # WEBP (RIFF....WEBP)
-            if head[:4] == b"RIFF" and head[8:12] == b"WEBP":
+            if head[:4] == b"RIFF" and head[8:12] == b"WEBP":   # WEBP
                 return "webp"
             return None
 
-from datetime import datetime
-from flask import Flask, render_template, request, jsonify, send_from_directory
-from openai import OpenAI
+APP_VERSION = "2025-08-29d"
 
-APP_VERSION = "2025-08-29c"  # mostra no topo do site e em /diag
+# --- Variáveis de ambiente (para padronizar PC e Render)
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+MODEL_NAME     = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+TEMPERATURE    = float(os.getenv("OPENAI_TEMPERATURE", "0.2"))
+SEED           = int(os.getenv("OPENAI_SEED", "123"))
 
+client = OpenAI(api_key=OPENAI_API_KEY)
+
+# --- Flask
 app = Flask(__name__, template_folder="templates", static_folder="static")
-app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024  # 20MB total
+app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024  # 20MB total de upload
 
+# --- Rotas básicas
 @app.get("/")
 def index():
     return render_template("index.html", app_version=APP_VERSION)
@@ -44,22 +49,21 @@ def healthz():
 
 @app.get("/diag")
 def diag():
-    return jsonify({
-        "openai_key_set": bool(os.environ.get("OPENAI_API_KEY")),
-        "version": APP_VERSION
-    })
+    return {
+        "openai_key_set": bool(OPENAI_API_KEY),
+        "version": APP_VERSION,
+        "model": MODEL_NAME,
+        "temperature": TEMPERATURE,
+        "seed": SEED
+    }, 200
 
-# -------- OpenAI client (simples, sem proxies)
-def get_client():
-    return OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-
-# -------- Prompt com Modo Certeiro e protocolo LCD
+# --- Prompt com Modo Certeiro e protocolo LCD
 ASSISTANT_SYSTEM = """
 Você é técnico de campo da Quanton3D. Estilo: direto de oficina, frases curtas, passo-a-passo.
 
 REGRAS GERAIS:
 - Se FALTAR dado essencial, faça APENAS 1 pergunta objetiva e PARE (aguarde resposta).
-- Se houver IMAGENS, descreva o que observa e use testes práticos; não entregue checklist genérico.
+- Se houver IMAGENS, descreva o que observa e use testes práticos; evite checklist genérico.
 - Não culpe “resina com defeito” antes de validar mecânica/óptica/parametrização.
 - Sempre termine com: O QUE FAZER AGORA (3 a 5 passos).
 
@@ -76,14 +80,17 @@ PROTOCOLO-GERAL (outros casos):
 - Checar adesão/nivelamento/exposição/suportes/FEP/velocidades; depois resina e temperatura ambiente.
 """
 
-def _file_to_base64(f):
-    data = f.read()
+# --- Utilitário: converte arquivo de imagem -> data URL, validando tipo
+def _file_to_dataurl_and_size(fs):
+    data = fs.read()
+    if not data:
+        return None, 0
     kind = imghdr.what(None, h=data)
     if kind not in {"jpeg", "png", "webp"}:
-        raise ValueError("Apenas JPG, PNG ou WEBP.")
-    b64 = base64.b64encode(data).decode("utf-8")
+        raise ValueError("Formato inválido. Envie JPG, PNG ou WEBP.")
     mime = {"jpeg": "image/jpeg", "png": "image/png", "webp": "image/webp"}[kind]
-    return f"data:{mime};base64,{b64}"
+    b64  = base64.b64encode(data).decode("utf-8")
+    return f"data:{mime};base64,{b64}", len(data)
 
 @app.post("/chat")
 def chat():
@@ -98,21 +105,26 @@ def chat():
         if not problem:
             return jsonify(ok=False, error="Descreva o problema."), 400
 
+        # Imagens (máx 5; 3MB cada)
         files = request.files.getlist("images")
-        images_b64, total_bytes = [], 0
-        for i, f in enumerate(files[:5]):
-            size = f.content_length or 0
-            total_bytes += size
-            if size and size > 3 * 1024 * 1024:
+        images_dataurls, total_bytes = [], 0
+        for i, fs in enumerate(files[:5]):
+            # tamanho via stream (pode ser None em alguns hosts)
+            size_hint = fs.content_length or 0
+            if size_hint > 3 * 1024 * 1024:
                 return jsonify(ok=False, error=f"Imagem {i+1} excede 3MB."), 400
-            if size == 0:
-                continue
-            images_b64.append(_file_to_base64(f))
 
-        app.logger.info(f"/chat imagens_recebidas={len(images_b64)} bytes_totais={total_bytes}")
+            dataurl, real_size = _file_to_dataurl_and_size(fs)
+            if dataurl:
+                total_bytes += real_size
+                if real_size > 3 * 1024 * 1024:
+                    return jsonify(ok=False, error=f"Imagem {i+1} excede 3MB."), 400
+                images_dataurls.append(dataurl)
 
-        # Dica ao modelo: LCD se tem foto ou o texto falar em tela/LCD
-        lcd_hint = ("lcd" in problem.lower()) or ("tela" in problem.lower()) or (len(images_b64) > 0)
+        app.logger.info(f"/chat imagens_recebidas={len(images_dataurls)} bytes_totais={total_bytes}")
+
+        # Sinaliza “LCD” se texto falar em tela/LCD ou se tem imagem
+        lcd_hint = ("lcd" in problem.lower()) or ("tela" in problem.lower()) or (len(images_dataurls) > 0)
 
         user_text = (
             f"Telefone: {phone}\n"
@@ -123,32 +135,31 @@ def chat():
             "Contexto: suporte técnico Quanton3D (SLA/DLP)."
         )
 
-        # >>>> AQUI ESTÁ A CORREÇÃO IMPORTANTE <<<<
+        # Monta conteúdo (texto + imagens) no formato que ativa visão
         content = [{"type": "text", "text": user_text}]
-        for url in images_b64:
-            content.append({
-                "type": "image_url",
-                "image_url": {"url": url}   # precisa ser objeto com {"url": "..."}
-            })
+        for url in images_dataurls:
+            content.append({"type": "image_url", "image_url": {"url": url}})
 
-        client = get_client()
         resp = client.chat.completions.create(
-            model="gpt-4o-mini",
-            temperature=0.1,
+            model=MODEL_NAME,
+            temperature=TEMPERATURE,
+            seed=SEED,
             messages=[
                 {"role": "system", "content": ASSISTANT_SYSTEM},
                 {"role": "user",   "content": content},
             ],
         )
         answer = resp.choices[0].message.content.strip()
-        return jsonify(ok=True, answer=answer, version=APP_VERSION)
+        return jsonify(ok=True, answer=answer, version=APP_VERSION, model=MODEL_NAME)
     except Exception as e:
         app.logger.exception("erro no /chat")
         return jsonify(ok=False, error=str(e)), 500
 
+# Estáticos (logo etc.)
 @app.get("/static/<path:filename>")
 def static_files(filename):
     return send_from_directory(app.static_folder, filename)
 
 if __name__ == "__main__":
+    # Local: python app.py
     app.run(host="0.0.0.0", port=5000, debug=True)
