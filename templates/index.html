@@ -1,98 +1,210 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <title>QUANTON3D® — Suporte Técnico SLA/DLP</title>
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Assistente Quanton3D</title>
+  <link rel="icon" href="/static/logo.png" />
   <style>
-    body{background:#0b1220;color:#e7ecf3;font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;margin:0;padding:24px}
-    .card{max-width:900px;margin:0 auto;background:#0f172a;border:1px solid #1f2a44;border-radius:12px;padding:16px}
-    h1{margin:8px 0 16px 0;font-size:20px}
-    label{display:block;margin-top:12px;font-size:14px;opacity:.9}
-    input,textarea,select{width:100%;padding:10px;border-radius:8px;border:1px solid #293652;background:#0b1220;color:#e7ecf3}
-    button{margin-top:12px;padding:10px 16px;border-radius:8px;border:0;background:#3b82f6;color:white;cursor:pointer}
-    .log{margin-top:16px;background:#0b1220;border:1px solid #1f2a44;border-radius:8px;padding:10px;max-height:420px;overflow:auto}
-    .pill{display:inline-block;padding:3px 8px;border-radius:999px;background:#111827;border:1px solid #1f2937;font-size:12px;margin-left:8px;opacity:.8}
-    .you{color:#93c5fd}
-    .bot{color:#86efac}
-    small{opacity:.7}
+    :root { --bg:#0b1220; --card:#121a2b; --ink:#eaf1ff; --muted:#9fb0d0; --brand:#2dd4bf; --danger:#ef4444; --ok:#22c55e; }
+    *{box-sizing:border-box}
+    body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial; background:var(--bg); color:var(--ink);}
+    a{color:var(--brand); text-decoration:none}
+    .wrap{max-width:980px; margin:auto; padding:16px;}
+    header{display:flex; align-items:center; gap:12px; padding:12px 0 16px}
+    header img{height:40px; width:auto}
+    h1{margin:0; font-size:20px; font-weight:700}
+    .note{font-size:12px; color:var(--muted)}
+    .grid{display:grid; gap:12px}
+    .card{background:var(--card); border:1px solid #1f2b45; border-radius:14px; padding:14px}
+    label{display:block; font-size:14px; margin-bottom:6px}
+    .bigger{font-size:15px; font-weight:700}
+    input, select, textarea{width:100%; padding:12px; border-radius:10px; border:1px solid #2a395d; background:#0f172a; color:var(--ink)}
+    textarea{min-height:110px; resize:vertical}
+    .row{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+    @media (max-width:720px){ .row{grid-template-columns:1fr} }
+    .actions{display:flex; flex-wrap:wrap; gap:10px; align-items:center}
+    button{padding:10px 14px; border-radius:10px; border:1px solid #2a395d; background:#0f172a; color:var(--ink); cursor:pointer}
+    button.primary{background:var(--brand); color:#04221e; border-color:transparent; font-weight:700}
+    button.danger{background:#220b0b; border-color:#541b1b; color:#ffd1d1}
+    .switch{display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted)}
+    .small{font-size:12px; color:var(--muted)}
+    .pill{display:inline-block; padding:3px 8px; border-radius:999px; font-size:12px; border:1px solid #2a395d; color:var(--muted)}
+    .resp{display:flex; flex-direction:column; gap:10px}
+    .msg{background:#0f172a; border:1px solid #223055; border-radius:12px; padding:12px}
+    .msg h4{margin:0 0 6px 0; font-size:13px; color:#a8b9db}
+    .ok{color:var(--ok)}
+    .err{color:#ff9aa3}
+    .copyright{font-size:12px; color:#b7c5e6}
+    .toast{position:fixed; right:12px; bottom:12px; background:#091225; border:1px solid #1e2b4b; color:#dbe7ff; padding:10px 12px; border-radius:10px; display:none}
+    .hint{font-size:12px; color:#95a6c9; margin-top:-4px; margin-bottom:8px}
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>QUANTON3D® — Suporte Técnico SLA/DLP
-      <span class="pill">v <span id="ver">?</span></span>
-      <span class="pill"><span id="model">?</span></span>
-    </h1>
-
-    <label>Telefone (WhatsApp)</label>
-    <input id="phone" placeholder="(31) 98334-0053" />
-
-    <div style="display:flex; gap:12px;">
-      <div style="flex:1;">
-        <label>Parâmetros de impressão — Resina (opcional)</label>
-        <input id="resin" placeholder="(só preencha se quiser perfil/exposição)"/>
+  <div class="wrap">
+    <header>
+      <img src="/static/logo.png" alt="Quanton3D" />
+      <div>
+        <h1>Assistente Técnico Quanton3D</h1>
+        <div class="note">v<span id="ver">{{ app_version or "" }}</span> • O telefone identifica seu histórico. <b>Use sempre o mesmo.</b></div>
       </div>
-      <div style="flex:1;">
-        <label>Parâmetros de impressão — Impressora (opcional)</label>
-        <input id="printer" placeholder="(só preencha se quiser perfil/exposição)"/>
+      <div style="margin-left:auto" class="pill">Serviço oficial</div>
+    </header>
+
+    <div class="card grid">
+      <div class="row">
+        <div>
+          <label class="bigger" for="phone">Telefone do cliente</label>
+          <input id="phone" type="tel" placeholder="11999999999" />
+          <div class="hint">O histórico fica atrelado a este número.</div>
+        </div>
+        <div class="switch">
+          <input id="keep" type="checkbox" checked />
+          <label for="keep">Manter conversa (histórico deste telefone)</label>
+        </div>
+      </div>
+
+      <div>
+        <div class="bigger" style="margin-bottom:4px">Parâmetros de impressão Quanton3D</div>
+        <div class="hint">Preencha para obter <b>parâmetros oficiais</b> da resina impressora (quando quiser). Não é obrigatório para diagnosticar defeitos.</div>
+        <div class="row">
+          <div>
+            <label for="resin">Resina</label>
+            <input id="resin" type="text" placeholder="Ex.: Spark" />
+          </div>
+          <div>
+            <label for="printer">Impressora</label>
+            <input id="printer" type="text" placeholder="Ex.: Saturn 3" />
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label class="bigger" for="problem">Descreva seu problema</label>
+        <textarea id="problem" placeholder="Ex.: Delaminação entre camadas na metade da peça..."></textarea>
+      </div>
+
+      <div class="actions">
+        <button id="send" class="primary">Enviar dúvida</button>
+        <button id="reset" class="danger" title="Zera o histórico deste telefone">Novo assunto (zerar conversa)</button>
+        <span id="status" class="small"></span>
+      </div>
+
+      <div>
+        <label for="images">Imagens (opcional, até 5 — máx 3MB cada)</label>
+        <input id="images" type="file" accept="image/png,image/jpeg,image/webp" multiple />
       </div>
     </div>
 
-    <label>Descreva o problema</label>
-    <textarea id="problem" rows="4" placeholder="Ex.: minhas peças estão rachando..."></textarea>
+    <div style="height:8px"></div>
 
-    <label>Imagens (JPG/PNG/WEBP — até 5; máx 3MB cada)</label>
-    <input id="images" type="file" multiple accept=".jpg,.jpeg,.png,.webp" />
+    <div class="card">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px">
+        <div class="bigger">Respostas</div>
+        <span class="pill">novas no topo</span>
+      </div>
+      <div id="resp" class="resp"></div>
+    </div>
 
-    <button id="send">Enviar</button>
+    <div style="height:10px"></div>
 
-    <div class="log" id="log"></div>
+    <div class="card">
+      <div class="copyright">
+        📜 Todo o conteúdo gerado por este assistente é de uso exclusivo da empresa detentora da marca <b>Quanton3D®</b>.<br/>
+        Esta IA segue diretrizes técnicas e estilo da marca. É proibida a reprodução sem autorização. Tentativas de cópia indevida podem gerar ação legal (Lei nº 9.279/96).<br/>
+        Para uso autorizado ou parcerias, contate nosso time 💙
+      </div>
+    </div>
   </div>
 
+  <div id="toast" class="toast"></div>
+
   <script>
-    async function diag() {
-      const r = await fetch("/diag");
-      const j = await r.json();
-      document.getElementById("ver").textContent   = j.version || "?";
-      document.getElementById("model").textContent = j.model   || "?";
-    }
-    diag();
+    const el = s => document.querySelector(s);
+    const phoneEl   = el('#phone');
+    const keepEl    = el('#keep');
+    const resinEl   = el('#resin');
+    const printerEl = el('#printer');
+    const probEl    = el('#problem');
+    const imagesEl  = el('#images');
+    const respEl    = el('#resp');
+    const statusEl  = el('#status');
+    const toastEl   = el('#toast');
 
-    function addLine(who, text){
-      const el = document.getElementById("log");
-      const p = document.createElement("p");
-      p.innerHTML = `<span class="${who==='Você'?'you':'bot'}">${who}:</span> ${text}`;
-      el.prepend(p);
+    // ——— util
+    function toast(msg, ok=true){ toastEl.textContent = msg; toastEl.style.display='block'; setTimeout(()=>toastEl.style.display='none', 2500); }
+    function prependMsg(title, body, cls=''){
+      const box = document.createElement('div');
+      box.className = 'msg';
+      box.innerHTML = `<h4>${title}</h4><div class="${cls}">${body.replace(/\n/g,'<br/>')}</div>`;
+      respEl.prepend(box);
     }
 
-    document.getElementById("send").onclick = async () => {
+    // ——— lembrar telefone no navegador do cliente
+    const LS_KEY = 'quanton3d_phone';
+    const savedPhone = localStorage.getItem(LS_KEY);
+    if(savedPhone){ phoneEl.value = savedPhone; }
+    phoneEl.addEventListener('change', ()=> localStorage.setItem(LS_KEY, phoneEl.value.replace(/\D+/g,'') ));
+
+    // ——— enviar dúvida
+    el('#send').addEventListener('click', async ()=>{
+      const phone = (phoneEl.value||'').trim();
+      const problem = (probEl.value||'').trim();
+      if(!phone){ toast('Informe o telefone.', false); phoneEl.focus(); return; }
+      if(!problem){ toast('Descreva o problema.', false); probEl.focus(); return; }
+
       const fd = new FormData();
-      fd.append("phone",   document.getElementById("phone").value);
-      fd.append("resin",   document.getElementById("resin").value);
-      fd.append("printer", document.getElementById("printer").value);
-      fd.append("problem", document.getElementById("problem").value);
-      // também enviamos 'scope' caso você queira usar depois
-      fd.append("scope", "geral");
+      fd.append('phone', phone);
+      fd.append('scope', 'desconhecido');
+      fd.append('resin', (resinEl.value||'').trim());
+      fd.append('printer', (printerEl.value||'').trim());
+      fd.append('problem', problem);
+      fd.append('continue', keepEl.checked ? '1':'0');
 
-      const files = document.getElementById("images").files || [];
-      for (let i=0;i<Math.min(files.length,5);i++){
-        fd.append("images", files[i]);
-      }
+      const files = imagesEl.files || [];
+      if(files.length>5){ toast('Máximo 5 imagens.', false); return; }
+      for(let i=0;i<files.length;i++){ fd.append('images', files[i]); }
 
-      addLine("Você", (document.getElementById("problem").value||"(vazio)"));
-      try {
-        const r = await fetch("/chat", { method: "POST", body: fd });
+      statusEl.textContent = 'Enviando...';
+      try{
+        const r = await fetch('/chat', { method:'POST', body: fd });
         const j = await r.json();
-        if (!j.ok) {
-          addLine("Assistente", "Falhou: " + (j.error||"erro desconhecido"));
-        } else {
-          addLine("Assistente", j.answer || j.reply || "(sem texto)");
+        if(!j.ok){
+          prependMsg('Erro', j.error || 'Falha ao responder.', 'err');
+        }else{
+          const cls = j.classification ? `(${j.classification}) ` : '';
+          const title = `Assistente ${cls}• imagens: ${j.images||0}`;
+          const body  = (j.answer||'').trim() || '(sem texto)';
+          prependMsg(title, body);
+          // limpa apenas problema e imagens (mantém telefone e preferências)
+          // probEl.value = ''; // se quiser limpar a caixa, descomente
+          imagesEl.value = '';
         }
-      } catch (e) {
-        addLine("Assistente", "Erro de rede: " + e.message);
+      }catch(e){
+        prependMsg('Erro', String(e), 'err');
+      }finally{
+        statusEl.textContent = '';
       }
-    };
+    });
+
+    // ——— reset (novo assunto)
+    el('#reset').addEventListener('click', async ()=>{
+      const phone = (phoneEl.value||'').trim();
+      if(!phone){ toast('Informe o telefone para resetar o assunto.', false); phoneEl.focus(); return; }
+      if(!confirm('Zerar a conversa deste telefone? Isso não apaga seus arquivos.')) return;
+      try{
+        const r = await fetch(`/reset?phone=${encodeURIComponent(phone)}`);
+        const j = await r.json();
+        if(j && j.ok){
+          toast('Assunto zerado. Pode começar um tema novo!');
+          prependMsg('Sistema', 'Assunto zerado para este telefone.', 'ok');
+        }else{
+          toast('Não foi possível zerar agora.', false);
+        }
+      }catch(e){
+        toast('Falha ao conectar.', false);
+      }
+    });
   </script>
 </body>
 </html>
