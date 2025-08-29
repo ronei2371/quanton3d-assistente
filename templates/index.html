@@ -1,373 +1,159 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-<meta charset="utf-8" />
-<title>QUANTON3D® — Assistente</title>
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<style>
-  :root{ --panel: rgba(17,24,39,.75); --stroke: rgba(255,255,255,.08); }
-  body{margin:0;min-height:100vh;background:#000 url("/static/fundotela.png") no-repeat center/cover fixed;color:#e5e7eb;font-family:system-ui,Arial,sans-serif;line-height:1.55}
-  .backdrop{min-height:100vh;background:linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,.80));display:flex;justify-content:center;align-items:flex-start;padding:36px 18px}
-  .card{width:100%;max-width:980px;background:var(--panel);border:1px solid var(--stroke);border-radius:18px;padding:24px 22px;box-shadow:0 10px 30px rgba(0,0,0,.4);backdrop-filter:blur(4px)}
-  .section{margin-top:20px;padding:16px;border:1px solid #334155;border-radius:14px;background:rgba(11,18,32,.55)}
-  .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px}
-  .logo{display:flex;align-items:center;gap:12px}
-  .logo img{height:50px}
-  h1{margin:0;font-weight:900;letter-spacing:.2px}
-  .ghost{background:transparent;border:1px solid #334155;color:#e5e7eb;padding:10px 14px;border-radius:12px;cursor:pointer}
-  .cta{border:0;background:linear-gradient(135deg,#0ea5e9,#2563eb);color:#fff;font-weight:900;padding:12px 16px;border-radius:14px}
-  label{display:block;font-weight:900;margin-top:12px}
-  .label-lg{font-size:1.08rem}
-  .title{font-size:1.2rem;font-weight:900;margin:0 0 8px 0}
-  .sub{color:#cbd5e1;margin-top:2px}
-  input,textarea,select{width:100%;padding:13px;border:1px solid #334155;border-radius:12px;background:#0b1220;color:#e5e7eb;outline:none}
-  input::placeholder,textarea::placeholder{color:#94a3b8}
-  .primary{margin-top:16px;padding:13px 18px;border:0;border-radius:12px;cursor:pointer;background:#1e40af;color:#fff;font-weight:900}
-  .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-  @media (max-width: 860px){ .row{grid-template-columns:1fr} }
-  .log{white-space:pre-wrap;background:#0b1220;padding:14px;border-radius:12px;min-height:140px;border:1px solid #334155}
-  .msg{display:flex;gap:12px;padding:12px;border-radius:12px;margin-bottom:12px;border:1px solid #334155}
-  .user{background:rgba(30,58,138,.32)} .assistant{background:rgba(22,101,52,.30)}
-  .avatar{width:38px;height:38px;border-radius:50%;flex:0 0 38px;display:flex;align-items:center;justify-content:center;background:#0b1220;border:1px solid #334155}
-  .avatar-img{width:38px;height:38px;border-radius:50%;border:1px solid #334155;object-fit:cover;background:#0b1220}
-  .msg-body{flex:1;min-width:0} .msg-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:10px}
-  .badge{display:inline-block;font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid #334155}
-  .badge-user{border-color:#1e3a8a} .badge-assistant{border-color:#065f46}
-  .time{font-size:12px;color:#94a3b8} .msg-content{white-space:pre-wrap}
-  .error{color:#fecaca;background:rgba(153,27,27,.35);border:1px solid #7f1d1d;padding:10px;border-radius:10px;margin-top:10px}
-  .thinking{display:none;align-items:center;gap:10px;margin-top:12px;color:#cbd5e1}
-  .spinner{width:16px;height:16px;border:2px solid #334155;border-top-color:#1e40af;border-radius:50%;animation:spin 1s linear infinite}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  .header-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
-  .hint{font-size:12px;color:#94a3b8;margin-top:6px}
-  small.muted{color:#94a3b8}
-  .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.65);z-index:50;padding:16px}
-  .modal .box{max-width:760px;width:100%;background:#0b1220;color:#e5e7eb;border:1px solid #334155;border-radius:16px;padding:20px}
-  .modal .box h3{margin:0 0 8px 0}
-  .modal .box p{margin:8px 0;line-height:1.6}
-  .modal .actions{display:flex;justify-content:flex-end;margin-top:12px}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>QUANTON3D® — Suporte Técnico SLA/DLP</title>
+  <style>
+    :root{
+      --bg:#0f131a; --panel:#121827; --ink:#e9eef5; --muted:#a8b3c7; --brand:#3aa0ff; --ok:#22c55e; --warn:#f59e0b; --err:#ef4444;
+      --stroke:#233047;
+    }
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,Segoe UI,Roboto,sans-serif}
+    header{display:flex;align-items:center;gap:14px;padding:16px 18px;border-bottom:1px solid var(--stroke);background:linear-gradient(180deg,#0f131a,#0d121b)}
+    header img{height:30px}
+    header h1{margin:0;font-size:18px;font-weight:800;letter-spacing:.3px}
+    main{max-width:980px;margin:24px auto;padding:0 16px;display:grid;grid-template-columns:1fr;gap:16px}
+    .card{background:var(--panel);border:1px solid var(--stroke);border-radius:14px;padding:16px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    label{display:block;font-weight:700;margin:10px 0 6px}
+    input,textarea,select{width:100%;padding:12px;border-radius:10px;border:1px solid var(--stroke);background:#0b1019;color:var(--ink);outline:none}
+    textarea{min-height:110px;resize:vertical}
+    .hint{color:var(--muted);font-size:12px;margin-top:6px}
+    .btn{cursor:pointer;border:1px solid var(--stroke);background:#122037;color:#fff;border-radius:12px;padding:12px 16px;font-weight:800}
+    .btn[disabled]{opacity:.6;cursor:not-allowed}
+    .btn-brand{background:linear-gradient(135deg,#3aa0ff,#2b68ff)}
+    .grid-2{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end}
+    .msgs{display:flex;flex-direction:column-reverse;gap:10px} /* mais novo em cima */
+    .msg{border:1px solid var(--stroke);border-radius:12px;padding:12px;background:#0e1625}
+    .me{background:#0b1a2b}
+    .badge{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid var(--stroke);font-size:12px;color:var(--muted)}
+    .ok{color:var(--ok)} .err{color:var(--err)} .muted{color:var(--muted)}
+    .top-actions{display:flex;gap:10px;align-items:center}
+    .pill{border:1px solid var(--stroke);border-radius:999px;padding:6px 10px;color:#cfe3ff;background:#0d1b2e}
+    a {color:#8bd0ff}
+  </style>
 </head>
 <body>
-<div class="backdrop"><div class="card">
+<header>
+  <img src="/static/logo.png" alt="QUANTON3D" onerror="this.style.display='none'">
+  <h1>QUANTON3D® — Suporte Técnico SLA/DLP</h1>
+  <span class="pill">v {{ app_version }}</span>
+  <span style="flex:1"></span>
+  <button class="btn" id="btn-autorais">Direitos autorais</button>
+</header>
 
-  <!-- Topo -->
-  <div class="topbar">
-    <div class="logo">
-      <img src="/static/logo.png" alt="QUANTON3D Logo">
-      <h1>QUANTON3D® — Suporte Técnico SLA/DLP</h1>
+<main>
+  <section class="card">
+    <div class="top-actions">
+      <div class="badge">Use sempre o mesmo telefone — ele vincula seu histórico.</div>
+      <a class="badge" href="/healthz" target="_blank">healthz</a>
+      <a class="badge" href="/diag" target="_blank">diag</a>
     </div>
-    <div style="display:flex;gap:10px;">
-      <button id="familyBtn" class="cta" type="button">Nossa história 💙</button>
-      <button id="aboutBtn" class="cta" type="button">Direitos autorais</button>
-    </div>
-  </div>
 
-  <!-- Form principal -->
-  <div class="section">
-    <div class="title">Atendimento técnico</div>
-    <form id="chatForm">
-      <label class="label-lg">Telefone (WhatsApp)</label>
-      <div class="sub">O telefone identifica seu histórico. Use sempre o mesmo.</div>
-      <input name="phone" placeholder="Ex: 11 98888-7777" required />
+    <form id="form">
+      <label>Telefone</label>
+      <input name="phone" placeholder="11999999999" required>
 
-      <label class="label-lg" style="margin-top:18px;">Onde está o problema?</label>
-      <select name="scope" id="scope">
-        <option value="desconhecido" selected>Não sei / me ajude a identificar</option>
-        <option value="peca">Na peça</option>
-        <option value="lcd">Na tela (LCD)</option>
-        <option value="fep">No filme FEP</option>
-        <option value="cuba">Na cuba / reservatório</option>
-      </select>
-
-      <div class="title" style="margin-top:18px;">Parâmetros de impressão Quanton3D</div>
       <div class="row">
         <div>
-          <label>Resina</label>
-          <input name="resin" placeholder="Tipo de resina (preencha para salvar configurações)" />
+          <label>Parâmetros de impressão Quanton3D — <span class="muted">Resina</span></label>
+          <input name="resin" placeholder="Preencha se quiser registrar">
         </div>
         <div>
-          <label>Impressora</label>
-          <input name="printer" placeholder="Modelo da máquina (preencha para salvar configurações)" />
+          <label>Parâmetros de impressão Quanton3D — <span class="muted">Impressora</span></label>
+          <input name="printer" placeholder="Preencha se quiser registrar">
         </div>
       </div>
 
-      <label class="label-lg" style="margin-top:18px;">Descreva o problema</label>
-      <textarea name="problem" rows="5" placeholder="Digite aqui seu problema..." required></textarea>
+      <label>Descreva seu problema</label>
+      <textarea name="problem" placeholder="Ex.: manchas na tela, linhas claras, peça não adere..."></textarea>
 
-      <button id="sendBtn" class="primary" type="submit">Enviar</button>
-
-      <!-- Imagens abaixo do enviar -->
-      <label style="margin-top:14px;">Imagens (opcional, até 5 — máx 3MB cada; formatos: JPG/PNG/WEBP)</label>
-      <input id="images" type="file" name="images" accept="image/jpeg,image/png,image/webp" multiple />
-      <div id="imgInfo" class="hint">Nenhuma imagem selecionada.</div>
-
-      <div id="errBox" class="error" style="display:none"></div>
-      <div id="thinking" class="thinking" aria-live="polite">
-        <div class="spinner" aria-hidden="true"></div><span>Analisando seu caso…</span>
+      <div class="grid-2">
+        <div>
+          <label>Imagens (JPG/PNG/WEBP, máx 5 • 3MB cada)</label>
+          <input type="file" id="images" name="images" accept="image/jpeg,image/png,image/webp" multiple>
+          <div class="hint" id="img-hint">Nenhuma imagem selecionada.</div>
+        </div>
+        <button class="btn btn-brand" id="send">Enviar</button>
       </div>
+      <div class="hint">Dica: se for iPhone/HEIC, exporte como JPEG/PNG antes de enviar.</div>
     </form>
-  </div>
+  </section>
 
-  <!-- Editor da história -->
-  <div class="section">
-    <details id="storyEditor">
-      <summary class="title" style="cursor:pointer;">✍️ Editar/guardar “Nossa história” (privado)</summary>
-      <small class="muted">Cole seu texto (pode copiar de um .txt). Ele será usado para responder perguntas no botão “Nossa história 💙”.</small>
-      <textarea id="story" rows="6" style="margin-top:10px;" placeholder="Cole sua história aqui..."></textarea>
-      <div style="display:flex;gap:8px;align-items:center;margin-top:8px;">
-        <button id="saveStory" class="ghost" type="button">Salvar história</button>
-        <button id="summaryStory" class="ghost" type="button">Ver resumo</button>
-        <button id="downloadStory" class="ghost" type="button">Baixar minha história (.txt)</button>
-        <span id="storyStatus" style="font-size:12px;color:#94a3b8;"></span>
-      </div>
-    </details>
-  </div>
-
-  <!-- Histórico -->
-  <div class="section">
-    <div class="header-row">
-      <div class="title" style="margin:0;">Histórico</div>
-      <button id="downloadHist" class="ghost" type="button">Baixar histórico (.txt)</button>
+  <section class="card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <strong>Respostas</strong>
+      <span class="badge">Mais novas no topo</span>
     </div>
-    <div id="history" class="log"></div>
-  </div>
-
-</div></div>
-
-<!-- Modal Direitos Autorais -->
-<div id="aboutModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
-  <div class="box">
-    <h3 id="aboutTitle">Direitos autorais — Quanton3D®</h3>
-    <p>📜 Todo o conteúdo gerado por este assistente é de uso exclusivo da empresa detentora da marca <b>Quanton3D®</b>.</p>
-    <p>Esta IA foi treinada com diretrizes, vocabulário técnico e estilo personalizado da marca. É proibida a reprodução ou uso sem autorização.</p>
-    <p>⚠️ Qualquer tentativa de cópia, clonagem ou uso indevido poderá gerar ação legal com base na <b>Lei da Propriedade Industrial (Lei nº 9.279/96)</b>.</p>
-    <p>Para uso autorizado ou parcerias, entre em contato com nosso time 💙</p>
-    <div class="actions"><button id="closeAbout" class="ghost" type="button">Fechar</button></div>
-  </div>
-</div>
-
-<!-- Modal Nossa História -->
-<div id="familyModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="familyTitle">
-  <div class="box">
-    <h3 id="familyTitle">A história de Nhor e filhos com Ronei</h3>
-    <p>Nhor sempre acreditou que a melhor tecnologia nasce do cuidado. Foi com esse espírito que criou os filhos: amor, honestidade e coragem. A Quanton3D é fruto dessa base — uma família que aprende junto e transforma dificuldades em aprendizado.</p>
-    <p>Para perguntas, usamos o texto salvo em <b>Editar “Nossa história”</b> na página principal.</p>
-    <hr style="border-color:#334155;margin:12px 0;">
-    <label class="label-lg">Pergunte sobre a nossa história</label>
-    <input id="familyQuestion" placeholder="Ex.: Como surgiu a Quanton3D?" />
-    <div style="display:flex;gap:8px;align-items:center;margin-top:8px;">
-      <button id="askFamily" class="ghost" type="button">Perguntar</button>
-      <span id="familyStatus" style="font-size:12px;color:#94a3b8;"></span>
-    </div>
-    <div id="familyAnswerBox" style="display:none;margin-top:10px;border:1px solid #334155;padding:10px;border-radius:10px;background:#0b1220;">
-      <div style="font-weight:800;margin-bottom:6px;">Resposta — Nhor</div>
-      <div id="familyAnswer" style="white-space:pre-wrap;"></div>
-    </div>
-    <div class="actions"><button id="closeFamily" class="ghost" type="button">Fechar</button></div>
-  </div>
-</div>
+    <div class="msgs" id="msgs"></div>
+  </section>
+</main>
 
 <script>
-  const form = document.getElementById('chatForm');
-  const historyEl = document.getElementById('history');
-  const errBox = document.getElementById('errBox');
-  const sendBtn = document.getElementById('sendBtn');
-  const thinking = document.getElementById('thinking');
-  const imgInput = document.getElementById('images');
-  const imgInfo  = document.getElementById('imgInfo');
-  const downloadHistBtn = document.getElementById('downloadHist');
+const form = document.getElementById('form');
+const sendBtn = document.getElementById('send');
+const msgs = document.getElementById('msgs');
+const imgInput = document.getElementById('images');
+const imgHint = document.getElementById('img-hint');
 
-  // limites (espelhos do backend)
-  const MAX_FILE = 3 * 1024 * 1024;
-  const MAX_TOTAL = 15 * 1024 * 1024;
+imgInput.addEventListener('change', () => {
+  const files = [...imgInput.files];
+  if (!files.length) { imgHint.textContent = "Nenhuma imagem selecionada."; return; }
+  const total = files.reduce((s,f)=>s+(f.size||0),0);
+  imgHint.textContent = `${files.length} imagem(ns) — ${(total/1024/1024).toFixed(2)} MB`;
+});
 
-  function renderMsg(it){
-    const wrap=document.createElement('div'); wrap.className='msg '+(it.role==='user'?'user':'assistant');
-    const avatar=document.createElement(it.role==='user'?'div':'img');
-    if(it.role==='user'){ avatar.className='avatar'; avatar.textContent='👤'; }
-    else{ avatar.className='avatar-img'; avatar.src='/static/logo.png'; avatar.alt='Assistente Quanton3D'; }
-    const body=document.createElement('div'); body.className='msg-body';
-    const head=document.createElement('div'); head.className='msg-head';
-    const left=document.createElement('div');
-    const badge=document.createElement('span'); badge.className='badge '+(it.role==='user'?'badge-user':'badge-assistant'); badge.textContent=(it.role==='user')?'Você':'Assistente';
-    left.appendChild(badge);
-    const time=document.createElement('span'); time.className='time'; time.textContent=new Date(it.ts*1000).toLocaleString();
-    head.appendChild(left); head.appendChild(time);
-    const content=document.createElement('div'); content.className='msg-content'; content.textContent=it.content||'';
-    body.appendChild(head); body.appendChild(content);
-    wrap.appendChild(avatar); wrap.appendChild(body);
-    return wrap;
-  }
-  function renderHistory(items){
-    historyEl.innerHTML='';
-    items.sort((a,b)=>b.ts-a.ts);
-    items.forEach(i=>historyEl.appendChild(renderMsg(i)));
-  }
-  async function loadHistory(phone){
-    if(!phone) return;
-    const r=await fetch(`/history?phone=${encodeURIComponent(phone)}`,{cache:'no-store'});
-    renderHistory(await r.json());
-  }
+function prependMsg(html){
+  const div = document.createElement('div');
+  div.className = 'msg';
+  div.innerHTML = html;
+  msgs.prepend(div);
+}
 
-  function humanSize(b){ if(b<1024) return b+' B'; if(b<1024*1024) return (b/1024).toFixed(1)+' KB'; return (b/1024/1024).toFixed(2)+' MB'; }
-  function updateImgInfo(){
-    const f=imgInput.files||[];
-    if(!f.length){ imgInfo.textContent='Nenhuma imagem selecionada.'; imgInfo.style.color='#94a3b8'; return; }
-    let total=0, over=false, bad=false;
-    for(const x of f){
-      total+=x.size;
-      if(x.size>MAX_FILE) over=true;
-      if(!['image/jpeg','image/png','image/webp'].includes(x.type)) bad=true;
-    }
-    let msg=`${f.length} imagem(ns) — total ${humanSize(total)}.`;
-    if(f.length>5) msg+=' (⚠️ máx. 5)';
-    if(over) msg+=` (⚠️ existe imagem > ${Math.round(MAX_FILE/1024/1024)}MB)`;
-    if(bad) msg+=' (⚠️ use JPG/PNG/WEBP; HEIC não é suportado)';
-    imgInfo.textContent=msg;
-    imgInfo.style.color=(f.length>5||over||bad||total>MAX_TOTAL)?'#fca5a5':'#94a3b8';
-  }
-  if (imgInput) imgInput.addEventListener('change', updateImgInfo);
+function me(text){
+  prependMsg(`<div class="me">${text.replaceAll('\n','<br>')}</div>`);
+}
+function bot(text){
+  prependMsg(`${text.replaceAll('\n','<br>')}`);
+}
 
-  // TRAVA anti-duplo envio
-  let isSending = false;
+function mdEscape(s){return s}
 
-  form.addEventListener('submit', async (e)=>{
-    e.preventDefault();
-    if (isSending) return; // evita duas chamadas
-    isSending = true;
+form.addEventListener('submit', async (ev)=>{
+  ev.preventDefault();
+  if (sendBtn.disabled) return;
 
-    errBox.style.display='none'; errBox.textContent='';
-
-    // valida imagens
-    const files=imgInput.files||[];
-    let total=0, bad=false, over=false;
-    for(const x of files){
-      total+=x.size;
-      if(x.size>MAX_FILE) over=true;
-      if(!['image/jpeg','image/png','image/webp'].includes(x.type)) bad=true;
-    }
-    if(files.length>5){ errBox.textContent='Você selecionou mais de 5 imagens (máx. 5).'; errBox.style.display='block'; isSending=false; return; }
-    if(over){ errBox.textContent='Há imagem maior que 3MB. Reduza e tente novamente.'; errBox.style.display='block'; isSending=false; return; }
-    if(total>MAX_TOTAL){ errBox.textContent='Soma das imagens excede 15MB. Reduza e tente novamente.'; errBox.style.display='block'; isSending=false; return; }
-    if(bad){ errBox.textContent='Formato não suportado. Use JPG, PNG ou WEBP (HEIC não é suportado).'; errBox.style.display='block'; isSending=false; return; }
-
-    sendBtn.disabled=true; sendBtn.textContent='Enviando...';
-    thinking.style.display='flex';
-
-    // timeout de rede (Render Free / rede lenta)
-    const controller = new AbortController();
-    const t = setTimeout(()=>controller.abort(), 65000); // 65s
-
-    try{
-      const fd=new FormData(form);
-      const r = await fetch('/chat',{method:'POST',body:fd,signal:controller.signal});
-      clearTimeout(t);
-      let data=null; try{ data=await r.json(); }catch{}
-
-      if(!r.ok){
-        const msg = data && data.error ? data.error : `Falha (HTTP ${r.status}).`;
-        throw new Error(msg);
-      }
-      if(data && data.error){ throw new Error(data.error); }
-
-      // sucesso
-      form.problem.value=''; imgInput.value=''; updateImgInfo();
-      await loadHistory(form.phone.value.trim());
-    }catch(err){
-      const m = (err.name==='AbortError') ? 'Tempo esgotado. Tente novamente.' : (err.message || 'Erro.');
-      errBox.textContent = m; errBox.style.display='block';
-    }finally{
-      clearTimeout(t);
-      sendBtn.disabled=false; sendBtn.textContent='Enviar';
-      thinking.style.display='none';
-      isSending = false;
-    }
-  });
-
-  // histórico + perfil
-  form.phone.addEventListener('change', ()=>{ const p=form.phone.value.trim(); loadHistory(p); loadProfile(p); });
-
-  const downloadHist = document.getElementById('downloadHist');
-  if(downloadHist){
-    downloadHist.addEventListener('click', ()=>{
-      const p=(form.phone.value||'').trim(); if(!p){ alert('Preencha o telefone.'); return; }
-      window.open(`/history_export?phone=${encodeURIComponent(p)}`,'_blank');
-    });
+  // valida imagens (máx 5, 3MB cada)
+  const files = [...imgInput.files];
+  if (files.length > 5) { alert("Máximo de 5 imagens."); return; }
+  for (const f of files) {
+    if (f.size > 3*1024*1024) { alert("Cada imagem deve ter até 3MB."); return; }
   }
 
-  // história (carregar/salvar/resumo/baixar)
-  const storyEl=document.getElementById('story'), storyStatus=document.getElementById('storyStatus');
-  async function loadProfile(phone){
-    if(!phone){ if(storyEl) storyEl.value=''; return; }
-    const r=await fetch(`/profile?phone=${encodeURIComponent(phone)}`,{cache:'no-store'});
-    const d=await r.json();
-    if(storyEl) storyEl.value=d.story||'';
-  }
-  const saveStory=document.getElementById('saveStory');
-  if(saveStory){
-    saveStory.addEventListener('click', async ()=>{
-      const p=(form.phone.value||'').trim(); const story=(storyEl.value||'').trim();
-      if(!p){ alert('Preencha o telefone para salvar.'); return; }
-      if(!story){ alert('Cole sua história antes de salvar.'); return; }
-      storyStatus.textContent='Salvando...';
-      try{
-        const fd=new FormData(); fd.append('phone',p); fd.append('story',story);
-        const r=await fetch('/profile',{method:'POST',body:fd}); const d=await r.json();
-        storyStatus.textContent=d.error?('Erro: '+d.error):'História salva ✔';
-        setTimeout(()=>storyStatus.textContent='',1500);
-      }catch(e){ storyStatus.textContent='Falha: '+e.message; }
-    });
-  }
-  const summaryStory=document.getElementById('summaryStory');
-  if(summaryStory){
-    summaryStory.addEventListener('click', async ()=>{
-      const p=(form.phone.value||'').trim(); if(!p){ alert('Preencha o telefone.'); return; }
-      storyStatus.textContent='Gerando resumo...';
-      try{
-        const fd=new FormData(); fd.append('phone',p);
-        const r=await fetch('/summary',{method:'POST',body:fd}); const d=await r.json();
-        if(d.error){ storyStatus.textContent='Erro: '+d.error; return; }
-        alert(d.summary||'(sem conteúdo)'); storyStatus.textContent='';
-      }catch(e){ storyStatus.textContent='Falha: '+e.message; }
-    });
-  }
-  const downloadStory=document.getElementById('downloadStory');
-  if(downloadStory){
-    downloadStory.addEventListener('click', ()=>{
-      const p=(form.phone.value||'').trim(); if(!p){ alert('Preencha o telefone.'); return; }
-      window.open(`/story_export?phone=${encodeURIComponent(p)}`,'_blank');
-    });
-  }
+  const fd = new FormData(form);
+  me(`<b>Você</b>:<br>${mdEscape(form.problem.value)}`);
 
-  // modais
-  const aboutBtn=document.getElementById('aboutBtn'), aboutModal=document.getElementById('aboutModal'), closeAbout=document.getElementById('closeAbout');
-  if(aboutBtn){ aboutBtn.addEventListener('click',()=>aboutModal.style.display='flex'); }
-  if(closeAbout){ closeAbout.addEventListener('click',()=>aboutModal.style.display='none'); }
-  if(aboutModal){ aboutModal.addEventListener('click',e=>{ if(e.target===aboutModal) aboutModal.style.display='none'; }); }
+  sendBtn.disabled = true; sendBtn.textContent = "Enviando...";
+  try{
+    const r = await fetch('/chat', { method:'POST', body:fd });
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || 'Falha inesperada');
 
-  const familyBtn=document.getElementById('familyBtn'), familyModal=document.getElementById('familyModal'), closeFamily=document.getElementById('closeFamily');
-  const familyQuestion=document.getElementById('familyQuestion'), askFamily=document.getElementById('askFamily');
-  const familyStatus=document.getElementById('familyStatus'), familyAnswer=document.getElementById('familyAnswer'), familyAnswerBox=document.getElementById('familyAnswerBox');
-
-  if(familyBtn){ familyBtn.addEventListener('click',()=>{ familyModal.style.display='flex'; }); }
-  if(closeFamily){ closeFamily.addEventListener('click',()=>{ familyModal.style.display='none'; }); }
-  if(familyModal){ familyModal.addEventListener('click',e=>{ if(e.target===familyModal) familyModal.style.display='none'; }); }
-
-  if(askFamily){
-    askFamily.addEventListener('click', async ()=>{
-      const p=(form.phone.value||'').trim(); const q=(familyQuestion.value||'').trim();
-      if(!p){ alert('Digite o telefone para perguntar.'); return; }
-      if(!q){ alert('Escreva sua pergunta.'); return; }
-      familyStatus.textContent='Respondendo...'; familyAnswerBox.style.display='none'; familyAnswer.textContent='';
-      try{
-        const fd=new FormData(); fd.append('phone',p); fd.append('question',q);
-        const r=await fetch('/story_ask',{method:'POST',body:fd}); const d=await r.json();
-        familyAnswer.textContent = d.error ? ('Erro: '+d.error) : (d.answer||'(sem conteúdo)');
-        familyAnswerBox.style.display='block'; familyStatus.textContent='';
-      }catch(e){ familyAnswer.textContent='Falha: '+e.message; familyAnswerBox.style.display='block'; familyStatus.textContent=''; }
-    });
+    bot(`<b>Assistente</b>:<br>${j.answer}`);
+  }catch(err){
+    bot(`<span class="err">Erro:</span> ${err.message}`);
+  }finally{
+    sendBtn.disabled = false; sendBtn.textContent = "Enviar";
   }
+});
+
+// Direitos autorais (modal simples)
+document.getElementById('btn-autorais').addEventListener('click', ()=>{
+  alert(`📜 Conteúdo exclusivo da marca Quanton3D®.
+Esta IA segue diretrizes e vocabulário técnico próprios.
+Uso e reprodução não autorizados são proibidos (Lei nº 9.279/96).`);
+});
 </script>
 </body>
 </html>
