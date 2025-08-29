@@ -1,208 +1,352 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Assistente Quanton3D</title>
-  <link rel="icon" href="/static/logo.png" />
+  <title>QUANTON3D — Suporte Técnico SLA/DLP</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
   <style>
-    :root { --bg:#0b1220; --card:#121a2b; --ink:#eaf1ff; --muted:#9fb0d0; --brand:#2dd4bf; --danger:#ef4444; --ok:#22c55e; }
+    :root{
+      --bg:#0b0f14;
+      --card:#0f1520cc;
+      --muted:#8aa0b2;
+      --text:#e9f1f7;
+      --brand:#39e1a2;
+      --brand-2:#53a8ff;
+      --danger:#ff6b6b;
+      --ok:#65ffa8;
+      --ring: 0 0 0 2px color-mix(in srgb, var(--brand) 60%, transparent);
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 16px;
+    }
     *{box-sizing:border-box}
-    body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial; background:var(--bg); color:var(--ink);}
-    a{color:var(--brand); text-decoration:none}
-    .wrap{max-width:980px; margin:auto; padding:16px;}
-    header{display:flex; align-items:center; gap:12px; padding:12px 0 16px}
-    header img{height:40px; width:auto}
-    h1{margin:0; font-size:20px; font-weight:700}
-    .note{font-size:12px; color:var(--muted)}
-    .grid{display:grid; gap:12px}
-    .card{background:var(--card); border:1px solid #1f2b45; border-radius:14px; padding:14px}
-    label{display:block; font-size:14px; margin-bottom:6px}
-    .bigger{font-size:15px; font-weight:700}
-    input, select, textarea{width:100%; padding:12px; border-radius:10px; border:1px solid #2a395d; background:#0f172a; color:var(--ink)}
-    textarea{min-height:110px; resize:vertical}
-    .row{display:grid; grid-template-columns:1fr 1fr; gap:12px}
-    @media (max-width:720px){ .row{grid-template-columns:1fr} }
-    .actions{display:flex; flex-wrap:wrap; gap:10px; align-items:center}
-    button{padding:10px 14px; border-radius:10px; border:1px solid #2a395d; background:#0f172a; color:var(--ink); cursor:pointer}
-    button.primary{background:var(--brand); color:#04221e; border-color:transparent; font-weight:700}
-    button.danger{background:#220b0b; border-color:#541b1b; color:#ffd1d1}
-    .switch{display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted)}
-    .small{font-size:12px; color:var(--muted)}
-    .pill{display:inline-block; padding:3px 8px; border-radius:999px; font-size:12px; border:1px solid #2a395d; color:var(--muted)}
-    .resp{display:flex; flex-direction:column; gap:10px}
-    .msg{background:#0f172a; border:1px solid #223055; border-radius:12px; padding:12px}
-    .msg h4{margin:0 0 6px 0; font-size:13px; color:#a8b9db}
-    .ok{color:var(--ok)}
-    .err{color:#ff9aa3}
-    .copyright{font-size:12px; color:#b7c5e6}
-    .toast{position:fixed; right:12px; bottom:12px; background:#091225; border:1px solid #1e2b4b; color:#dbe7ff; padding:10px 12px; border-radius:10px; display:none}
-    .hint{font-size:12px; color:#95a6c9; margin-top:-4px; margin-bottom:8px}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:Inter,system-ui,Segoe UI,Roboto,Arial,Helvetica,sans-serif;
+      background:
+        radial-gradient(1200px 600px at 80% -20%, #1b2632 15%, transparent 60%),
+        radial-gradient(1200px 600px at 10% -30%, #15202b 10%, transparent 60%),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.03) 0 1px, transparent 1px 80px),
+        linear-gradient(#0b0f14, #0b0f14);
+      color:var(--text);
+      letter-spacing:.2px;
+    }
+    a{color:var(--brand-2);text-decoration:none}
+    a:hover{text-decoration:underline}
+
+    .wrap{
+      max-width:1120px;
+      margin:32px auto;
+      padding:0 16px 56px;
+    }
+
+    .header{
+      display:flex;align-items:center;gap:16px;justify-content:space-between;margin-bottom:20px
+    }
+    .brand{
+      display:flex;align-items:center;gap:14px
+    }
+    .logo{
+      width:44px;height:44px;border-radius:12px;
+      background: linear-gradient(135deg,var(--brand),var(--brand-2));
+      display:grid;place-items:center;color:#002a1e;font-weight:900;
+      box-shadow: var(--shadow);
+    }
+    .title{font-weight:800;font-size:22px}
+    .version{
+      font-size:12px;color:var(--muted);padding:4px 10px;border:1px solid #203040;border-radius:999px
+    }
+    .actions{display:flex;gap:10px}
+    .btn{
+      border:1px solid #223243;background:#0f1520;color:var(--text);
+      padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:600
+    }
+    .btn:hover{border-color:#38556e}
+    .btn-brand{
+      background:linear-gradient(135deg,var(--brand-2),var(--brand));border:none;color:#041015;
+    }
+    .btn-brand:hover{filter:brightness(1.05)}
+    .btn-ghost{background:#101620;border:1px solid #26374a}
+    .grid{
+      display:grid;grid-template-columns: 1.1fr .9fr;gap:18px
+    }
+    @media (max-width: 980px){ .grid{grid-template-columns:1fr} }
+
+    .card{
+      background:var(--card);backdrop-filter: blur(10px);
+      border:1px solid #1c2733;border-radius:var(--radius);box-shadow:var(--shadow)
+    }
+    .card .hd{
+      padding:16px 18px;border-bottom:1px solid #1b2a38;display:flex;justify-content:space-between;align-items:center
+    }
+    .card .bd{padding:18px}
+
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .row-3{display:grid;grid-template-columns:1.1fr .9fr;gap:12px}
+    .row-1{display:grid;grid-template-columns:1fr;gap:12px}
+    @media (max-width:720px){ .row, .row-3{grid-template-columns:1fr} }
+
+    label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+    .in{
+      width:100%;padding:12px 12px 12px 12px;border-radius:12px;
+      background:#0d131b;border:1px solid #1f2e3d;color:var(--text);
+      outline:none
+    }
+    .in:focus{box-shadow:var(--ring);border-color:#29506b}
+    textarea.in{min-height:110px;resize:vertical}
+
+    .hint{color:var(--muted);font-size:12px;margin-top:6px}
+
+    .toolbar{display:flex;gap:10px;align-items:center;margin-top:10px}
+    .sp{flex:1}
+    .small{font-size:12px;color:var(--muted)}
+
+    .thumbs{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    .thumb{
+      width:84px;height:84px;border-radius:12px;background:#0a0f14;border:1px dashed #29445a;
+      display:grid;place-items:center;overflow:hidden
+    }
+    .thumb img{width:100%;height:100%;object-fit:cover}
+
+    .timeline{display:flex;flex-direction:column;gap:10px;max-height:640px;overflow:auto;padding:12px}
+    .bubble{
+      padding:12px 14px;border-radius:14px;border:1px solid #203041;background:#0d1218
+    }
+    .bubble.me{background:#0a1216;border-color:#21424e}
+    .bubble.ai{background:#0f161f;border-color:#24445a}
+    .tag{display:inline-block;padding:2px 8px;border:1px solid #264059;border-radius:999px;color:#9fc1d6;font-size:12px}
+    .empty{color:#7c92a4;font-size:14px;padding:6px}
+
+    .footer{margin-top:20px;color:#7faac0;font-size:13px}
+    .hr{border-top:1px solid #1b2a38;margin:8px 0 14px}
+    .pill{padding:6px 10px;border-radius:999px;background:#0c131a;border:1px solid #213445;color:#b6d2e2;font-size:12px}
+
+    .spin{width:16px;height:16px;border-radius:50%;border:2px solid #1f2f3f;border-top-color:var(--brand);display:inline-block;animation:spin .8s linear infinite;vertical-align:-3px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .quick{
+      display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px
+    }
+    @media (max-width:980px){ .quick{grid-template-columns:1fr} }
+    .qcard{border:1px solid #223244;border-radius:12px;padding:12px;background:#0c131a}
+    .qcard h4{margin:0 0 6px;font-size:14px}
+    .qcard ul{margin:0;padding-left:18px}
+    .qcard li{color:#9eb5c6;font-size:13px;margin:6px 0}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <header>
-      <img src="/static/logo.png" alt="Quanton3D" />
-      <div>
-        <h1>Assistente Técnico Quanton3D</h1>
-        <div class="note">v<span id="ver">{{ app_version or "" }}</span> • O telefone identifica seu histórico. <b>Use sempre o mesmo.</b></div>
-      </div>
-      <div style="margin-left:auto" class="pill">Serviço oficial</div>
-    </header>
-
-    <div class="card grid">
-      <div class="row">
+    <div class="header">
+      <div class="brand">
+        <div class="logo">Q3</div>
         <div>
-          <label class="bigger" for="phone">Telefone do cliente</label>
-          <input id="phone" type="tel" placeholder="11999999999" />
-          <div class="hint">O histórico fica atrelado a este número.</div>
-        </div>
-        <div class="switch">
-          <input id="keep" type="checkbox" checked />
-          <label for="keep">Manter conversa (histórico deste telefone)</label>
+          <div class="title">QUANTON3D® — Suporte Técnico SLA/DLP</div>
+          <div class="small">Atendimento prático e certeiro. <span class="pill">v {{ app_version or "local" }}</span></div>
         </div>
       </div>
-
-      <div>
-        <div class="bigger" style="margin-bottom:4px">Parâmetros de impressão Quanton3D</div>
-        <div class="hint">Preencha para obter <b>parâmetros oficiais</b> da resina impressora (quando quiser). Não é obrigatório para diagnosticar defeitos.</div>
-        <div class="row">
-          <div>
-            <label for="resin">Resina</label>
-            <input id="resin" type="text" placeholder="Ex.: Spark" />
-          </div>
-          <div>
-            <label for="printer">Impressora</label>
-            <input id="printer" type="text" placeholder="Ex.: Saturn 3" />
-          </div>
-        </div>
-      </div>
-
-      <div>
-        <label class="bigger" for="problem">Descreva seu problema</label>
-        <textarea id="problem" placeholder="Ex.: Delaminação entre camadas na metade da peça..."></textarea>
-      </div>
-
       <div class="actions">
-        <button id="send" class="primary">Enviar dúvida</button>
-        <button id="reset" class="danger" title="Zera o histórico deste telefone">Novo assunto (zerar conversa)</button>
-        <span id="status" class="small"></span>
-      </div>
-
-      <div>
-        <label for="images">Imagens (opcional, até 5 — máx 3MB cada)</label>
-        <input id="images" type="file" accept="image/png,image/jpeg,image/webp" multiple />
+        <a class="btn btn-ghost" href="#" onclick="alert('Em breve ✨');return false;">Nossa história</a>
+        <a class="btn btn-ghost" href="#" onclick="alert('Direitos reservados QUANTON3D®');return false;">Direitos autorais</a>
       </div>
     </div>
 
-    <div style="height:8px"></div>
+    <div class="grid">
+      <!-- FORM -->
+      <div class="card">
+        <div class="hd">
+          <div>Atendimento técnico</div>
+          <div class="version">Use sempre o mesmo telefone — liga as conversas.</div>
+        </div>
+        <div class="bd">
+          <form id="f" enctype="multipart/form-data" onsubmit="return false;">
+            <div class="row">
+              <div>
+                <label>Telefone (WhatsApp)</label>
+                <input class="in" name="phone" id="phone" placeholder="31 98334-0053" required />
+              </div>
+              <div>
+                <label>Escopo</label>
+                <select class="in" name="scope" id="scope">
+                  <option value="geral">Geral</option>
+                  <option value="lcd">Na tela (LCD)</option>
+                  <option value="fatiamento">Fatiamento</option>
+                  <option value="mecanica">Mecânica</option>
+                  <option value="resina">Resina</option>
+                </select>
+              </div>
+            </div>
 
-    <div class="card">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px">
-        <div class="bigger">Respostas</div>
-        <span class="pill">novas no topo</span>
+            <div class="row">
+              <div>
+                <label>Resina (opcional)</label>
+                <input class="in" name="resin" id="resin" placeholder="Ex.: ALCHEMIST ELEGOO / FlexForm..." />
+                <div class="hint">Preencha para salvar suas configs no histórico.</div>
+              </div>
+              <div>
+                <label>Impressora (opcional)</label>
+                <input class="in" name="printer" id="printer" placeholder="Ex.: Anycubic Mono 4K / Saturn 3..." />
+              </div>
+            </div>
+
+            <div class="row-1">
+              <div>
+                <label>Descreva o problema</label>
+                <textarea class="in" name="problem" id="problem" placeholder="Explique em 1 frase. Ex.: 'Peça rachando no meio' ou 'LCD com faixas claras'." required></textarea>
+              </div>
+            </div>
+
+            <div class="row-1">
+              <div>
+                <label>Imagens (JPG/PNG/WEBP, máx 5 — 3MB cada)</label>
+                <input class="in" type="file" name="photos" id="photos" multiple accept="image/*" />
+                <div class="thumbs" id="thumbs"></div>
+                <div class="hint">Fotos ajudam MUITO para LCD, adesão e suportes.</div>
+              </div>
+            </div>
+
+            <div class="toolbar">
+              <div class="sp"></div>
+              <a class="btn" id="btnHealth" href="/healthz" target="_blank" rel="noopener">Saúde</a>
+              <a class="btn" id="btnDiag" href="/diag" target="_blank" rel="noopener">Diag</a>
+              <button class="btn btn-ghost" id="btnReset" type="button" title="Limpa o histórico deste telefone">Reset</button>
+              <button class="btn btn-brand" id="btnSend" type="submit">Enviar</button>
+            </div>
+          </form>
+
+          <div class="hr"></div>
+
+          <div class="quick">
+            <div class="qcard">
+              <h4>LCD — Modo certeiro</h4>
+              <ul>
+                <li>Papel branco: ver faixas → difusor/LED</li>
+                <li>Grade/pixels: linhas apagadas → LCD</li>
+                <li>Limpeza: microfibra + IPA (sem encharcar)</li>
+              </ul>
+            </div>
+            <div class="qcard">
+              <h4>Adesão & base</h4>
+              <ul>
+                <li>Base nivelada e limpa</li>
+                <li>Camadas de base suficientes</li>
+                <li>Elevação mais lenta se soltar</li>
+              </ul>
+            </div>
+            <div class="qcard">
+              <h4>Suportes</h4>
+              <ul>
+                <li>Ângulos suaves e densidade adequada</li>
+                <li>Refaça ilhas e pontos fracos</li>
+                <li>Teste rápido com peça simples</li>
+              </ul>
+            </div>
+          </div>
+        </div>
       </div>
-      <div id="resp" class="resp"></div>
+
+      <!-- CHAT -->
+      <div class="card">
+        <div class="hd">
+          <div>Respostas</div>
+          <div class="small">
+            <span class="tag">conversa contínua por telefone</span>
+          </div>
+        </div>
+        <div class="bd">
+          <div id="tl" class="timeline">
+            <div class="empty">Sem mensagens ainda. Envie sua primeira pergunta acima. 🙂</div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div style="height:10px"></div>
-
-    <div class="card">
-      <div class="copyright">
-        📜 Todo o conteúdo gerado por este assistente é de uso exclusivo da empresa detentora da marca <b>Quanton3D®</b>.<br/>
-        Esta IA segue diretrizes técnicas e estilo da marca. É proibida a reprodução sem autorização. Tentativas de cópia indevida podem gerar ação legal (Lei nº 9.279/96).<br/>
-        Para uso autorizado ou parcerias, contate nosso time 💙
-      </div>
+    <div class="footer">
+      Conte com o time QUANTON3D; seguimos com você até dar certo. •
+      <a href="#" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">voltar ao topo</a>
     </div>
   </div>
 
-  <div id="toast" class="toast"></div>
-
   <script>
-    const el = s => document.querySelector(s);
-    const phoneEl   = el('#phone');
-    const keepEl    = el('#keep');
-    const resinEl   = el('#resin');
-    const printerEl = el('#printer');
-    const probEl    = el('#problem');
-    const imagesEl  = el('#images');
-    const respEl    = el('#resp');
-    const statusEl  = el('#status');
-    const toastEl   = el('#toast');
+    const el = (id)=>document.getElementById(id);
+    const tl = el('tl');
+    const thumbs = el('thumbs');
+    const phone = el('phone');
+    const scope = el('scope');
+    const resin = el('resin');
+    const printer = el('printer');
+    const problem = el('problem');
+    const photos = el('photos');
+    const btnSend = el('btnSend');
+    const btnReset = el('btnReset');
 
-    // ——— util
-    function toast(msg, ok=true){ toastEl.textContent = msg; toastEl.style.display='block'; setTimeout(()=>toastEl.style.display='none', 2500); }
-    function prependMsg(title, body, cls=''){
-      const box = document.createElement('div');
-      box.className = 'msg';
-      box.innerHTML = `<h4>${title}</h4><div class="${cls}">${body.replace(/\n/g,'<br/>')}</div>`;
-      respEl.prepend(box);
-    }
-
-    // ——— lembrar telefone no navegador do cliente
-    const LS_KEY = 'quanton3d_phone';
-    const savedPhone = localStorage.getItem(LS_KEY);
-    if(savedPhone){ phoneEl.value = savedPhone; }
-    phoneEl.addEventListener('change', ()=> localStorage.setItem(LS_KEY, phoneEl.value.replace(/\D+/g,'') ));
-
-    // ——— enviar dúvida
-    el('#send').addEventListener('click', async ()=>{
-      const phone = (phoneEl.value||'').trim();
-      const problem = (probEl.value||'').trim();
-      if(!phone){ toast('Informe o telefone.', false); phoneEl.focus(); return; }
-      if(!problem){ toast('Descreva o problema.', false); probEl.focus(); return; }
-
-      const fd = new FormData();
-      fd.append('phone', phone);
-      fd.append('scope', 'desconhecido');
-      fd.append('resin', (resinEl.value||'').trim());
-      fd.append('printer', (printerEl.value||'').trim());
-      fd.append('problem', problem);
-      fd.append('continue', keepEl.checked ? '1':'0');
-
-      const files = imagesEl.files || [];
-      if(files.length>5){ toast('Máximo 5 imagens.', false); return; }
-      for(let i=0;i<files.length;i++){ fd.append('images', files[i]); }
-
-      statusEl.textContent = 'Enviando...';
-      try{
-        const r = await fetch('/chat', { method:'POST', body: fd });
-        const j = await r.json();
-        if(!j.ok){
-          prependMsg('Erro', j.error || 'Falha ao responder.', 'err');
-        }else{
-          const cls = j.classification ? `(${j.classification}) ` : '';
-          const title = `Assistente ${cls}• imagens: ${j.images||0}`;
-          const body  = (j.answer||'').trim() || '(sem texto)';
-          prependMsg(title, body);
-          // limpa apenas problema e imagens (mantém telefone e preferências)
-          // probEl.value = ''; // se quiser limpar a caixa, descomente
-          imagesEl.value = '';
-        }
-      }catch(e){
-        prependMsg('Erro', String(e), 'err');
-      }finally{
-        statusEl.textContent = '';
-      }
+    // Previews
+    photos.addEventListener('change', ()=>{
+      thumbs.innerHTML = '';
+      [...photos.files].slice(0,5).forEach(f=>{
+        const d = document.createElement('div');
+        d.className='thumb';
+        const img = document.createElement('img');
+        d.appendChild(img);
+        thumbs.appendChild(d);
+        const reader = new FileReader();
+        reader.onload = e => img.src = e.target.result;
+        reader.readAsDataURL(f);
+      });
     });
 
-    // ——— reset (novo assunto)
-    el('#reset').addEventListener('click', async ()=>{
-      const phone = (phoneEl.value||'').trim();
-      if(!phone){ toast('Informe o telefone para resetar o assunto.', false); phoneEl.focus(); return; }
-      if(!confirm('Zerar a conversa deste telefone? Isso não apaga seus arquivos.')) return;
+    function addBubble(role, text){
+      const b = document.createElement('div');
+      b.className = 'bubble ' + (role==='me'?'me':'ai');
+      b.innerText = text;
+      tl.querySelector('.empty')?.remove();
+      tl.appendChild(b);
+      tl.scrollTop = tl.scrollHeight;
+    }
+
+    // Reset conversas
+    btnReset.addEventListener('click', ()=>{
+      const p = (phone.value||'').replace(/\D/g,'');
+      if(!p){ alert('Informe o telefone para resetar.'); return; }
+      if(!confirm('Limpar histórico deste telefone?')) return;
+      window.open(`/reset?phone=${encodeURIComponent(p)}`,'_blank');
+    });
+
+    // Enviar
+    document.getElementById('f').addEventListener('submit', async ()=>{
+      const p = phone.value.trim();
+      const text = problem.value.trim();
+      if(!p || !text){ alert('Preencha telefone e problema.'); return; }
+
+      addBubble('me', text);
+      const label = btnSend.innerHTML;
+      btnSend.innerHTML = '<span class="spin"></span> Enviando...';
+      btnSend.disabled = true;
+
       try{
-        const r = await fetch(`/reset?phone=${encodeURIComponent(phone)}`);
-        const j = await r.json();
-        if(j && j.ok){
-          toast('Assunto zerado. Pode começar um tema novo!');
-          prependMsg('Sistema', 'Assunto zerado para este telefone.', 'ok');
+        const fd = new FormData();
+        fd.append('phone', p);
+        fd.append('scope', scope.value);
+        fd.append('resin', resin.value);
+        fd.append('printer', printer.value);
+        fd.append('problem', text);
+        // arquivos (máx 5)
+        [...photos.files].slice(0,5).forEach(f => fd.append('photos', f));
+
+        const r = await fetch('/chat', { method: 'POST', body: fd });
+        const js = await r.json().catch(()=>({ok:false,error:'Erro ao ler resposta.'}));
+
+        if(js.ok){
+          addBubble('ai', js.reply || js.answer || '(sem conteúdo)');
         }else{
-          toast('Não foi possível zerar agora.', false);
+          addBubble('ai', '⚠️ ' + (js.error || 'Falha ao processar. Tente novamente.'));
         }
       }catch(e){
-        toast('Falha ao conectar.', false);
+        addBubble('ai', '⚠️ Erro de rede: ' + e.message);
+      }finally{
+        btnSend.innerHTML = label;
+        btnSend.disabled = false;
       }
     });
   </script>
