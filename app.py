@@ -1,4 +1,30 @@
-import os, base64, imghdr
+import os, base64
+try:
+    import imghdr  # presente até Python 3.12
+except ModuleNotFoundError:
+    # Compat para Python 3.13+: recria imghdr.what() só p/ JPG, PNG e WEBP
+    class imghdr:  # noqa: N801 (nome igual ao módulo antigo)
+        @staticmethod
+        def what(file=None, h=None):
+            # Aceita tanto bytes (h) quanto um file-like (file)
+            if h is None and hasattr(file, "read"):
+                pos = file.tell()
+                h = file.read(16)
+                file.seek(pos)
+            if not isinstance(h, (bytes, bytearray)):
+                return None
+            head = h[:16]
+            # JPEG
+            if head.startswith(b"\xFF\xD8\xFF"):
+                return "jpeg"
+            # PNG
+            if head.startswith(b"\x89PNG\r\n\x1a\n"):
+                return "png"
+            # WEBP (RIFF....WEBP)
+            if head[:4] == b"RIFF" and head[8:12] == b"WEBP":
+                return "webp"
+            return None
+
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, send_from_directory
 from openai import OpenAI
