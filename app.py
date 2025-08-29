@@ -14,6 +14,11 @@ BASE_DIR = os.path.dirname(__file__)
 DB_PATH = os.getenv("DB_PATH", os.path.join(BASE_DIR, "chat.db"))
 app = Flask(__name__, template_folder="templates", static_folder="static")
 
+# Limites para upload (seguro p/ Render Free)
+MAX_FILE_MB = 3          # cada imagem até 3MB
+MAX_TOTAL_MB = 15        # soma das imagens até 15MB
+app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024  # 20MB no request (garante erro limpo)
+
 def norm_phone(s: str) -> str:
     return re.sub(r"\D+", "", (s or ""))[:15]
 
@@ -75,50 +80,34 @@ def load_history(phone_norm, order="ASC"):
     return [{"role": r, "content": ct, "ts": ts} for (r, ct, ts) in rows if r != "system"]
 
 def clamp_story_for_qa(story: str, limit_chars: int = 9000) -> str:
-    """Evita 429/TPM cortando textos enormes: mantém começo e fim."""
     s = story or ""
-    if len(s) <= limit_chars:
-        return s
+    if len(s) <= limit_chars: return s
     head = s[:int(limit_chars * 0.65)]
     tail = s[-int(limit_chars * 0.25):]
     return head + "\n\n[trecho intermediário omitido]\n\n" + tail
 
 def sanitize_response(text: str) -> str:
-    """Remove markdown (###, **bold**, _itálico_) e normaliza bullets/numeração."""
-    if not text:
-        return ""
+    """Remove markdown e normaliza bullets/numeração."""
+    if not text: return ""
     t = (text or "").replace("\r\n", "\n")
-
-    # 1) remover cabeçalhos markdown #####
-    t = re.sub(r'(^|\n)#{1,6}\s*', r'\1', t)
-
-    # 2) remover negrito/itálico (**...**, __...__, *...*)
-    t = re.sub(r'\*\*(.+?)\*\*', r'\1', t)
-    t = re.sub(r'__(.+?)__', r'\1', t)
-    # itálico com *texto* — evitar capturar bullets "* "
-    t = re.sub(r'(?<!\S)\*(?!\s)(.+?)(?<!\s)\*(?!\S)', r'\1', t)
-
-    # 3) normalizar numeração "1. " -> "1) "
-    def _num(match):
-        lead = match.group(1)
-        num = match.group(2)
-        rest = match.group(3) or ""
-        return f"{lead}{num}) {rest}"
-    t = re.sub(r'(^|\n)\s*(\d+)\.\s*(.*)', _num, t)
-
-    # 4) normalizar bullets para "- "
-    t = re.sub(r'(^|\n)\s*[-*]\s+', r'\1- ', t)
-
-    # 5) remover linhas de regra --- e excesso de linhas vazias
-    t = re.sub(r'\n-{3,}\n', '\n', t)
-    t = re.sub(r'\n{3,}', '\n\n', t)
-
+    t = re.sub(r'(^|\n)#{1,6}\s*', r'\1', t)              # cabeçalhos
+    t = re.sub(r'\*\*(.+?)\*\*', r'\1', t)                 # **bold**
+    t = re.sub(r'__(.+?)__', r'\1', t)                     # __bold__
+    t = re.sub(r'(?<!\S)\*(?!\s)(.+?)(?<!\s)\*(?!\S)', r'\1', t)  # *itálico*
+    t = re.sub(r'(^|\n)\s*(\d+)\.\s*', r'\1\2) ', t)       # 1. -> 1)
+    t = re.sub(r'(^|\n)\s*[-*]\s+', r'\1- ', t)            # bullets -> -
+    t = re.sub(r'\n-{3,}\n', '\n', t)                      # hr
+    t = re.sub(r'\n{3,}', '\n\n', t)                       # quebras
     return t.strip()
 
 # ========= Rotas =========
 @app.route("/")
 def index():
     return render_template("index.html")
+
+@app.errorhandler(413)
+def too_large(_e):
+    return jsonify({"error": f"Tamanho total do envio excedeu 20MB. Reduza as imagens e tente novamente."}), 413
 
 @app.route("/healthz")
 def healthz():
@@ -254,6 +243,33 @@ def story_ask():
     answer = sanitize_response(out.choices[0].message.content)
     return jsonify({"answer": answer})
 
+def build_sys_prompt() -> str:
+    # Modo Certeiro fixo + Estilo técnico fixo
+    return (
+        "Você é o assistente QUANTON3D®, especialista em impressão 3D de resina.\n"
+        "Objetivo: diagnosticar e orientar com precisão, SEM sugerir trocas de marca e sem culpar produtos.\n\n"
+        "Regras de saída: Não use markdown, cabeçalhos, nem **negrito**. "
+        "Use texto plano, numerado '1)' e bullets '-'. Escreva em tom técnico, gentil e direto. Máx. 8 passos.\n\n"
+        "Modo Certeiro: Se faltar dado para definir a causa, NÃO liste soluções. "
+        "Faça UMA pergunta objetiva de esclarecimento e finalize com: 'Aguardo sua resposta para prosseguir.'\n\n"
+        "Escopos:\n"
+        "• 'peca' = defeitos/manchas NA PEÇA.\n"
+        "• 'lcd'  = artefatos/manchas NA TELA LCD (pixel queimado, luz vazando, polarizador/backlight).\n"
+        "• 'fep'  = problemas no FILME FEP (risco, opaco, folga, tensão/instalação, vazamento).\n"
+        "• 'cuba' = contaminação/resíduos/deformações na CUBA/RESERVATÓRIO.\n\n"
+        "Se houver 'Escopo informado: <valor>' use exatamente esse escopo. "
+        "Se não houver, em UMA linha classifique: A) PEÇA, B) LCD, C) FEP, D) CUBA, E) outro.\n\n"
+        "Ao listar passos, foque só no escopo:\n"
+        "• LCD: limpeza suave do LCD (microfibra, sem encharcar), teste de pixels/tela branca, polarizador/backlight, "
+        "  vazamento de resina (FEP/cuba), riscos/contaminação no FEP, uniformidade de luz. NÃO sugerir nivelamento/suportes/firmware.\n"
+        "• PEÇA: lavagem/pós-cura (banhos limpos e tempo adequado), exposição (sub/super), mistura/idade/armazenamento da resina, "
+        "  temperatura/viscosidade, orientação e suportes (sombras/acúmulo), contaminação no FEP/cuba. "
+        "  Nivelamento só se houver sintoma de adesão/deslocamento.\n"
+        "• FEP: risco/opacificação/folga, tensão correta ao instalar, aperto do anel, vazamento, limpeza/contaminação.\n"
+        "• CUBA: resíduos/partículas, rachaduras/deformações, limpeza e inspeção, alinhamento e vedação da cuba.\n\n"
+        "Finalize com: 'Conte com o time QUANTON3D; seguimos com você até dar certo.'"
+    )
+
 @app.route("/chat", methods=["POST"])
 def chat():
     f = request.form
@@ -270,46 +286,33 @@ def chat():
         return jsonify({"error": "Descreva o problema ou envie imagens"}), 400
     migrate_phone_if_needed(raw_phone, phone)
 
-    # imagens
+    # imagens (até 5, 3MB cada, 15MB total)
     image_parts = []
+    total_bytes = 0
     if "images" in request.files:
         files = request.files.getlist("images")
         for img in files[:5]:
             data = img.read()
-            if not data or len(data) > 3 * 1024 * 1024:
+            if not data: 
                 continue
+            size = len(data)
+            total_bytes += size
+            if size > MAX_FILE_MB * 1024 * 1024:
+                return jsonify({"error": f"Uma imagem excede {MAX_FILE_MB}MB. Reduza e envie novamente."}), 400
+            if total_bytes > MAX_TOTAL_MB * 1024 * 1024:
+                return jsonify({"error": f"Soma das imagens excede {MAX_TOTAL_MB}MB. Reduza e envie novamente."}), 400
+
             mime = (img.mimetype or "image/jpeg").lower()
             if mime not in ("image/jpeg", "image/png", "image/webp"):
-                mime = "image/jpeg"
+                return jsonify({"error": "Formato não suportado. Use JPG, PNG ou WEBP."}), 400
+
             url = f"data:{mime};base64," + base64.b64encode(data).decode("utf-8")
             image_parts.append({"type": "image_url", "image_url": {"url": url, "detail": "high"}})
 
     hist = load_history(phone, order="ASC")
 
-    # ===== Prompt refinado com escopo =====
-    sys_prompt = (
-        "Você é o assistente QUANTON3D®, especialista em impressão 3D de resina.\n"
-        "Objetivo: diagnosticar e orientar com precisão, SEM sugerir trocas de marca e sem atribuir defeito a produtos. "
-        "Use linguagem neutra (validade/armazenamento/contaminação/temperatura) e nunca culpe marcas.\n\n"
-        "Regras de saída: NÃO use markdown, NEM '###', NEM **negrito**. Liste em texto plano com '1)' e '-'.\n\n"
-        "• Se houver 'Escopo informado: <valor>' em peca/lcd/fep/cuba, USE esse escopo e NÃO faça pergunta de esclarecimento.\n"
-        "  – 'peca' = defeitos/manchas NA PEÇA.\n"
-        "  – 'lcd'  = artefatos/manchas NA TELA LCD (pixel queimado, luz vazando, polarizador/backlight).\n"
-        "  – 'fep'  = problemas no FILME FEP (risco, opaco, folga, tensão/instalação, vazamento).\n"
-        "  – 'cuba' = contaminação/resíduos/deformações na CUBA/RESERVATÓRIO.\n"
-        "• Se o escopo for 'desconhecido' ou não vier, em UMA linha classifique: A) PEÇA, B) LCD, C) FEP, D) CUBA, E) outro. "
-        "  Se ambíguo, faça apenas 1 pergunta breve antes de listar passos.\n\n"
-        "Ao listar passos, foque no RELEVANTE ao escopo:\n"
-        "• LCD: limpeza suave do LCD (microfibra, sem encharcar), teste de pixels/tela branca, polarizador/backlight, "
-        "  vazamento de resina (FEP/cuba), riscos/contaminação no FEP, uniformidade de luz. NÃO sugerir nivelamento/suportes/firmware.\n"
-        "• PEÇA: lavagem/pós-cura (banhos limpos e tempo adequado), exposição (sub/super), mistura/idade/armazenamento da resina, "
-        "  temperatura/viscosidade, orientação e suportes (sombras/acúmulo), contaminação no FEP/cuba. "
-        "  Nivelamento só se houver sintoma de adesão/deslocamento.\n"
-        "• FEP: risco/opacificação/folga, tensão correta ao instalar, aperto do anel, vazamento, limpeza/contaminação.\n"
-        "• CUBA: resíduos/partículas, rachaduras/deformações, limpeza e inspeção, alinhamento e vedação da cuba.\n\n"
-        "Estilo: técnico, gentil e direto. Máx. 8 passos, personalizados ao relato/imagens.\n"
-        "Encerramento: 'Conte com o time QUANTON3D; seguimos com você até dar certo.'"
-    )
+    # ===== Prompt fixo =====
+    sys_prompt = build_sys_prompt()
 
     messages = [{"role": "system", "content": sys_prompt}]
     for m in hist:
@@ -337,8 +340,8 @@ def chat():
     out = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=messages,
-        temperature=0.35,
-        max_tokens=1200  # evita resposta cortada
+        temperature=0.25,   # mais conservador no Modo Certeiro
+        max_tokens=1100
     )
     reply = sanitize_response(out.choices[0].message.content)
     save_message(phone, "assistant", reply)

@@ -5,10 +5,7 @@
 <title>QUANTON3D® — Assistente</title>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <style>
-  :root{
-    --panel: rgba(17,24,39,.75);
-    --stroke: rgba(255,255,255,.08);
-  }
+  :root{ --panel: rgba(17,24,39,.75); --stroke: rgba(255,255,255,.08); }
   body{margin:0;min-height:100vh;background:#000 url("/static/fundotela.png") no-repeat center/cover fixed;color:#e5e7eb;font-family:system-ui,Arial,sans-serif;line-height:1.55}
   .backdrop{min-height:100vh;background:linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,.80));display:flex;justify-content:center;align-items:flex-start;padding:36px 18px}
   .card{width:100%;max-width:980px;background:var(--panel);border:1px solid var(--stroke);border-radius:18px;padding:24px 22px;box-shadow:0 10px 30px rgba(0,0,0,.4);backdrop-filter:blur(4px)}
@@ -23,7 +20,7 @@
   .label-lg{font-size:1.08rem}
   .title{font-size:1.2rem;font-weight:900;margin:0 0 8px 0}
   .sub{color:#cbd5e1;margin-top:2px}
-  input,textarea{width:100%;padding:13px;border:1px solid #334155;border-radius:12px;background:#0b1220;color:#e5e7eb;outline:none}
+  input,textarea,select{width:100%;padding:13px;border:1px solid #334155;border-radius:12px;background:#0b1220;color:#e5e7eb;outline:none}
   input::placeholder,textarea::placeholder{color:#94a3b8}
   .primary{margin-top:16px;padding:13px 18px;border:0;border-radius:12px;cursor:pointer;background:#1e40af;color:#fff;font-weight:900}
   .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
@@ -34,7 +31,7 @@
   .avatar{width:38px;height:38px;border-radius:50%;flex:0 0 38px;display:flex;align-items:center;justify-content:center;background:#0b1220;border:1px solid #334155}
   .avatar-img{width:38px;height:38px;border-radius:50%;border:1px solid #334155;object-fit:cover;background:#0b1220}
   .msg-body{flex:1;min-width:0} .msg-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:10px}
-  .badge{display:inline-block;font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid #334155;background:#0b1220}
+  .badge{display:inline-block;font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid #334155}
   .badge-user{border-color:#1e3a8a} .badge-assistant{border-color:#065f46}
   .time{font-size:12px;color:#94a3b8} .msg-content{white-space:pre-wrap}
   .error{color:#fecaca;background:rgba(153,27,27,.35);border:1px solid #7f1d1d;padding:10px;border-radius:10px;margin-top:10px}
@@ -74,7 +71,16 @@
       <div class="sub">O telefone identifica seu histórico. Use sempre o mesmo.</div>
       <input name="phone" placeholder="Ex: 11 98888-7777" required />
 
-      <div class="title" style="margin-top:16px;">Parâmetros de impressão Quanton3D</div>
+      <label class="label-lg" style="margin-top:18px;">Onde está o problema?</label>
+      <select name="scope" id="scope">
+        <option value="desconhecido" selected>Não sei / me ajude a identificar</option>
+        <option value="peca">Na peça</option>
+        <option value="lcd">Na tela (LCD)</option>
+        <option value="fep">No filme FEP</option>
+        <option value="cuba">Na cuba / reservatório</option>
+      </select>
+
+      <div class="title" style="margin-top:18px;">Parâmetros de impressão Quanton3D</div>
       <div class="row">
         <div>
           <label>Resina</label>
@@ -92,8 +98,8 @@
       <button id="sendBtn" class="primary" type="submit">Enviar</button>
 
       <!-- imagens abaixo do enviar -->
-      <label style="margin-top:14px;">Imagens (opcional, até 5 — máx 3MB cada)</label>
-      <input id="images" type="file" name="images" accept="image/*" multiple />
+      <label style="margin-top:14px;">Imagens (opcional, até 5 — máx 3MB cada; formatos: JPG/PNG/WEBP)</label>
+      <input id="images" type="file" name="images" accept="image/jpeg,image/png,image/webp" multiple />
       <div id="imgInfo" class="hint">Nenhuma imagem selecionada.</div>
 
       <div id="errBox" class="error" style="display:none"></div>
@@ -103,7 +109,7 @@
     </form>
   </div>
 
-  <!-- Editor da história (colapsado) -->
+  <!-- Editor da história -->
   <div class="section">
     <details id="storyEditor">
       <summary class="title" style="cursor:pointer;">✍️ Editar/guardar “Nossa história” (privado)</summary>
@@ -141,7 +147,7 @@
   </div>
 </div>
 
-<!-- Modal Nossa História (Q&A) -->
+<!-- Modal Nossa História -->
 <div id="familyModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="familyTitle">
   <div class="box">
     <h3 id="familyTitle">A história de Nhor e filhos com Ronei</h3>
@@ -172,6 +178,10 @@
   const imgInfo  = document.getElementById('imgInfo');
   const downloadHistBtn = document.getElementById('downloadHist');
 
+  // limites (espelhos do backend)
+  const MAX_FILE = 3 * 1024 * 1024;
+  const MAX_TOTAL = 15 * 1024 * 1024;
+
   function renderMsg(it){
     const wrap=document.createElement('div'); wrap.className='msg '+(it.role==='user'?'user':'assistant');
     const avatar=document.createElement(it.role==='user'?'div':'img');
@@ -192,30 +202,66 @@
   function renderHistory(items){ historyEl.innerHTML=''; items.sort((a,b)=>b.ts-a.ts); items.forEach(i=>historyEl.appendChild(renderMsg(i))); }
   async function loadHistory(phone){ if(!phone) return; const r=await fetch(`/history?phone=${encodeURIComponent(phone)}`,{cache:'no-store'}); renderHistory(await r.json()); }
 
+  function humanSize(b){ if(b<1024) return b+' B'; if(b<1024*1024) return (b/1024).toFixed(1)+' KB'; return (b/1024/1024).toFixed(2)+' MB'; }
+  function updateImgInfo(){
+    const f=imgInput.files||[];
+    if(!f.length){ imgInfo.textContent='Nenhuma imagem selecionada.'; imgInfo.style.color='#94a3b8'; return; }
+    let total=0, over=false, bad=false;
+    for(const x of f){
+      total+=x.size;
+      if(x.size>MAX_FILE) over=true;
+      if(!['image/jpeg','image/png','image/webp'].includes(x.type)) bad=true;
+    }
+    let msg=`${f.length} imagem(ns) — total ${humanSize(total)}.`;
+    if(f.length>5) msg+=' (⚠️ máx. 5)';
+    if(over) msg+=` (⚠️ existe imagem > ${Math.round(MAX_FILE/1024/1024)}MB)`;
+    if(bad) msg+=' (⚠️ use JPG/PNG/WEBP; HEIC não é suportado)';
+    imgInfo.textContent=msg;
+    imgInfo.style.color=(f.length>5||over||bad||total>MAX_TOTAL)?'#fca5a5':'#94a3b8';
+  }
+  imgInput.addEventListener('change', updateImgInfo);
+
   form.addEventListener('submit', async (e)=>{
     e.preventDefault();
     errBox.style.display='none'; errBox.textContent='';
+    // validações locais
+    const files=imgInput.files||[];
+    let total=0, bad=false, over=false;
+    for(const x of files){
+      total+=x.size;
+      if(x.size>MAX_FILE) over=true;
+      if(!['image/jpeg','image/png','image/webp'].includes(x.type)) bad=true;
+    }
+    if(files.length>5){ errBox.textContent='Você selecionou mais de 5 imagens (máx. 5).'; errBox.style.display='block'; return; }
+    if(over){ errBox.textContent='Há imagem maior que 3MB. Reduza e tente novamente.'; errBox.style.display='block'; return; }
+    if(total>MAX_TOTAL){ errBox.textContent='Soma das imagens excede 15MB. Reduza e tente novamente.'; errBox.style.display='block'; return; }
+    if(bad){ errBox.textContent='Formato não suportado. Use JPG, PNG ou WEBP (HEIC não é suportado).'; errBox.style.display='block'; return; }
+
     sendBtn.disabled=true; sendBtn.textContent='Enviando...'; thinking.style.display='flex';
     try{
       const fd=new FormData(form); const phone=fd.get('phone')||'';
-      const files=imgInput.files||[]; if(files.length>5) alert('Você selecionou '+files.length+' imagens. Apenas 5 serão enviadas.');
-      for(const f of files){ if(f.size>3*1024*1024){ alert('Há imagem >3MB; será ignorada.'); break; } }
-      const r=await fetch('/chat',{method:'POST',body:fd}); const data=await r.json();
+      const r=await fetch('/chat',{method:'POST',body:fd});
+      let data;
+      if(!r.ok){
+        // tenta extrair o json de erro
+        try{ data=await r.json(); }catch{ throw new Error('Falha ao enviar (HTTP '+r.status+').'); }
+        if(data && data.error){ throw new Error(data.error); }
+      }else{
+        data=await r.json();
+      }
       if(data.error){ errBox.textContent='Erro: '+data.error; errBox.style.display='block'; }
       else{ form.problem.value=''; imgInput.value=''; updateImgInfo(); await loadHistory(phone); }
-    }catch(err){ errBox.textContent='Falha de rede: '+err.message; errBox.style.display='block'; }
-    finally{ sendBtn.disabled=false; sendBtn.textContent='Enviar'; thinking.style.display='none'; }
+    }catch(err){
+      errBox.textContent='Falha: '+err.message;
+      errBox.style.display='block';
+    }finally{
+      sendBtn.disabled=false; sendBtn.textContent='Enviar'; thinking.style.display='none';
+    }
   });
 
   form.phone.addEventListener('change', ()=>{ const p=form.phone.value.trim(); loadHistory(p); loadProfile(p); });
 
-  function humanSize(b){ if(b<1024) return b+' B'; if(b<1024*1024) return (b/1024).toFixed(1)+' KB'; return (b/1024/1024).toFixed(2)+' MB'; }
-  function updateImgInfo(){ const f=imgInput.files||[]; if(!f.length){ imgInfo.textContent='Nenhuma imagem selecionada.'; imgInfo.style.color='#94a3b8'; return; }
-    let total=0,over=false; for(const x of f){ total+=x.size; if(x.size>3*1024*1024) over=true; }
-    let msg=`${f.length} imagem(ns) — total ${humanSize(total)}.`; if(f.length>5) msg+=' (⚠️ máx. 5)'; if(over) msg+=' (⚠️ >3MB serão ignoradas)';
-    imgInfo.textContent=msg; imgInfo.style.color=(f.length>5||over)?'#fca5a5':'#94a3b8'; }
-  imgInput.addEventListener('change', updateImgInfo);
-
+  const downloadHistBtn = document.getElementById('downloadHist');
   downloadHistBtn.addEventListener('click', ()=>{ const p=(form.phone.value||'').trim(); if(!p){ alert('Preencha o telefone.'); return; } window.open(`/history_export?phone=${encodeURIComponent(p)}`,'_blank'); });
 
   // história (carregar/salvar/resumo/baixar)
