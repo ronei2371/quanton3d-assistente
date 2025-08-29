@@ -1,0 +1,69 @@
+[
+  {
+    "id": "adesao_base",
+    "gatilhos": ["não gruda","nao gruda","descolando","soltando da base","adesão","adesao","não adere","nao adere"],
+    "texto": "Provável adesão fraca. Nivelar base (método papel), limpar base com IPA 99%, aumentar camadas e tempo de base (+20–30s), manter 22–26 °C. Se gruda demais, reduzir base −10–15s e usar 5–6 camadas."
+  },
+  {
+    "id": "mole_grudenta",
+    "gatilhos": ["mole","grudenta","peça mole","peca mole","pegajosa","não cura direito","nao cura direito"],
+    "texto": "Subexposição. Aumente exposição por camada (+0.3–0.5s), execute um teste XP2, verifique uniformidade do LCD e pós-cura (lavar com IPA e curar 2–5 min)."
+  },
+  {
+    "id": "quebradica_rachando",
+    "gatilhos": ["rachando","quebradiça","quebradica","quebrando","frágil","fragil","trincando","trincas"],
+    "texto": "Pode ser superexposição ou frio. Reduza exposição −0.2–0.3s, mantenha 20–24 °C, evite pós-cura excessiva. Em frio (<20 °C), aqueça ambiente ou aumente exposição ~15%."
+  },
+  {
+    "id": "suportes_quebram",
+    "gatilhos": ["suporte quebra","suportes quebram","cai dos suportes","soltou dos suportes","arranca dos suportes"],
+    "texto": "Suporte subdimensionado/posicionado. Use suporte médio 0.4–0.6 mm, densidade 60–80%, adicione manuais em áreas críticas. Lift 1–2 mm/s e um pequeno 'rest' antes do lift."
+  },
+  {
+    "id": "linhas_camadas",
+    "gatilhos": ["linhas","camadas visíveis","banding","faixas","serrilhado"],
+    "texto": "Altura de camada/anti-aliasing/mecânica do Z. Use 0,05 mm, AA nível 2–3, lubrifique fuso Z e elimine folgas."
+  },
+  {
+    "id": "para_no_meio",
+    "gatilhos": ["para no meio","parou no meio","interrompe","trava impressão","trava impressao","falha no meio"],
+    "texto": "Arquivo/hardware. Refatie, teste SD novo/formatado, atualize slicer/firmware e verifique fonte/driver do eixo Z."
+  },
+  {
+    "id": "superficie_rugosa",
+    "gatilhos": ["rugosa","granulada","granulado","superfície ruim","superficie ruim","aspera"],
+    "texto": "Resina contaminada/temperatura/vibração. Filtre a resina, mantenha 22–25 °C e elimine vibrações."
+  },
+  {
+    "id": "lcd_pixels",
+    "gatilhos": ["pixel morto","pixels mortos","falha lcd","manchas lcd","faixas lcd","lcd","tela manchada","tela com faixa"],
+    "texto": "Faça teste do papel branco e de grade. Padrões fixos → LCD; faixas que se repetem → difusor/LED. Limpeza suave; trocar LCD se muitos pixels."
+  },
+  {
+    "id": "fep_danificado",
+    "gatilhos": ["fep","nfep","filme perfurado","filme riscado","opaco fep","fep marcado"],
+    "texto": "Cheque transparência/risco/furo e tensão (som de tambor). Troque e limpe tanque. Troca preventiva a cada 20–30 impressões."
+  },
+
+  /* —— PERFIS / PARÂMETROS QUANTON3D — preencha quando quiser — */
+  {
+    "id": "params_quanton3d_generic",
+    "gatilhos": ["perfil","parametro","parâmetro","parametrização","parametrizacao","exposição","exposicao","tempo de exposição","tempo de exposicao","configuração","configuracao","preset","profile","resina quanton3d","parametros quanton3d","parâmetros quanton3d"],
+    "texto": "[PREENCHER] Ponto de partida QUANTON3D (genérico): Base: __s × __ camadas; Camada 0,05 mm: __s; Lift: __ mm/s; Retract: __ mm/s; Light-off: __ s; Temp: 23–25 °C; Lavagem: IPA curto e suave; Cura: 2–5 min. Ajuste fino com XP2."
+  },
+  {
+    "id": "params_quanton3d_spark",
+    "gatilhos": ["resina quanton3d spark","quanton3d spark","spark perfil","spark parâmetros","spark parametros"],
+    "texto": "[PREENCHER] QUANTON3D Spark — valores oficiais da marca. Base: __s × __; Camada 0,05: __s; 0,03: __s; Lift/Ret: __/__ mm/s; Light-off: __ s; Notas: __."
+  },
+  {
+    "id": "params_quanton3d_flex",
+    "gatilhos": ["resina quanton3d flex","quanton3d flex","flex perfil","flex parâmetros","flex parametros"],
+    "texto": "[PREENCHER] QUANTON3D Flex — ponto de partida. Base: __s × __; Camada 0,05: __s; Lift/Ret: __/__ mm/s; Light-off: __ s; Temp: 24–26 °C; Notas: evitar pós-cura excessiva."
+  },
+  {
+    "id": "params_quanton3d_dental",
+    "gatilhos": ["resina quanton3d dental","quanton3d dental","dental perfil","dental parâmetros","dental parametros"],
+    "texto": "[PREENCHER] QUANTON3D Dental — base: __s × __; 0,05: __s; Pós-cura UV específico: __ min; Normas: __; Observações: __."
+  }
+]
