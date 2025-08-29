@@ -97,7 +97,7 @@
 
       <button id="sendBtn" class="primary" type="submit">Enviar</button>
 
-      <!-- imagens abaixo do enviar -->
+      <!-- Imagens abaixo do enviar -->
       <label style="margin-top:14px;">Imagens (opcional, até 5 — máx 3MB cada; formatos: JPG/PNG/WEBP)</label>
       <input id="images" type="file" name="images" accept="image/jpeg,image/png,image/webp" multiple />
       <div id="imgInfo" class="hint">Nenhuma imagem selecionada.</div>
@@ -116,9 +116,9 @@
       <small class="muted">Cole seu texto (pode copiar de um .txt). Ele será usado para responder perguntas no botão “Nossa história 💙”.</small>
       <textarea id="story" rows="6" style="margin-top:10px;" placeholder="Cole sua história aqui..."></textarea>
       <div style="display:flex;gap:8px;align-items:center;margin-top:8px;">
-        <button id="saveStory" class="ghost">Salvar história</button>
-        <button id="summaryStory" class="ghost">Ver resumo</button>
-        <button id="downloadStory" class="ghost">Baixar minha história (.txt)</button>
+        <button id="saveStory" class="ghost" type="button">Salvar história</button>
+        <button id="summaryStory" class="ghost" type="button">Ver resumo</button>
+        <button id="downloadStory" class="ghost" type="button">Baixar minha história (.txt)</button>
         <span id="storyStatus" style="font-size:12px;color:#94a3b8;"></span>
       </div>
     </details>
@@ -143,7 +143,7 @@
     <p>Esta IA foi treinada com diretrizes, vocabulário técnico e estilo personalizado da marca. É proibida a reprodução ou uso sem autorização.</p>
     <p>⚠️ Qualquer tentativa de cópia, clonagem ou uso indevido poderá gerar ação legal com base na <b>Lei da Propriedade Industrial (Lei nº 9.279/96)</b>.</p>
     <p>Para uso autorizado ou parcerias, entre em contato com nosso time 💙</p>
-    <div class="actions"><button id="closeAbout" class="ghost">Fechar</button></div>
+    <div class="actions"><button id="closeAbout" class="ghost" type="button">Fechar</button></div>
   </div>
 </div>
 
@@ -157,14 +157,14 @@
     <label class="label-lg">Pergunte sobre a nossa história</label>
     <input id="familyQuestion" placeholder="Ex.: Como surgiu a Quanton3D?" />
     <div style="display:flex;gap:8px;align-items:center;margin-top:8px;">
-      <button id="askFamily" class="ghost">Perguntar</button>
+      <button id="askFamily" class="ghost" type="button">Perguntar</button>
       <span id="familyStatus" style="font-size:12px;color:#94a3b8;"></span>
     </div>
     <div id="familyAnswerBox" style="display:none;margin-top:10px;border:1px solid #334155;padding:10px;border-radius:10px;background:#0b1220;">
       <div style="font-weight:800;margin-bottom:6px;">Resposta — Nhor</div>
       <div id="familyAnswer" style="white-space:pre-wrap;"></div>
     </div>
-    <div class="actions"><button id="closeFamily" class="ghost">Fechar</button></div>
+    <div class="actions"><button id="closeFamily" class="ghost" type="button">Fechar</button></div>
   </div>
 </div>
 
@@ -199,8 +199,16 @@
     wrap.appendChild(avatar); wrap.appendChild(body);
     return wrap;
   }
-  function renderHistory(items){ historyEl.innerHTML=''; items.sort((a,b)=>b.ts-a.ts); items.forEach(i=>historyEl.appendChild(renderMsg(i))); }
-  async function loadHistory(phone){ if(!phone) return; const r=await fetch(`/history?phone=${encodeURIComponent(phone)}`,{cache:'no-store'}); renderHistory(await r.json()); }
+  function renderHistory(items){
+    historyEl.innerHTML='';
+    items.sort((a,b)=>b.ts-a.ts);
+    items.forEach(i=>historyEl.appendChild(renderMsg(i)));
+  }
+  async function loadHistory(phone){
+    if(!phone) return;
+    const r=await fetch(`/history?phone=${encodeURIComponent(phone)}`,{cache:'no-store'});
+    renderHistory(await r.json());
+  }
 
   function humanSize(b){ if(b<1024) return b+' B'; if(b<1024*1024) return (b/1024).toFixed(1)+' KB'; return (b/1024/1024).toFixed(2)+' MB'; }
   function updateImgInfo(){
@@ -219,12 +227,19 @@
     imgInfo.textContent=msg;
     imgInfo.style.color=(f.length>5||over||bad||total>MAX_TOTAL)?'#fca5a5':'#94a3b8';
   }
-  imgInput.addEventListener('change', updateImgInfo);
+  if (imgInput) imgInput.addEventListener('change', updateImgInfo);
+
+  // TRAVA anti-duplo envio
+  let isSending = false;
 
   form.addEventListener('submit', async (e)=>{
     e.preventDefault();
+    if (isSending) return; // evita duas chamadas
+    isSending = true;
+
     errBox.style.display='none'; errBox.textContent='';
-    // validações locais
+
+    // valida imagens
     const files=imgInput.files||[];
     let total=0, bad=false, over=false;
     for(const x of files){
@@ -232,90 +247,127 @@
       if(x.size>MAX_FILE) over=true;
       if(!['image/jpeg','image/png','image/webp'].includes(x.type)) bad=true;
     }
-    if(files.length>5){ errBox.textContent='Você selecionou mais de 5 imagens (máx. 5).'; errBox.style.display='block'; return; }
-    if(over){ errBox.textContent='Há imagem maior que 3MB. Reduza e tente novamente.'; errBox.style.display='block'; return; }
-    if(total>MAX_TOTAL){ errBox.textContent='Soma das imagens excede 15MB. Reduza e tente novamente.'; errBox.style.display='block'; return; }
-    if(bad){ errBox.textContent='Formato não suportado. Use JPG, PNG ou WEBP (HEIC não é suportado).'; errBox.style.display='block'; return; }
+    if(files.length>5){ errBox.textContent='Você selecionou mais de 5 imagens (máx. 5).'; errBox.style.display='block'; isSending=false; return; }
+    if(over){ errBox.textContent='Há imagem maior que 3MB. Reduza e tente novamente.'; errBox.style.display='block'; isSending=false; return; }
+    if(total>MAX_TOTAL){ errBox.textContent='Soma das imagens excede 15MB. Reduza e tente novamente.'; errBox.style.display='block'; isSending=false; return; }
+    if(bad){ errBox.textContent='Formato não suportado. Use JPG, PNG ou WEBP (HEIC não é suportado).'; errBox.style.display='block'; isSending=false; return; }
 
-    sendBtn.disabled=true; sendBtn.textContent='Enviando...'; thinking.style.display='flex';
+    sendBtn.disabled=true; sendBtn.textContent='Enviando...';
+    thinking.style.display='flex';
+
+    // timeout de rede (Render Free / rede lenta)
+    const controller = new AbortController();
+    const t = setTimeout(()=>controller.abort(), 65000); // 65s
+
     try{
-      const fd=new FormData(form); const phone=fd.get('phone')||'';
-      const r=await fetch('/chat',{method:'POST',body:fd});
-      let data;
+      const fd=new FormData(form);
+      const r = await fetch('/chat',{method:'POST',body:fd,signal:controller.signal});
+      clearTimeout(t);
+      let data=null; try{ data=await r.json(); }catch{}
+
       if(!r.ok){
-        // tenta extrair o json de erro
-        try{ data=await r.json(); }catch{ throw new Error('Falha ao enviar (HTTP '+r.status+').'); }
-        if(data && data.error){ throw new Error(data.error); }
-      }else{
-        data=await r.json();
+        const msg = data && data.error ? data.error : `Falha (HTTP ${r.status}).`;
+        throw new Error(msg);
       }
-      if(data.error){ errBox.textContent='Erro: '+data.error; errBox.style.display='block'; }
-      else{ form.problem.value=''; imgInput.value=''; updateImgInfo(); await loadHistory(phone); }
+      if(data && data.error){ throw new Error(data.error); }
+
+      // sucesso
+      form.problem.value=''; imgInput.value=''; updateImgInfo();
+      await loadHistory(form.phone.value.trim());
     }catch(err){
-      errBox.textContent='Falha: '+err.message;
-      errBox.style.display='block';
+      const m = (err.name==='AbortError') ? 'Tempo esgotado. Tente novamente.' : (err.message || 'Erro.');
+      errBox.textContent = m; errBox.style.display='block';
     }finally{
-      sendBtn.disabled=false; sendBtn.textContent='Enviar'; thinking.style.display='none';
+      clearTimeout(t);
+      sendBtn.disabled=false; sendBtn.textContent='Enviar';
+      thinking.style.display='none';
+      isSending = false;
     }
   });
 
+  // histórico + perfil
   form.phone.addEventListener('change', ()=>{ const p=form.phone.value.trim(); loadHistory(p); loadProfile(p); });
 
-  const downloadHistBtn = document.getElementById('downloadHist');
-  downloadHistBtn.addEventListener('click', ()=>{ const p=(form.phone.value||'').trim(); if(!p){ alert('Preencha o telefone.'); return; } window.open(`/history_export?phone=${encodeURIComponent(p)}`,'_blank'); });
+  const downloadHist = document.getElementById('downloadHist');
+  if(downloadHist){
+    downloadHist.addEventListener('click', ()=>{
+      const p=(form.phone.value||'').trim(); if(!p){ alert('Preencha o telefone.'); return; }
+      window.open(`/history_export?phone=${encodeURIComponent(p)}`,'_blank');
+    });
+  }
 
   // história (carregar/salvar/resumo/baixar)
   const storyEl=document.getElementById('story'), storyStatus=document.getElementById('storyStatus');
-  async function loadProfile(phone){ if(!phone){ storyEl.value=''; return; } const r=await fetch(`/profile?phone=${encodeURIComponent(phone)}`,{cache:'no-store'}); const d=await r.json(); storyEl.value=d.story||''; }
-  document.getElementById('saveStory').addEventListener('click', async ()=>{
-    const p=(form.phone.value||'').trim(); const story=(storyEl.value||'').trim();
-    if(!p){ alert('Preencha o telefone para salvar.'); return; }
-    if(!story){ alert('Cole sua história antes de salvar.'); return; }
-    storyStatus.textContent='Salvando...';
-    try{ const fd=new FormData(); fd.append('phone',p); fd.append('story',story);
-      const r=await fetch('/profile',{method:'POST',body:fd}); const d=await r.json();
-      storyStatus.textContent=d.error?('Erro: '+d.error):'História salva ✔'; setTimeout(()=>storyStatus.textContent='',1500);
-    }catch(e){ storyStatus.textContent='Falha: '+e.message; }
-  });
-  document.getElementById('summaryStory').addEventListener('click', async ()=>{
-    const p=(form.phone.value||'').trim(); if(!p){ alert('Preencha o telefone.'); return; }
-    storyStatus.textContent='Gerando resumo...';
-    try{ const fd=new FormData(); fd.append('phone',p); const r=await fetch('/summary',{method:'POST',body:fd}); const d=await r.json();
-      if(d.error){ storyStatus.textContent='Erro: '+d.error; return; }
-      alert(d.summary||'(sem conteúdo)'); storyStatus.textContent='';
-    }catch(e){ storyStatus.textContent='Falha: '+e.message; }
-  });
-  document.getElementById('downloadStory').addEventListener('click', ()=>{
-    const p=(form.phone.value||'').trim(); if(!p){ alert('Preencha o telefone.'); return; }
-    window.open(`/story_export?phone=${encodeURIComponent(p)}`,'_blank');
-  });
+  async function loadProfile(phone){
+    if(!phone){ if(storyEl) storyEl.value=''; return; }
+    const r=await fetch(`/profile?phone=${encodeURIComponent(phone)}`,{cache:'no-store'});
+    const d=await r.json();
+    if(storyEl) storyEl.value=d.story||'';
+  }
+  const saveStory=document.getElementById('saveStory');
+  if(saveStory){
+    saveStory.addEventListener('click', async ()=>{
+      const p=(form.phone.value||'').trim(); const story=(storyEl.value||'').trim();
+      if(!p){ alert('Preencha o telefone para salvar.'); return; }
+      if(!story){ alert('Cole sua história antes de salvar.'); return; }
+      storyStatus.textContent='Salvando...';
+      try{
+        const fd=new FormData(); fd.append('phone',p); fd.append('story',story);
+        const r=await fetch('/profile',{method:'POST',body:fd}); const d=await r.json();
+        storyStatus.textContent=d.error?('Erro: '+d.error):'História salva ✔';
+        setTimeout(()=>storyStatus.textContent='',1500);
+      }catch(e){ storyStatus.textContent='Falha: '+e.message; }
+    });
+  }
+  const summaryStory=document.getElementById('summaryStory');
+  if(summaryStory){
+    summaryStory.addEventListener('click', async ()=>{
+      const p=(form.phone.value||'').trim(); if(!p){ alert('Preencha o telefone.'); return; }
+      storyStatus.textContent='Gerando resumo...';
+      try{
+        const fd=new FormData(); fd.append('phone',p);
+        const r=await fetch('/summary',{method:'POST',body:fd}); const d=await r.json();
+        if(d.error){ storyStatus.textContent='Erro: '+d.error; return; }
+        alert(d.summary||'(sem conteúdo)'); storyStatus.textContent='';
+      }catch(e){ storyStatus.textContent='Falha: '+e.message; }
+    });
+  }
+  const downloadStory=document.getElementById('downloadStory');
+  if(downloadStory){
+    downloadStory.addEventListener('click', ()=>{
+      const p=(form.phone.value||'').trim(); if(!p){ alert('Preencha o telefone.'); return; }
+      window.open(`/story_export?phone=${encodeURIComponent(p)}`,'_blank');
+    });
+  }
 
   // modais
   const aboutBtn=document.getElementById('aboutBtn'), aboutModal=document.getElementById('aboutModal'), closeAbout=document.getElementById('closeAbout');
-  aboutBtn.addEventListener('click',()=>aboutModal.style.display='flex');
-  closeAbout.addEventListener('click',()=>aboutModal.style.display='none');
-  aboutModal.addEventListener('click',e=>{ if(e.target===aboutModal) aboutModal.style.display='none'; });
+  if(aboutBtn){ aboutBtn.addEventListener('click',()=>aboutModal.style.display='flex'); }
+  if(closeAbout){ closeAbout.addEventListener('click',()=>aboutModal.style.display='none'); }
+  if(aboutModal){ aboutModal.addEventListener('click',e=>{ if(e.target===aboutModal) aboutModal.style.display='none'; }); }
 
   const familyBtn=document.getElementById('familyBtn'), familyModal=document.getElementById('familyModal'), closeFamily=document.getElementById('closeFamily');
   const familyQuestion=document.getElementById('familyQuestion'), askFamily=document.getElementById('askFamily');
   const familyStatus=document.getElementById('familyStatus'), familyAnswer=document.getElementById('familyAnswer'), familyAnswerBox=document.getElementById('familyAnswerBox');
 
-  familyBtn.addEventListener('click',()=>{ familyModal.style.display='flex'; });
-  closeFamily.addEventListener('click',()=>{ familyModal.style.display='none'; });
-  familyModal.addEventListener('click',e=>{ if(e.target===familyModal) familyModal.style.display='none'; });
+  if(familyBtn){ familyBtn.addEventListener('click',()=>{ familyModal.style.display='flex'; }); }
+  if(closeFamily){ closeFamily.addEventListener('click',()=>{ familyModal.style.display='none'; }); }
+  if(familyModal){ familyModal.addEventListener('click',e=>{ if(e.target===familyModal) familyModal.style.display='none'; }); }
 
-  askFamily.addEventListener('click', async ()=>{
-    const p=(form.phone.value||'').trim(); const q=(familyQuestion.value||'').trim();
-    if(!p){ alert('Digite o telefone para perguntar.'); return; }
-    if(!q){ alert('Escreva sua pergunta.'); return; }
-    familyStatus.textContent='Respondendo...'; familyAnswerBox.style.display='none'; familyAnswer.textContent='';
-    try{
-      const fd=new FormData(); fd.append('phone',p); fd.append('question',q);
-      const r=await fetch('/story_ask',{method:'POST',body:fd}); const d=await r.json();
-      familyAnswer.textContent = d.error ? ('Erro: '+d.error) : (d.answer||'(sem conteúdo)');
-      familyAnswerBox.style.display='block'; familyStatus.textContent='';
-    }catch(e){ familyAnswer.textContent='Falha: '+e.message; familyAnswerBox.style.display='block'; familyStatus.textContent=''; }
-  });
+  if(askFamily){
+    askFamily.addEventListener('click', async ()=>{
+      const p=(form.phone.value||'').trim(); const q=(familyQuestion.value||'').trim();
+      if(!p){ alert('Digite o telefone para perguntar.'); return; }
+      if(!q){ alert('Escreva sua pergunta.'); return; }
+      familyStatus.textContent='Respondendo...'; familyAnswerBox.style.display='none'; familyAnswer.textContent='';
+      try{
+        const fd=new FormData(); fd.append('phone',p); fd.append('question',q);
+        const r=await fetch('/story_ask',{method:'POST',body:fd}); const d=await r.json();
+        familyAnswer.textContent = d.error ? ('Erro: '+d.error) : (d.answer||'(sem conteúdo)');
+        familyAnswerBox.style.display='block'; familyStatus.textContent='';
+      }catch(e){ familyAnswer.textContent='Falha: '+e.message; familyAnswerBox.style.display='block'; familyStatus.textContent=''; }
+    });
+  }
 </script>
 </body>
 </html>
