@@ -5,33 +5,24 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>QUANTON3D® — Suporte Técnico SLA/DLP</title>
   <style>
-    :root{
-      --bg:#0f131a; --panel:#121827; --ink:#e9eef5; --muted:#a8b3c7; --brand:#3aa0ff; --ok:#22c55e; --warn:#f59e0b; --err:#ef4444;
-      --stroke:#233047;
-    }
-    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,Segoe UI,Roboto,sans-serif}
+    :root{--bg:#0f131a;--panel:#121827;--ink:#e9eef5;--muted:#a8b3c7;--brand:#3aa0ff;--stroke:#233047;--ok:#22c55e;--err:#ef4444}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,Segoe UI,Roboto,sans-serif}
     header{display:flex;align-items:center;gap:14px;padding:16px 18px;border-bottom:1px solid var(--stroke);background:linear-gradient(180deg,#0f131a,#0d121b)}
-    header img{height:30px}
-    header h1{margin:0;font-size:18px;font-weight:800;letter-spacing:.3px}
-    main{max-width:980px;margin:24px auto;padding:0 16px;display:grid;grid-template-columns:1fr;gap:16px}
+    header img{height:30px} header h1{margin:0;font-size:18px;font-weight:800}
+    main{max-width:980px;margin:24px auto;padding:0 16px;display:grid;gap:16px}
     .card{background:var(--panel);border:1px solid var(--stroke);border-radius:14px;padding:16px}
     .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     label{display:block;font-weight:700;margin:10px 0 6px}
-    input,textarea,select{width:100%;padding:12px;border-radius:10px;border:1px solid var(--stroke);background:#0b1019;color:var(--ink);outline:none}
-    textarea{min-height:110px;resize:vertical}
-    .hint{color:var(--muted);font-size:12px;margin-top:6px}
+    input,textarea,select{width:100%;padding:12px;border-radius:10px;border:1px solid var(--stroke);background:#0b1019;color:var(--ink)}
+    textarea{min-height:110px;resize:vertical}.hint{color:var(--muted);font-size:12px;margin-top:6px}
     .btn{cursor:pointer;border:1px solid var(--stroke);background:#122037;color:#fff;border-radius:12px;padding:12px 16px;font-weight:800}
-    .btn[disabled]{opacity:.6;cursor:not-allowed}
-    .btn-brand{background:linear-gradient(135deg,#3aa0ff,#2b68ff)}
+    .btn[disabled]{opacity:.6;cursor:not-allowed}.btn-brand{background:linear-gradient(135deg,#3aa0ff,#2b68ff)}
     .grid-2{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end}
-    .msgs{display:flex;flex-direction:column-reverse;gap:10px} /* mais novo em cima */
+    .msgs{display:flex;flex-direction:column-reverse;gap:10px}
     .msg{border:1px solid var(--stroke);border-radius:12px;padding:12px;background:#0e1625}
-    .me{background:#0b1a2b}
-    .badge{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid var(--stroke);font-size:12px;color:var(--muted)}
-    .ok{color:var(--ok)} .err{color:var(--err)} .muted{color:var(--muted)}
-    .top-actions{display:flex;gap:10px;align-items:center}
+    .me{background:#0b1a2b}.badge{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid var(--stroke);font-size:12px;color:var(--muted)}
     .pill{border:1px solid var(--stroke);border-radius:999px;padding:6px 10px;color:#cfe3ff;background:#0d1b2e}
-    a {color:#8bd0ff}
+    a{color:#8bd0ff}
   </style>
 </head>
 <body>
@@ -40,25 +31,23 @@
   <h1>QUANTON3D® — Suporte Técnico SLA/DLP</h1>
   <span class="pill">v {{ app_version }}</span>
   <span style="flex:1"></span>
+  <button class="btn" id="btn-hist">Nossa história 💙</button>
   <button class="btn" id="btn-autorais">Direitos autorais</button>
 </header>
 
 <main>
   <section class="card">
-    <div class="top-actions">
-      <div class="badge">Use sempre o mesmo telefone — ele vincula seu histórico.</div>
-      <a class="badge" href="/healthz" target="_blank">healthz</a>
-      <a class="badge" href="/diag" target="_blank">diag</a>
-    </div>
+    <div class="badge">Use sempre o mesmo telefone — ele vincula seu histórico.</div>
 
     <form id="form">
-      <label>Telefone</label>
+      <label>Telefone (WhatsApp)</label>
       <input name="phone" placeholder="11999999999" required>
 
       <div class="row">
         <div>
           <label>Parâmetros de impressão Quanton3D — <span class="muted">Resina</span></label>
           <input name="resin" placeholder="Preencha se quiser registrar">
+          <div class="hint">Resina e Impressora servem para manter seu cadastro. Não são obrigatórios para resolver o problema.</div>
         </div>
         <div>
           <label>Parâmetros de impressão Quanton3D — <span class="muted">Impressora</span></label>
@@ -66,18 +55,17 @@
         </div>
       </div>
 
-      <label>Descreva seu problema</label>
-      <textarea name="problem" placeholder="Ex.: manchas na tela, linhas claras, peça não adere..."></textarea>
+      <label>Descreva o problema</label>
+      <textarea name="problem" placeholder="Ex.: meu LCD está com faixas claras / peça não adere..."></textarea>
 
       <div class="grid-2">
         <div>
-          <label>Imagens (JPG/PNG/WEBP, máx 5 • 3MB cada)</label>
+          <label>Imagens (JPG/PNG/WEBP, máx 5 — 3MB cada)</label>
           <input type="file" id="images" name="images" accept="image/jpeg,image/png,image/webp" multiple>
           <div class="hint" id="img-hint">Nenhuma imagem selecionada.</div>
         </div>
         <button class="btn btn-brand" id="send">Enviar</button>
       </div>
-      <div class="hint">Dica: se for iPhone/HEIC, exporte como JPEG/PNG antes de enviar.</div>
     </form>
   </section>
 
@@ -85,6 +73,8 @@
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
       <strong>Respostas</strong>
       <span class="badge">Mais novas no topo</span>
+      <a class="badge" href="/healthz" target="_blank">healthz</a>
+      <a class="badge" href="/diag" target="_blank">diag</a>
     </div>
     <div class="msgs" id="msgs"></div>
   </section>
@@ -110,49 +100,40 @@ function prependMsg(html){
   div.innerHTML = html;
   msgs.prepend(div);
 }
-
-function me(text){
-  prependMsg(`<div class="me">${text.replaceAll('\n','<br>')}</div>`);
-}
-function bot(text){
-  prependMsg(`${text.replaceAll('\n','<br>')}`);
-}
-
-function mdEscape(s){return s}
+function me(text){ prependMsg(`<div class="me"><b>Você</b>:<br>${text.replaceAll('\n','<br>')}</div>`); }
+function bot(text){ prependMsg(`<b>Assistente</b>:<br>${text.replaceAll('\n','<br>')}`); }
 
 form.addEventListener('submit', async (ev)=>{
   ev.preventDefault();
   if (sendBtn.disabled) return;
 
-  // valida imagens (máx 5, 3MB cada)
   const files = [...imgInput.files];
-  if (files.length > 5) { alert("Máximo de 5 imagens."); return; }
-  for (const f of files) {
-    if (f.size > 3*1024*1024) { alert("Cada imagem deve ter até 3MB."); return; }
-  }
+  if (files.length > 5){ alert("Máximo de 5 imagens."); return; }
+  for (const f of files){ if (f.size > 3*1024*1024){ alert("Cada imagem deve ter até 3MB."); return; } }
 
   const fd = new FormData(form);
-  me(`<b>Você</b>:<br>${mdEscape(form.problem.value)}`);
+  me(form.problem.value || "(sem descrição)");
 
   sendBtn.disabled = true; sendBtn.textContent = "Enviando...";
   try{
     const r = await fetch('/chat', { method:'POST', body:fd });
     const j = await r.json();
     if (!j.ok) throw new Error(j.error || 'Falha inesperada');
-
-    bot(`<b>Assistente</b>:<br>${j.answer}`);
+    bot(j.answer + (j.version ? `<br><span class="badge">versão ${j.version}</span>` : ""));
   }catch(err){
-    bot(`<span class="err">Erro:</span> ${err.message}`);
+    bot(`<span style="color:var(--err)">Erro:</span> ${err.message}`);
   }finally{
     sendBtn.disabled = false; sendBtn.textContent = "Enviar";
   }
 });
 
-// Direitos autorais (modal simples)
 document.getElementById('btn-autorais').addEventListener('click', ()=>{
   alert(`📜 Conteúdo exclusivo da marca Quanton3D®.
 Esta IA segue diretrizes e vocabulário técnico próprios.
 Uso e reprodução não autorizados são proibidos (Lei nº 9.279/96).`);
+});
+document.getElementById('btn-hist').addEventListener('click', ()=>{
+  alert("Nossa história 💙 — espaço de carinho entre Nhor, os filhos e o Ronei.");
 });
 </script>
 </body>

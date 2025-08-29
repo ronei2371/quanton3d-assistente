@@ -3,18 +3,14 @@ from datetime import datetime
 from flask import Flask, render_template, request, jsonify, send_from_directory
 from openai import OpenAI
 
-APP_VERSION = "2025-08-29b"
+APP_VERSION = "2025-08-29c"  # mostra no topo do site e em /diag
 
-# Flask
 app = Flask(__name__, template_folder="templates", static_folder="static")
 app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024  # 20MB total
 
-# Rotas básicas
 @app.get("/")
 def index():
-    # Cache mais curto para o HTML (evita pegar versão antiga)
-    resp = render_template("index.html", app_version=APP_VERSION)
-    return resp
+    return render_template("index.html", app_version=APP_VERSION)
 
 @app.get("/healthz")
 def healthz():
@@ -27,37 +23,35 @@ def diag():
         "version": APP_VERSION
     })
 
-# ====== OpenAI ======
+# -------- OpenAI client (simples, sem proxies)
 def get_client():
-    # Sem proxies, simples e compatível
     return OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
-# Prompt – MODO CERTEIRO + protocolo LCD
+# -------- Prompt com Modo Certeiro e protocolo LCD
 ASSISTANT_SYSTEM = """
-Você é o técnico de campo da Quanton3D. Estilo: direto de oficina, frases curtas, passo-a-passo.
+Você é técnico de campo da Quanton3D. Estilo: direto de oficina, frases curtas, passo-a-passo.
 
 REGRAS GERAIS:
-- Quando FALTAR dado essencial, FAÇA APENAS 1 pergunta objetiva e PARE (espere resposta).
-- Se houver IMAGENS, descreva o que observa e priorize testes práticos.
-- Nunca culpe “resina defeituosa” antes de validar mecânica/óptica/parametrização.
-- Traga sempre um “O QUE FAZER AGORA” no final.
+- Se FALTAR dado essencial, faça APENAS 1 pergunta objetiva e PARE (aguarde resposta).
+- Se houver IMAGENS, descreva o que observa e use testes práticos; não entregue checklist genérico.
+- Não culpe “resina com defeito” antes de validar mecânica/óptica/parametrização.
+- Sempre termine com: O QUE FAZER AGORA (3 a 5 passos).
 
-PROTOCOLO-LCD (quando a tela/LCD é citada ou há foto da tela acesa):
-1) Teste do PAPEL BRANCO (cuba fora): ligar UV/Exposure e avaliar UNIFORMIDADE no papel.
+PROTOCOLO-LCD (quando for LCD ou houver foto da tela acesa):
+1) Teste do PAPEL BRANCO (cuba fora) para avaliar UNIFORMIDADE:
    - Faixas/zonas que se repetem no papel = suspeita DIFUSOR/LED (backlight).
    - Pontos/linhas finas fixas = PIXELS MORTOS (LCD).
 2) Teste de GRADE/pattern: procurar quadrados apagados/linhas.
 3) Limpeza suave do LCD: microfibra + IPA 99%, sem encharcar, sem pressão.
 4) Verificar FEP (opacidade/riscos) e VAZAMENTO de resina nas bordas do LCD.
-5) Conclusão objetiva: se padrão se repete no papel → difusor/LED; se pontos/linhas → LCD; caso contrário, reflexo/ângulo.
+5) Concluir objetivamente: difusor/LED x LCD x reflexo/ângulo. Evite generalidades.
 
-PROTOCOLO-GERAL (quando não for LCD):
-- Cheque adesão, nivelamento, exposição, suporte, FEP, altura de lift e velocidade; depois resina/temperatura.
+PROTOCOLO-GERAL (outros casos):
+- Checar adesão/nivelamento/exposição/suportes/FEP/velocidades; depois resina e temperatura ambiente.
 """
 
 def _file_to_base64(f):
     data = f.read()
-    # Segurança extra: valida mimetype simples
     kind = imghdr.what(None, h=data)
     if kind not in {"jpeg", "png", "webp"}:
         raise ValueError("Apenas JPG, PNG ou WEBP.")
@@ -68,8 +62,8 @@ def _file_to_base64(f):
 @app.post("/chat")
 def chat():
     try:
-        phone = (request.form.get("phone") or "").strip()
-        resin = (request.form.get("resin") or "").strip()
+        phone   = (request.form.get("phone")   or "").strip()
+        resin   = (request.form.get("resin")   or "").strip()
         printer = (request.form.get("printer") or "").strip()
         problem = (request.form.get("problem") or "").strip()
 
@@ -79,9 +73,7 @@ def chat():
             return jsonify(ok=False, error="Descreva o problema."), 400
 
         files = request.files.getlist("images")
-        # Validação leve de imagens
-        images_b64 = []
-        total_bytes = 0
+        images_b64, total_bytes = [], 0
         for i, f in enumerate(files[:5]):
             size = f.content_length or 0
             total_bytes += size
@@ -91,11 +83,10 @@ def chat():
                 continue
             images_b64.append(_file_to_base64(f))
 
-        app.logger.info(f"/chat imagens={len(images_b64)} bytes_totais={total_bytes}")
+        app.logger.info(f"/chat imagens_recebidas={len(images_b64)} bytes_totais={total_bytes}")
 
-        # Categoria sugerida (ajuda o modelo a escolher o protocolo)
-        p_low = problem.lower()
-        lcd_hint = ("lcd" in p_low) or ("tela" in p_low) or (len(images_b64) > 0)
+        # Dica ao modelo: LCD se tem foto ou o texto falar em tela/LCD
+        lcd_hint = ("lcd" in problem.lower()) or ("tela" in problem.lower()) or (len(images_b64) > 0)
 
         user_text = (
             f"Telefone: {phone}\n"
@@ -106,10 +97,13 @@ def chat():
             "Contexto: suporte técnico Quanton3D (SLA/DLP)."
         )
 
-        # Monta conteúdo do usuário (texto + imagens)
+        # >>>> AQUI ESTÁ A CORREÇÃO IMPORTANTE <<<<
         content = [{"type": "text", "text": user_text}]
         for url in images_b64:
-            content.append({"type": "image_url", "image_url": url})
+            content.append({
+                "type": "image_url",
+                "image_url": {"url": url}   # precisa ser objeto com {"url": "..."}
+            })
 
         client = get_client()
         resp = client.chat.completions.create(
@@ -117,7 +111,7 @@ def chat():
             temperature=0.1,
             messages=[
                 {"role": "system", "content": ASSISTANT_SYSTEM},
-                {"role": "user", "content": content},
+                {"role": "user",   "content": content},
             ],
         )
         answer = resp.choices[0].message.content.strip()
@@ -126,11 +120,9 @@ def chat():
         app.logger.exception("erro no /chat")
         return jsonify(ok=False, error=str(e)), 500
 
-# Arquivos estáticos (logo etc.)
 @app.get("/static/<path:filename>")
 def static_files(filename):
     return send_from_directory(app.static_folder, filename)
 
 if __name__ == "__main__":
-    # Local: python app.py
     app.run(host="0.0.0.0", port=5000, debug=True)
