@@ -1,163 +1,124 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="dark">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>QUANTON3D — Suporte Técnico SLA/DLP</title>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="icon" href="{{ url_for('static', filename='favicon.png') }}" />
   <style>
     :root{
-      --bg:#0b0f14;
-      --card:#0f1520cc;
-      --muted:#8aa0b2;
-      --text:#e9f1f7;
-      --brand:#39e1a2;
-      --brand-2:#53a8ff;
-      --danger:#ff6b6b;
-      --ok:#65ffa8;
-      --ring: 0 0 0 2px color-mix(in srgb, var(--brand) 60%, transparent);
-      --shadow: 0 10px 30px rgba(0,0,0,.35);
-      --radius: 16px;
+      --bg:#0b0f14; --card:#0f1520cc; --muted:#8aa0b2; --text:#e9f1f7;
+      --brand:#39e1a2; --brand-2:#53a8ff; --ring: 0 0 0 2px color-mix(in srgb, var(--brand) 60%, transparent);
+      --border:#1c2733; --border2:#1b2a38; --ok:#65ffa8;
+      --shadow: 0 10px 30px rgba(0,0,0,.35); --radius:16px;
     }
-    *{box-sizing:border-box}
-    html,body{height:100%}
+    :root[data-theme="light"]{
+      --bg:#f5f8fb; --card:#ffffffd9; --muted:#506271; --text:#0c1014;
+      --brand:#1ed6a1; --brand-2:#458bff; --border:#d9e2ea; --border2:#e7eef5;
+      --shadow: 0 10px 24px rgba(0,0,0,.08);
+    }
+    *{box-sizing:border-box} html,body{height:100%}
     body{
-      margin:0;
-      font-family:Inter,system-ui,Segoe UI,Roboto,Arial,Helvetica,sans-serif;
+      margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;color:var(--text);
       background:
         radial-gradient(1200px 600px at 80% -20%, #1b2632 15%, transparent 60%),
         radial-gradient(1200px 600px at 10% -30%, #15202b 10%, transparent 60%),
         repeating-linear-gradient(90deg, rgba(255,255,255,.03) 0 1px, transparent 1px 80px),
-        linear-gradient(#0b0f14, #0b0f14);
-      color:var(--text);
-      letter-spacing:.2px;
+        linear-gradient(var(--bg),var(--bg));
     }
-    a{color:var(--brand-2);text-decoration:none}
-    a:hover{text-decoration:underline}
-
-    .wrap{
-      max-width:1120px;
-      margin:32px auto;
-      padding:0 16px 56px;
+    :root[data-theme="light"] body{
+      background:
+        radial-gradient(1200px 600px at 80% -20%, #e8f0ff 15%, transparent 60%),
+        radial-gradient(1200px 600px at 10% -30%, #f1fff9 10%, transparent 60%),
+        linear-gradient(var(--bg),var(--bg));
     }
-
-    .header{
-      display:flex;align-items:center;gap:16px;justify-content:space-between;margin-bottom:20px
-    }
-    .brand{
-      display:flex;align-items:center;gap:14px
-    }
-    .logo{
-      width:44px;height:44px;border-radius:12px;
-      background: linear-gradient(135deg,var(--brand),var(--brand-2));
-      display:grid;place-items:center;color:#002a1e;font-weight:900;
-      box-shadow: var(--shadow);
-    }
+    a{color:var(--brand-2);text-decoration:none} a:hover{text-decoration:underline}
+    .wrap{max-width:1120px;margin:32px auto;padding:0 16px 56px}
+    .header{display:flex;align-items:center;gap:16px;justify-content:space-between;margin-bottom:20px}
+    .brand{display:flex;align-items:center;gap:14px}
+    .logoBox{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;box-shadow:var(--shadow);
+      background:linear-gradient(135deg,var(--brand),var(--brand-2));overflow:hidden}
+    .logoBox img{width:100%;height:100%;object-fit:cover}
+    .logoFallback{color:#002a1e;font-weight:900}
     .title{font-weight:800;font-size:22px}
-    .version{
-      font-size:12px;color:var(--muted);padding:4px 10px;border:1px solid #203040;border-radius:999px
-    }
+    .small{font-size:12px;color:var(--muted)}
+    .pill{padding:6px 10px;border-radius:999px;border:1px solid var(--border);background:color-mix(in srgb,var(--card) 90%, transparent);font-size:12px}
     .actions{display:flex;gap:10px}
-    .btn{
-      border:1px solid #223243;background:#0f1520;color:var(--text);
-      padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:600
-    }
+    .btn{border:1px solid #223243;border-color:var(--border);background:var(--card);backdrop-filter:blur(10px);
+      color:var(--text);padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:600}
     .btn:hover{border-color:#38556e}
-    .btn-brand{
-      background:linear-gradient(135deg,var(--brand-2),var(--brand));border:none;color:#041015;
-    }
-    .btn-brand:hover{filter:brightness(1.05)}
-    .btn-ghost{background:#101620;border:1px solid #26374a}
-    .grid{
-      display:grid;grid-template-columns: 1.1fr .9fr;gap:18px
-    }
-    @media (max-width: 980px){ .grid{grid-template-columns:1fr} }
-
-    .card{
-      background:var(--card);backdrop-filter: blur(10px);
-      border:1px solid #1c2733;border-radius:var(--radius);box-shadow:var(--shadow)
-    }
-    .card .hd{
-      padding:16px 18px;border-bottom:1px solid #1b2a38;display:flex;justify-content:space-between;align-items:center
-    }
+    .btn-brand{background:linear-gradient(135deg,var(--brand-2),var(--brand));border:none;color:#041015}
+    .btn-ghost{background:color-mix(in srgb,var(--card) 85%, transparent)}
+    .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}
+    @media (max-width:980px){.grid{grid-template-columns:1fr}}
+    .card{background:var(--card);backdrop-filter:blur(10px);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .card .hd{padding:16px 18px;border-bottom:1px solid var(--border2);display:flex;justify-content:space-between;align-items:center}
     .card .bd{padding:18px}
-
     .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     .row-3{display:grid;grid-template-columns:1.1fr .9fr;gap:12px}
     .row-1{display:grid;grid-template-columns:1fr;gap:12px}
-    @media (max-width:720px){ .row, .row-3{grid-template-columns:1fr} }
-
+    @media (max-width:720px){ .row,.row-3{grid-template-columns:1fr} }
     label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
-    .in{
-      width:100%;padding:12px 12px 12px 12px;border-radius:12px;
-      background:#0d131b;border:1px solid #1f2e3d;color:var(--text);
-      outline:none
-    }
+    .in{width:100%;padding:12px;border-radius:12px;background:#0d131b;color:var(--text);border:1px solid #1f2e3d;outline:none}
+    :root[data-theme="light"] .in{background:#ffffff;border-color:var(--border)}
     .in:focus{box-shadow:var(--ring);border-color:#29506b}
     textarea.in{min-height:110px;resize:vertical}
-
     .hint{color:var(--muted);font-size:12px;margin-top:6px}
-
     .toolbar{display:flex;gap:10px;align-items:center;margin-top:10px}
     .sp{flex:1}
-    .small{font-size:12px;color:var(--muted)}
-
+    .tag{display:inline-block;padding:2px 8px;border:1px solid #264059;border-radius:999px;color:#9fc1d6;font-size:12px}
     .thumbs{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
-    .thumb{
-      width:84px;height:84px;border-radius:12px;background:#0a0f14;border:1px dashed #29445a;
-      display:grid;place-items:center;overflow:hidden
-    }
+    .thumb{width:84px;height:84px;border-radius:12px;background:#0a0f14;border:1px dashed #29445a;display:grid;place-items:center;overflow:hidden;position:relative}
     .thumb img{width:100%;height:100%;object-fit:cover}
-
+    .thumb .x{position:absolute;inset:4px 4px auto auto;background:#0b0b0bcc;border:1px solid #2e2e2e;color:#fff;font-size:10px;
+      padding:2px 6px;border-radius:999px}
+    .dz{border:1px dashed #2f4f67;border-radius:12px;padding:10px;margin-top:10px;color:var(--muted);font-size:12px;text-align:center}
+    .dz.over{background:color-mix(in srgb,var(--card) 80%, transparent)}
     .timeline{display:flex;flex-direction:column;gap:10px;max-height:640px;overflow:auto;padding:12px}
-    .bubble{
-      padding:12px 14px;border-radius:14px;border:1px solid #203041;background:#0d1218
-    }
+    .bubble{padding:12px 14px;border-radius:14px;border:1px solid #203041;background:#0d1218}
     .bubble.me{background:#0a1216;border-color:#21424e}
     .bubble.ai{background:#0f161f;border-color:#24445a}
-    .tag{display:inline-block;padding:2px 8px;border:1px solid #264059;border-radius:999px;color:#9fc1d6;font-size:12px}
+    :root[data-theme="light"] .bubble{background:#fff;border-color:var(--border)}
     .empty{color:#7c92a4;font-size:14px;padding:6px}
-
-    .footer{margin-top:20px;color:#7faac0;font-size:13px}
-    .hr{border-top:1px solid #1b2a38;margin:8px 0 14px}
-    .pill{padding:6px 10px;border-radius:999px;background:#0c131a;border:1px solid #213445;color:#b6d2e2;font-size:12px}
-
+    .hr{border-top:1px solid var(--border2);margin:8px 0 14px}
     .spin{width:16px;height:16px;border-radius:50%;border:2px solid #1f2f3f;border-top-color:var(--brand);display:inline-block;animation:spin .8s linear infinite;vertical-align:-3px}
     @keyframes spin{to{transform:rotate(360deg)}}
-
-    .quick{
-      display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px
-    }
-    @media (max-width:980px){ .quick{grid-template-columns:1fr} }
-    .qcard{border:1px solid #223244;border-radius:12px;padding:12px;background:#0c131a}
+    .quick{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px}
+    @media (max-width:980px){.quick{grid-template-columns:1fr}}
+    .qcard{border:1px solid var(--border);border-radius:12px;padding:12px;background:color-mix(in srgb,var(--card) 85%, transparent)}
     .qcard h4{margin:0 0 6px;font-size:14px}
     .qcard ul{margin:0;padding-left:18px}
     .qcard li{color:#9eb5c6;font-size:13px;margin:6px 0}
+    .footer{margin-top:20px;color:#7faac0;font-size:13px}
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="header">
       <div class="brand">
-        <div class="logo">Q3</div>
+        <div class="logoBox">
+          {% set _logo = url_for('static', filename='logo.png') %}
+          <img src="{{ _logo }}" alt="Logo" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'logoFallback',textContent:'Q3'}));">
+        </div>
         <div>
           <div class="title">QUANTON3D® — Suporte Técnico SLA/DLP</div>
           <div class="small">Atendimento prático e certeiro. <span class="pill">v {{ app_version or "local" }}</span></div>
         </div>
       </div>
       <div class="actions">
-        <a class="btn btn-ghost" href="#" onclick="alert('Em breve ✨');return false;">Nossa história</a>
+        <button class="btn" id="btnTheme" title="Alternar claro/escuro">🌙 / ☀️</button>
         <a class="btn btn-ghost" href="#" onclick="alert('Direitos reservados QUANTON3D®');return false;">Direitos autorais</a>
       </div>
     </div>
 
     <div class="grid">
-      <!-- FORM -->
       <div class="card">
         <div class="hd">
           <div>Atendimento técnico</div>
-          <div class="version">Use sempre o mesmo telefone — liga as conversas.</div>
+          <div class="small">Use sempre o mesmo telefone — mantém o histórico.</div>
         </div>
         <div class="bd">
           <form id="f" enctype="multipart/form-data" onsubmit="return false;">
@@ -182,7 +143,7 @@
               <div>
                 <label>Resina (opcional)</label>
                 <input class="in" name="resin" id="resin" placeholder="Ex.: ALCHEMIST ELEGOO / FlexForm..." />
-                <div class="hint">Preencha para salvar suas configs no histórico.</div>
+                <div class="hint">Preencha para guardar suas configs.</div>
               </div>
               <div>
                 <label>Impressora (opcional)</label>
@@ -200,17 +161,18 @@
             <div class="row-1">
               <div>
                 <label>Imagens (JPG/PNG/WEBP, máx 5 — 3MB cada)</label>
-                <input class="in" type="file" name="photos" id="photos" multiple accept="image/*" />
+                <input class="in" type="file" name="photos" id="photos" multiple accept="image/*" capture="environment" />
+                <div class="dz" id="dz">Arraste as fotos aqui ou clique em “Escolher arquivo”.</div>
                 <div class="thumbs" id="thumbs"></div>
-                <div class="hint">Fotos ajudam MUITO para LCD, adesão e suportes.</div>
+                <div class="hint"><span id="count">0</span>/5 imagens • Clique numa miniatura para remover.</div>
               </div>
             </div>
 
             <div class="toolbar">
               <div class="sp"></div>
-              <a class="btn" id="btnHealth" href="/healthz" target="_blank" rel="noopener">Saúde</a>
-              <a class="btn" id="btnDiag" href="/diag" target="_blank" rel="noopener">Diag</a>
-              <button class="btn btn-ghost" id="btnReset" type="button" title="Limpa o histórico deste telefone">Reset</button>
+              <a class="btn" href="/healthz" target="_blank" rel="noopener">Saúde</a>
+              <a class="btn" href="/diag" target="_blank" rel="noopener">Diag</a>
+              <button class="btn" id="btnReset" type="button" title="Limpa histórico deste telefone">Fechar assunto</button>
               <button class="btn btn-brand" id="btnSend" type="submit">Enviar</button>
             </div>
           </form>
@@ -221,9 +183,9 @@
             <div class="qcard">
               <h4>LCD — Modo certeiro</h4>
               <ul>
-                <li>Papel branco: ver faixas → difusor/LED</li>
+                <li>Papel branco: faixas → difusor/LED</li>
                 <li>Grade/pixels: linhas apagadas → LCD</li>
-                <li>Limpeza: microfibra + IPA (sem encharcar)</li>
+                <li>Microfibra + IPA (sem encharcar)</li>
               </ul>
             </div>
             <div class="qcard">
@@ -237,8 +199,8 @@
             <div class="qcard">
               <h4>Suportes</h4>
               <ul>
-                <li>Ângulos suaves e densidade adequada</li>
-                <li>Refaça ilhas e pontos fracos</li>
+                <li>Densidade adequada e ângulos suaves</li>
+                <li>Reforce ilhas e pontos fracos</li>
                 <li>Teste rápido com peça simples</li>
               </ul>
             </div>
@@ -246,12 +208,12 @@
         </div>
       </div>
 
-      <!-- CHAT -->
       <div class="card">
         <div class="hd">
           <div>Respostas</div>
           <div class="small">
-            <span class="tag">conversa contínua por telefone</span>
+            <button class="btn btn-ghost" id="btnCopy" title="Copiar última resposta">Copiar</button>
+            <button class="btn btn-ghost" id="btnSave" title="Baixar conversa (.txt)">Baixar</button>
           </div>
         </div>
         <div class="bd">
@@ -269,84 +231,107 @@
   </div>
 
   <script>
-    const el = (id)=>document.getElementById(id);
-    const tl = el('tl');
-    const thumbs = el('thumbs');
-    const phone = el('phone');
-    const scope = el('scope');
-    const resin = el('resin');
-    const printer = el('printer');
-    const problem = el('problem');
-    const photos = el('photos');
-    const btnSend = el('btnSend');
-    const btnReset = el('btnReset');
+    const $ = (id)=>document.getElementById(id);
+    const tl = $('tl'), thumbs=$('thumbs'), photos=$('photos'), dz=$('dz'), count=$('count');
+    const phone=$('phone'), scope=$('scope'), resin=$('resin'), printer=$('printer'), problem=$('problem');
+    const btnSend=$('btnSend'), btnReset=$('btnReset'), btnCopy=$('btnCopy'), btnSave=$('btnSave'), btnTheme=$('btnTheme');
 
-    // Previews
-    photos.addEventListener('change', ()=>{
-      thumbs.innerHTML = '';
-      [...photos.files].slice(0,5).forEach(f=>{
-        const d = document.createElement('div');
-        d.className='thumb';
-        const img = document.createElement('img');
-        d.appendChild(img);
-        thumbs.appendChild(d);
-        const reader = new FileReader();
-        reader.onload = e => img.src = e.target.result;
-        reader.readAsDataURL(f);
+    // ---- Tema (salva no navegador)
+    const THEME_KEY='q3_theme';
+    const setTheme = t => { document.documentElement.setAttribute('data-theme',t); localStorage.setItem(THEME_KEY,t); };
+    setTheme(localStorage.getItem(THEME_KEY)||'dark');
+    btnTheme.addEventListener('click', ()=> setTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark'));
+
+    // ---- Previews e remoção
+    function refreshCount(){ count.textContent = Math.min(5, (photos.files||[]).length); }
+    function renderThumbs(){
+      thumbs.innerHTML=''; refreshCount();
+      [...photos.files].slice(0,5).forEach((f,idx)=>{
+        const t=document.createElement('div'); t.className='thumb';
+        const img=new Image(); t.appendChild(img);
+        const x=document.createElement('button'); x.className='x'; x.type='button'; x.textContent='remover'; t.appendChild(x);
+        x.addEventListener('click',()=> removeFile(idx));
+        const r=new FileReader(); r.onload=e=>img.src=e.target.result; r.readAsDataURL(f);
+        thumbs.appendChild(t);
       });
+    }
+    function removeFile(index){
+      const dt = new DataTransfer();
+      [...photos.files].forEach((f,i)=>{ if(i!==index) dt.items.add(f); });
+      photos.files = dt.files; renderThumbs();
+    }
+    photos.addEventListener('change', renderThumbs);
+
+    // ---- Drag & Drop
+    ;['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault(); dz.classList.add('over');}));
+    ;['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault(); dz.classList.remove('over');}));
+    dz.addEventListener('drop', e=>{
+      const files = [...(e.dataTransfer?.files||[])].slice(0, 5);
+      const dt = new DataTransfer();
+      files.forEach(f=>dt.items.add(f));
+      photos.files = dt.files; renderThumbs();
     });
 
-    function addBubble(role, text){
-      const b = document.createElement('div');
-      b.className = 'bubble ' + (role==='me'?'me':'ai');
-      b.innerText = text;
-      tl.querySelector('.empty')?.remove();
-      tl.appendChild(b);
-      tl.scrollTop = tl.scrollHeight;
+    // ---- Linha do tempo
+    function bubble(role, text){
+      const b=document.createElement('div'); b.className='bubble '+(role==='me'?'me':'ai');
+      b.innerText = text; tl.querySelector('.empty')?.remove(); tl.appendChild(b); tl.scrollTop = tl.scrollHeight;
     }
 
-    // Reset conversas
+    // ---- Copiar última resposta
+    btnCopy.addEventListener('click', ()=>{
+      const last = [...document.querySelectorAll('.bubble.ai')].pop();
+      if(!last){ alert('Sem resposta para copiar.'); return; }
+      navigator.clipboard.writeText(last.innerText);
+      btnCopy.textContent='Copiado ✓'; setTimeout(()=>btnCopy.textContent='Copiar',1200);
+    });
+
+    // ---- Baixar conversa
+    btnSave.addEventListener('click', ()=>{
+      const lines=[...document.querySelectorAll('.bubble')].map(b => (b.classList.contains('me')?'Você: ':'Assistente: ')+b.innerText);
+      if(!lines.length){ alert('Sem mensagens.'); return; }
+      const blob=new Blob([lines.join('\n')],{type:'text/plain;charset=utf-8'});
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+      a.download='conversa_quanton3d.txt'; a.click(); URL.revokeObjectURL(a.href);
+    });
+
+    // ---- Reset (fechar assunto)
     btnReset.addEventListener('click', ()=>{
-      const p = (phone.value||'').replace(/\D/g,'');
+      const p=(phone.value||'').replace(/\D/g,'');
       if(!p){ alert('Informe o telefone para resetar.'); return; }
       if(!confirm('Limpar histórico deste telefone?')) return;
       window.open(`/reset?phone=${encodeURIComponent(p)}`,'_blank');
     });
 
-    // Enviar
+    // ---- Enviar mensagem
     document.getElementById('f').addEventListener('submit', async ()=>{
-      const p = phone.value.trim();
-      const text = problem.value.trim();
+      const p=phone.value.trim(), text=problem.value.trim();
       if(!p || !text){ alert('Preencha telefone e problema.'); return; }
 
-      addBubble('me', text);
-      const label = btnSend.innerHTML;
-      btnSend.innerHTML = '<span class="spin"></span> Enviando...';
-      btnSend.disabled = true;
+      bubble('me', text);
+      const label=btnSend.innerHTML; btnSend.innerHTML='<span class="spin"></span> Enviando...'; btnSend.disabled=true;
 
       try{
-        const fd = new FormData();
+        const fd=new FormData();
         fd.append('phone', p);
         fd.append('scope', scope.value);
         fd.append('resin', resin.value);
         fd.append('printer', printer.value);
         fd.append('problem', text);
-        // arquivos (máx 5)
-        [...photos.files].slice(0,5).forEach(f => fd.append('photos', f));
+        [...photos.files].slice(0,5).forEach(f=>fd.append('photos', f));
 
-        const r = await fetch('/chat', { method: 'POST', body: fd });
-        const js = await r.json().catch(()=>({ok:false,error:'Erro ao ler resposta.'}));
+        const r=await fetch('/chat',{method:'POST',body:fd});
+        const js=await r.json().catch(()=>({ok:false,error:'Erro ao ler resposta.'}));
 
         if(js.ok){
-          addBubble('ai', js.reply || js.answer || '(sem conteúdo)');
+          bubble('ai', js.reply || js.answer || '(sem conteúdo)');
         }else{
-          addBubble('ai', '⚠️ ' + (js.error || 'Falha ao processar. Tente novamente.'));
+          bubble('ai', '⚠️ ' + (js.error || 'Falha ao processar. Tente novamente.'));
         }
       }catch(e){
-        addBubble('ai', '⚠️ Erro de rede: ' + e.message);
+        bubble('ai','⚠️ Erro de rede: '+e.message);
       }finally{
-        btnSend.innerHTML = label;
-        btnSend.disabled = false;
+        btnSend.innerHTML=label; btnSend.disabled=false;
       }
     });
   </script>
