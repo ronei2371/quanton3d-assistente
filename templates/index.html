@@ -2,226 +2,362 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>QUANTON3D — Suporte Técnico SLA/DLP</title>
-
-  <!-- Favicon oficial -->
-  <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}" sizes="32x32" />
-  <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}" sizes="192x192" />
-  <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon.png') }}"/>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>QUANTON3D® — Suporte Técnico 3D</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}" />
   <style>
     :root{
-      --bg:#0b0f14; --panel:#121821; --muted:#2a3442; --line:#243040;
-      --brand:#06c3ff; --brand2:#28e1ff; --text:#e9f0f8; --text-dim:#9bb0c9; --ok:#2ed573; --err:#ff6b6b;
+      --bg:#0b1220;          /* fundo escuro elegante */
+      --panel:#0f1730;       /* cartões */
+      --text:#e7f1ff;        /* texto principal */
+      --muted:#9fc5ff;       /* texto suave */
+      --line:#1c2744;        /* bordas */
+      --brand:#00c2ff;       /* ciano Quanton */
+      --brand2:#4f46e5;      /* indigo */
+      --ok:#10b981;          /* verde ok */
+      --warn:#f59e0b;        /* amarelo */
+      --err:#ef4444;         /* vermelho */
+      --radius:16px;
     }
     *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0; background:radial-gradient(1200px 600px at 10% -10%, #0c1723 10%, var(--bg) 60%),
-      radial-gradient(900px 500px at 110% -20%, #072c3e 10%, transparent 60%), var(--bg);
-      color:var(--text); font:16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    }
-    .wrap{max-width:970px; margin:24px auto 56px; padding:0 16px}
-    header{
-      display:flex; align-items:center; gap:14px; margin:8px 0 22px;
-    }
-    header img.logo{width:44px; height:44px; border-radius:10px; background:#000; box-shadow:0 0 0 2px #0b0b0b, 0 0 18px rgba(0, 195, 255,.3)}
-    header .ttl{font-weight:700; letter-spacing:.3px}
-    header .ver{color:var(--text-dim); font-size:.85rem; padding:.15rem .5rem; border:1px solid var(--line); border-radius:999px}
+    html,body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Ubuntu,"Helvetica Neue",Arial,sans-serif}
+    a{color:var(--muted);text-decoration:none}
+    a:hover{color:#fff;text-decoration:underline}
 
-    .card{background:linear-gradient(180deg, rgba(6,28,38,.45), rgba(9,18,28,.45)), var(--panel);
-      border:1px solid var(--line); border-radius:16px; box-shadow:0 20px 40px rgba(0,0,0,.25); padding:18px}
-    .grid{display:grid; grid-template-columns:1fr 1fr; gap:14px}
-    .grid-1{display:grid; grid-template-columns:1fr; gap:14px}
-    label{font-size:.9rem; color:var(--text-dim)}
-    input[type="text"], textarea, select{
-      width:100%; background:#0f1520; color:var(--text); border:1px solid #1d2734; outline:none;
-      padding:12px 12px; border-radius:12px; transition:.15s; caret-color:var(--brand);
+    /* topo com gradiente Quanton */
+    .hero{
+      background: radial-gradient(1200px 600px at 20% -10%, rgba(79,70,229,.35), transparent 60%),
+                  linear-gradient(90deg, var(--brand2), var(--brand));
+      padding:24px 16px 100px 16px;
+      position:relative;
+      overflow:hidden;
     }
-    input::placeholder, textarea::placeholder{color:#7f96b1}
-    input:focus, textarea:focus, select:focus{border-color:var(--brand)}
+    .wrap{max-width:980px;margin:0 auto;padding:0 16px}
+
+    .brand-row{display:flex;align-items:center;gap:16px}
+    .brand-logo{
+      width:52px;height:52px;border-radius:14px;
+      background:#0008;display:flex;align-items:center;justify-content:center;
+      box-shadow:0 8px 30px #0008;overflow:hidden
+    }
+    .brand-logo img{width:100%;height:100%;object-fit:cover}
+
+    h1{
+      margin:0;
+      font-size:clamp(22px, 2.4vw + 16px, 40px);
+      line-height:1.05;
+      letter-spacing:.3px;
+    }
+    .brand-mark{font-weight:900}
+    .brand-mark sup{font-size:.55em; top:-0.7em; position:relative}
+    .subtitle{
+      display:block;
+      font-weight:600;
+      opacity:.92;
+      margin-top:6px;
+      font-size:clamp(14px, 1.1vw + 10px, 18px);
+    }
+
+    /* chips de topo */
+    .chips{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+    .chip{
+      background:#ffffff22;border:1px solid #ffffff33;color:#eaf6ff;
+      border-radius:999px;padding:6px 12px;font-size:13px;backdrop-filter:blur(6px)
+    }
+    .mode-toggle{cursor:pointer}
+
+    /* cartão formulário */
+    .card{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      margin-top:-64px;
+      box-shadow:0 15px 60px rgba(0,0,0,.35);
+    }
+    .card-body{padding:18px}
+
+    /* grid dos campos */
+    .grid{
+      display:grid; gap:14px;
+      grid-template-columns:1fr;
+    }
+    @media(min-width:860px){
+      .grid{grid-template-columns:1fr 1fr}
+      .grid span.full{grid-column:1 / span 2}
+    }
+
+    label{display:block;font-weight:700;font-size:14px;margin:6px 0 6px 2px}
+    .hint{font-weight:500;color:var(--muted);font-size:12px;margin:0 0 10px 2px}
+    input[type="text"], input[type="tel"], select, textarea{
+      width:100%; background:#0b1328; color:var(--text);
+      border:1.5px solid #193057; border-radius:12px;
+      padding:12px 14px; outline:none; font-size:15px;
+      transition: .15s border, .15s box-shadow, .15s background;
+    }
     textarea{min-height:120px; resize:vertical}
-    .hint{font-size:.8rem; color:var(--text-dim)}
-    .bar{display:flex; gap:10px; align-items:center; justify-content:flex-end; margin-top:10px}
-    .btn{
-      appearance:none; border:0; padding:12px 18px; border-radius:12px; cursor:pointer; font-weight:600;
-      color:#001018; background:linear-gradient(180deg, var(--brand2), var(--brand)); box-shadow:0 8px 24px rgba(6,195,255,.25);
+    input:focus, select:focus, textarea:focus{
+      border-color: var(--brand);
+      box-shadow:0 0 0 4px rgba(0,194,255,.18);
+      background:#0b1530;
     }
-    .btn:disabled{opacity:.6; cursor:not-allowed}
-    .btn-out{
-      background:transparent; color:var(--text); border:1px solid var(--line)
-    }
-    .resp{margin-top:16px; padding:14px; border-radius:12px; border:1px dashed var(--line); background:#0b121b}
-    .resp .me{opacity:.9; margin:10px 0 2px; color:#c7d6ea; font-size:.92rem}
-    .resp .ai{margin:6px 0 14px; white-space:pre-wrap}
-    .muted{color:var(--text-dim)}
-    .links{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
-    .chip{font-size:.8rem; padding:.15rem .5rem; border-radius:999px; border:1px solid var(--line); color:var(--text-dim)}
-    .ok{color:var(--ok)} .err{color:var(--err)}
+    .file-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+    input[type="file"]{font-size:14px}
+    .small{font-size:12px;color:var(--muted)}
 
-    /* Modal Termos */
-    .modal-back{position:fixed; inset:0; background:rgba(5,10,16,.7); backdrop-filter:blur(3px); display:none; align-items:center; justify-content:center; z-index:1000}
-    .modal{width:min(680px, 92vw); background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:20px}
-    .modal h3{margin:0 0 10px}
-    .ul{margin:10px 0 14px 20px}
-    .ul li{margin:6px 0}
-    .tos-row{display:flex; align-items:center; gap:10px; margin-top:8px}
-    .tiny{font-size:.82rem; color:var(--text-dim)}
+    .actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}
+    .btn{
+      appearance:none;border:none;cursor:pointer;
+      border-radius:14px;padding:12px 18px;font-weight:800;
+      letter-spacing:.2px;font-size:15px;
+      transition: .15s transform, .15s filter, .15s opacity;
+    }
+    .btn:active{transform:translateY(1px)}
+    .btn-primary{
+      color:#00111a;background:linear-gradient(90deg,var(--brand),#36e1ff);
+      box-shadow: 0 10px 30px rgba(0,194,255,.35), inset 0 -2px 0 #00a1d4;
+    }
+    .btn-ghost{background:#10203a;color:#d8ecff;border:1px solid #1a2d50}
+    .btn[disabled]{opacity:.45;cursor:not-allowed;filter:grayscale(.3)}
+
+    /* mensagens */
+    .feed{padding:6px 0 4px}
+    .bubble{border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin:8px 0}
+    .me{background:#0b162a}
+    .bot{background:#0f1a33}
+
+    .ok{color:var(--ok)}
+    .err{color:var(--err)}
+    .warn{color:var(--warn)}
+    .link-row{display:flex; gap:14px; align-items:center; flex-wrap:wrap; margin-top:10px}
+    .brand-badge{display:inline-flex;align-items:center;gap:8px;font-weight:700}
+
+    /* destaque dos selects */
+    select{appearance:none;background-image:
+      linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+      linear-gradient(135deg, var(--muted) 50%, transparent 50%),
+      linear-gradient(to right, #0b1328, #0b1328);
+      background-position: calc(100% - 18px) calc(1em + 2px),
+                           calc(100% - 13px) calc(1em + 2px),
+                           100% 0;
+      background-size: 5px 5px, 5px 5px, 2.8em 2.8em;
+      background-repeat: no-repeat;
+      padding-right:42px;
+    }
+    .terms{
+      display:flex; align-items:center; gap:10px; margin-top:6px;
+      border-top:1px solid var(--line); padding-top:10px; color:var(--muted); font-size:13px;
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <img class="logo" src="{{ url_for('static', filename='logo.png') }}" alt="Quanton3D">
-      <div>
-        <div class="ttl">QUANTON3D® — Suporte Técnico SLA/DLP</div>
-        <div class="links">
-          <span class="chip">v {{ app_version }}</span>
-          <a class="chip" href="{{ url_for('static', filename='direitos-autorais.txt') }}" target="_blank" rel="noopener">Direitos autorais</a>
-          <a class="chip" href="{{ url_for('static', filename='privacidade.txt') }}" target="_blank" rel="noopener">Privacidade</a>
-        </div>
-      </div>
-      <div style="flex:1"></div>
-      <span class="ver">Modo Certeiro</span>
-    </header>
 
-    <section class="card">
-      <form id="f" class="grid-1" enctype="multipart/form-data" autocomplete="on">
-        <div class="grid">
-          <div>
-            <label>Telefone (WhatsApp)</label>
-            <input type="text" name="phone" id="phone" placeholder="(31) 9 0000-0000" required>
-            <div class="hint">Use sempre o mesmo telefone — ele vincula seu histórico.</div>
-          </div>
-          <div>
-            <label>Onde está o problema?</label>
-            <select name="scope" id="scope">
-              <option value="desconhecido">Selecione…</option>
-              <option value="lcd">Na tela (LCD)</option>
-              <option value="geral">Geral (adesão/suportes/exposição)</option>
-              <option value="mecanico">Mecânico (eixo Z/FEP)</option>
-              <option value="eletronica">Eletrônica/Luzes</option>
-            </select>
-          </div>
+  <header class="hero">
+    <div class="wrap">
+      <div class="brand-row">
+        <div class="brand-logo">
+          <!-- coloque static/logo.png (oficial) -->
+          <img src="{{ url_for('static', filename='logo.png') }}" alt="Quanton3D">
         </div>
-
-        <div class="grid">
-          <div>
-            <label>Resina (opcional — catálogo Quanton3D em breve)</label>
-            <input type="text" name="resin" id="resin" placeholder="Ex.: Q3D Dental / Flex / Tough…">
-          </div>
-          <div>
-            <label>Impressora (opcional — catálogo em breve)</label>
-            <input type="text" name="printer" id="printer" placeholder="Ex.: Anycubic Photon Mono X, Elegoo Saturn…">
-          </div>
-        </div>
-
         <div>
-          <label>Descreva o problema</label>
-          <textarea name="problem" id="problem" placeholder="Explique o que está acontecendo…"></textarea>
+          <h1>
+            <span class="brand-mark">QUANTON3D<sup>®</sup></span>
+            <span class="subtitle">Suporte Técnico 3D • SLA/DLP</span>
+          </h1>
+          <div class="chips">
+            <span class="chip">v {{ app_version }}</span>
+            <a class="chip" href="#" id="modeBtn">Modo Certeiro</a>
+            <a class="chip" href="https://quanton3d.com.br" target="_blank">Site Quanton3D</a>
+          </div>
         </div>
-
-        <div>
-          <label>Imagens (JPG/PNG/WEBP, máx 5 — 3MB cada)</label>
-          <input type="file" id="photos" name="photos" accept=".jpg,.jpeg,.png,.webp" multiple />
-          <div class="hint">Dica: foto da tela acesa ajuda MUITO nos casos de LCD/backlight.</div>
-        </div>
-
-        <div class="bar">
-          <button type="button" class="btn-out" id="btnReset">Reset do meu histórico</button>
-          <button type="submit" class="btn" id="btnSend">Enviar</button>
-        </div>
-      </form>
-
-      <div id="resp" class="resp" hidden>
-        <div class="me muted" id="me"></div>
-        <div class="ai" id="ai"></div>
-      </div>
-    </section>
-
-    <p class="tiny" style="margin-top:12px">Conte com o time QUANTON3D; seguimos com você até dar certo.</p>
-  </div>
-
-  <!-- Modal de Termos -->
-  <div class="modal-back" id="tosBack">
-    <div class="modal">
-      <h3>📌 Termos de Uso — Bot Quanton3D</h3>
-      <ul class="ul">
-        <li>Você reconhece que o bot é propriedade exclusiva da <b>Quanton3D</b>.</li>
-        <li>Uso permitido apenas para suporte em impressão 3D.</li>
-        <li>É proibida a cópia, modificação ou redistribuição.</li>
-        <li>As respostas são apoio técnico e <b>não substituem</b> decisões profissionais.</li>
-        <li>Violação implica em bloqueio de acesso e medidas legais.</li>
-      </ul>
-      <label class="tos-row"><input type="checkbox" id="tosCheck"> Li e aceito os Termos de Uso.</label>
-      <div class="bar" style="justify-content:space-between">
-        <a class="tiny" href="{{ url_for('static', filename='privacidade.txt') }}" target="_blank" rel="noopener">Política de Privacidade</a>
-        <button class="btn" id="tosGo" disabled>Aceito e continuar</button>
       </div>
     </div>
-  </div>
+  </header>
+
+  <main class="wrap">
+    <section class="card">
+      <div class="card-body">
+        <form id="form" enctype="multipart/form-data" class="grid">
+          <!-- Telefone -->
+          <span>
+            <label for="phone">Telefone (WhatsApp)</label>
+            <input id="phone" name="phone" type="tel" placeholder="(31) 9 0000-0000" required />
+            <p class="hint">Use sempre o mesmo número — ele vincula seu histórico.</p>
+          </span>
+
+          <!-- Onde está o problema -->
+          <span>
+            <label for="scope">Onde está o problema?</label>
+            <select id="scope" name="scope">
+              <option value="">Selecione…</option>
+              <option value="lcd">Tela / LCD</option>
+              <option value="adesao">Adesão / Base</option>
+              <option value="suportes">Suportes</option>
+              <option value="fep">FEP / Cuba</option>
+              <option value="resina">Resina</option>
+              <option value="arquivo">Arquivo / Fatiamento</option>
+              <option value="mecanico">Mecânico / Z / Ruídos</option>
+              <option value="outro">Outro</option>
+            </select>
+          </span>
+
+          <!-- Resina -->
+          <span>
+            <label for="resin">Resina (opcional — catálogo Quanton3D em breve)</label>
+            <input id="resin" name="resin" type="text" placeholder="Ex.: Q3D Dental / Flex / Tough…" />
+          </span>
+
+          <!-- Impressora -->
+          <span>
+            <label for="printer">Impressora (opcional — catálogo em breve)</label>
+            <input id="printer" name="printer" list="printerList" placeholder="Ex.: Anycubic Photon Mono X, Elegoo Saturn…" />
+            <datalist id="printerList"></datalist>
+          </span>
+
+          <!-- Problema -->
+          <span class="full">
+            <label for="problem">Descreva o problema</label>
+            <textarea id="problem" name="problem" placeholder="Explique o que está acontecendo…" required></textarea>
+          </span>
+
+          <!-- Fotos -->
+          <span class="full">
+            <label>Imagens (JPG/PNG/WEBP, máx 5 — 3MB cada)</label>
+            <div class="file-row">
+              <input id="photos" name="photos" type="file" accept="image/*" multiple />
+              <span class="small">Dica: foto da tela acesa ajuda MUITO nos casos de LCD/backlight.</span>
+            </div>
+          </span>
+
+          <span class="full terms">
+            <input type="checkbox" id="termsCheck" />
+            <label for="termsCheck" style="margin:0;">Li e aceito os <a href="#" id="termsLink">termos de uso</a> e a <a href="#" id="privacyLink">política de privacidade</a>.</label>
+          </span>
+
+          <span class="full actions">
+            <button class="btn btn-ghost" type="button" id="resetBtn">Reset do meu histórico</button>
+            <button class="btn btn-primary" type="submit" id="sendBtn" disabled>Enviar</button>
+          </span>
+        </form>
+
+        <!-- Feed de mensagens -->
+        <div class="feed" id="feed"></div>
+
+        <div class="link-row">
+          <span class="brand-badge">© QUANTON3D — todos os direitos reservados</span>
+          <a href="#" id="rights">Direitos autorais</a>
+          <a href="#" id="privacy">Privacidade</a>
+        </div>
+      </div>
+    </section>
+  </main>
 
   <script>
-    const qs = (s)=>document.querySelector(s);
-    const me = qs('#me'), ai = qs('#ai'), resp = qs('#resp');
-    const btnSend = qs('#btnSend'); const frm = qs('#f');
-    const tosBack = qs('#tosBack'); const tosGo = qs('#tosGo'); const tosCheck = qs('#tosCheck');
-    const TOS_KEY = 'q3d_tos_v1';
+    // ===== aparência / interações
+    const el = (id)=>document.getElementById(id);
+    const feed = el('feed');
+    const sendBtn = el('sendBtn');
+    const termsCheck = el('termsCheck');
+    const phone = el('phone');
 
-    // Modal Termos
-    function showTos(){ tosBack.style.display='flex' }
-    function hideTos(){ tosBack.style.display='none' }
-    if(!localStorage.getItem(TOS_KEY)) showTos();
-    tosCheck.addEventListener('change', ()=>{ tosGo.disabled = !tosCheck.checked; });
-    tosGo.addEventListener('click', ()=>{
-      localStorage.setItem(TOS_KEY, 'true');
-      hideTos();
+    // liga/desliga botão de envio conforme termos
+    termsCheck.addEventListener('change', ()=> sendBtn.disabled = !termsCheck.checked);
+
+    // máscara simples do telefone (BR)
+    phone.addEventListener('input', (e)=>{
+      let v = e.target.value.replace(/\D/g,'').slice(0,11);
+      if(v.length>6) e.target.value = `(${v.slice(0,2)}) ${v.slice(2,3)} ${v.slice(3,7)}-${v.slice(7)}`;
+      else if(v.length>2) e.target.value = `(${v.slice(0,2)}) ${v.slice(2)}`;
+      else e.target.value = v;
     });
 
-    // Reset do histórico
-    qs('#btnReset').addEventListener('click', ()=>{
-      const phone = qs('#phone').value.trim();
-      if(!phone){ alert('Digite seu telefone para resetar seu histórico.'); return; }
-      location.href = `/reset?phone=${encodeURIComponent(phone)}`;
+    // “Modo Certeiro”: apenas etiqueta visual (o back-end já entende esse estilo)
+    const modeBtn = el('modeBtn');
+    let certeiro = true;
+    modeBtn.addEventListener('click', (ev)=>{ ev.preventDefault(); certeiro=!certeiro; modeBtn.textContent = certeiro?'Modo Certeiro':'Modo Livre'; });
+
+    // termos/privacidade – abre pop simples
+    function showText(title, html){
+      const w = window.open('', '_blank', 'width=480,height=640');
+      w.document.write('<meta charset="utf-8"><title>'+title+'</title><style>body{font-family:system-ui;padding:20px;line-height:1.5} h2{margin-top:0}</style><h2>'+title+'</h2>'+html);
+      w.document.close();
+    }
+    el('termsLink').onclick = (e)=>{e.preventDefault(); showText('Termos de Uso', `
+      <p>Ao continuar, você declara que:</p>
+      <ul>
+        <li>Reconhece que o bot é propriedade exclusiva da QUANTON3D®;</li>
+        <li>O uso é permitido apenas para suporte em impressão 3D;</li>
+        <li>É proibida a cópia, modificação ou redistribuição;</li>
+        <li>As informações são apoio técnico e não substituem decisões profissionais;</li>
+        <li>Violação implica em bloqueio de acesso e medidas legais.</li>
+      </ul>`); };
+    el('privacyLink').onclick = (e)=>{e.preventDefault(); showText('Privacidade', '<p>Coletamos apenas os dados necessários para prestar suporte (telefone, descrição e imagens). Não vendemos seus dados.</p>');};
+    el('rights').onclick = (e)=>{e.preventDefault(); showText('Direitos autorais', '<p>QUANTON3D® – todos os direitos reservados. Marca e identidade visual registradas.</p>');};
+    el('privacy').onclick = el('privacyLink').onclick;
+
+    // lista de impressoras (tenta carregar /static/printers.json; senão usa fallback)
+    const fallbackPrinters = [
+      "Anycubic Photon Mono", "Anycubic Photon Mono X", "Anycubic Photon Mono X 6K", "Anycubic Photon Mono M5",
+      "Elegoo Mars", "Elegoo Mars 2 Pro", "Elegoo Mars 3 Pro", "Elegoo Saturn", "Elegoo Saturn 2", "Elegoo Saturn 3", "Elegoo Saturn 3 Ultra", "Elegoo Saturn 4 Ultra",
+      "Creality LD-002H", "Creality Halot-One", "Creality Halot-Sky",
+      "Phrozen Sonic Mini 4K", "Phrozen Sonic Mighty 4K", "Phrozen Sonic Mighty 8K"
+    ];
+    fetch("{{ url_for('static', filename='printers.json') }}", {cache:"no-store"})
+      .then(r=> r.ok ? r.json() : Promise.reject())
+      .then(list => fillPrinters(list))
+      .catch(()=> fillPrinters(fallbackPrinters));
+    function fillPrinters(list){
+      const dl = document.getElementById('printerList');
+      dl.innerHTML = '';
+      (list||[]).forEach(name=>{
+        const o = document.createElement('option'); o.value = name; dl.appendChild(o);
+      });
+    }
+
+    // reset do histórico por telefone
+    el('resetBtn').addEventListener('click', ()=>{
+      const tel = phone.value.replace(/\D/g,'');
+      if(!tel){ alert("Digite o telefone para eu localizar seu histórico."); return; }
+      window.open(`/reset?phone=${tel}`, '_blank');
     });
 
-    // Envio
-    frm.addEventListener('submit', async (e)=>{
+    // helper para colocar bolhas
+    function bubble(text, cls){
+      const b = document.createElement('div');
+      b.className = 'bubble '+(cls||'');
+      b.innerHTML = text.replace(/\n/g,'<br>');
+      feed.prepend(b);
+    }
+
+    // envio do formulário
+    document.getElementById('form').addEventListener('submit', async (e)=>{
       e.preventDefault();
-      if(!localStorage.getItem(TOS_KEY)){ showTos(); return; }
+      if(!termsCheck.checked){ alert("Marque que aceita os termos para continuar."); return; }
 
-      btnSend.disabled = true;
+      const fd = new FormData(e.target);
+      // backend atual aceita "photos" (várias)
+      const files = document.getElementById('photos').files;
+      if(files?.length){ for(const f of files){ fd.append('photos', f); } }
 
-      const fd = new FormData();
-      fd.append('phone', qs('#phone').value.trim());
-      fd.append('scope', qs('#scope').value);
-      fd.append('resin', qs('#resin').value.trim());
-      fd.append('printer', qs('#printer').value.trim());
-      fd.append('problem', qs('#problem').value.trim());
-      fd.append('tos_ok', 'true');
+      // mostra a pergunta no feed
+      bubble(`<strong>Você:</strong><br>${(fd.get('problem')||'').toString()}`, 'me');
 
-      const files = qs('#photos').files;
-      for(let i=0; i<Math.min(files.length,5); i++){
-        if(files[i].size > 3*1024*1024){ alert(`Imagem ${i+1} excede 3MB.`); btnSend.disabled=false; return; }
-        fd.append('photos', files[i]); // <- campo que o backend espera
-      }
-
-      me.textContent = `Você: ${qs('#problem').value.trim() || '(sem texto)'}`;
-      resp.hidden = false;
-      ai.innerHTML = '<span class="muted">Processando…</span>';
+      sendBtn.disabled = true;
+      sendBtn.textContent = 'Enviando…';
 
       try{
         const r = await fetch('/chat', { method:'POST', body: fd });
-        const j = await r.json();
-        if(!j.ok){ ai.innerHTML = `<span class="err">Erro: ${j.error||'falha inesperada'}</span>`; }
-        else{
-          ai.textContent = j.reply || j.answer || '(sem resposta)';
+        const js = await r.json();
+        if(js?.ok){
+          const text = (js.reply || js.answer || '(sem resposta)').toString();
+          bubble(`<strong>Assistente:</strong><br>${text}`, 'bot');
+        }else{
+          bubble(`<span class="err"><strong>Erro:</strong> ${js?.error || 'Falha ao enviar'}</span>`, 'bot');
         }
       }catch(err){
-        ai.innerHTML = `<span class="err">Erro de rede.</span>`;
+        bubble(`<span class="err"><strong>Erro de rede:</strong> ${err}</span>`, 'bot');
       }finally{
-        btnSend.disabled = false;
+        sendBtn.disabled = !termsCheck.checked;
+        sendBtn.textContent = 'Enviar';
       }
     });
   </script>
