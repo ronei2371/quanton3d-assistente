@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin Quanton3D — Bloqueio por Telefone</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;background:#0b1020;color:#e8ecf3;margin:0}
+    .wrap{max-width:940px;margin:24px auto;padding:24px}
+    .card{background:#121832;border:1px solid #1f2848;border-radius:16px;padding:20px;margin-bottom:16px}
+    h1{font-size:24px;margin:0 0 12px}
+    label{display:block;margin:10px 0 6px}
+    input[type="text"],input[type="password"]{width:100%;padding:12px;border-radius:10px;border:1px solid #263157;background:#0e142a;color:#e8ecf3}
+    .row{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
+    button{padding:12px 16px;border-radius:10px;border:1px solid #2b8cff;background:#2b8cff;color:#fff;font-weight:600;cursor:pointer}
+    button.alt{border-color:#ff3d6e;background:#ff3d6e}
+    button.ghost{border-color:#3b4668;background:transparent}
+    pre{background:#0e142a;border:1px solid #263157;border-radius:10px;padding:12px;white-space:pre-wrap}
+    small{opacity:.8}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Admin — Bloqueio por Telefone</h1>
+
+    <div class="card">
+      <label>Token de Admin (X-Admin-Token)</label>
+      <input id="token" type="password" placeholder="Cole aqui o ADMIN_TOKEN" />
+      <small>O token fica apenas nesta aba para os pedidos desta página.</small>
+    </div>
+
+    <div class="card">
+      <label>Telefone para bloquear/desbloquear</label>
+      <input id="phone" type="text" placeholder="(31) 9 9999-9999 ou 31999999999" />
+      <div class="row">
+        <button id="btnBlock">Bloquear</button>
+        <button class="alt" id="btnUnblock">Desbloquear</button>
+        <button class="ghost" id="btnList">Ver lista bloqueados</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <label>Resultado</label>
+      <pre id="out">—</pre>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id)=>document.getElementById(id);
+    const urlBase = `${location.origin}`;
+
+    async function post(path, body) {
+      const token = $("token").value.trim();
+      const res = await fetch(urlBase + path, {
+        method: "POST",
+        headers: { "X-Admin-Token": token },
+        body: new URLSearchParams(body||{})
+      });
+      const text = await res.text();
+      try { return { status: res.status, json: JSON.parse(text) }; }
+      catch { return { status: res.status, json: { raw: text } }; }
+    }
+    async function get(path) {
+      const token = $("token").value.trim();
+      const res = await fetch(urlBase + path, { method: "GET", headers: { "X-Admin-Token": token } });
+      const text = await res.text();
+      try { return { status: res.status, json: JSON.parse(text) }; }
+      catch { return { status: res.status, json: { raw: text } }; }
+    }
+
+    $("btnBlock").onclick = async () => {
+      const r = await post("/admin/block", { phone: $("phone").value });
+      $("out").textContent = JSON.stringify(r, null, 2);
+    };
+    $("btnUnblock").onclick = async () => {
+      const r = await post("/admin/unblock", { phone: $("phone").value });
+      $("out").textContent = JSON.stringify(r, null, 2);
+    };
+    $("btnList").onclick = async () => {
+      const r = await get("/admin/list");
+      $("out").textContent = JSON.stringify(r, null, 2);
+    };
+  </script>
+</body>
+</html>
