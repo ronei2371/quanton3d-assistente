@@ -1,177 +1,176 @@
-# kb_build.py — RAG index builder (memory-friendly)
-# v2025-08-30b
-import os, re, json, uuid, sys
-from typing import List, Dict, Iterable, Tuple
+# -*- coding: utf-8 -*-
+# v2025-08-31a — compat Python 3.13, OpenAI 1.x, visão por imagens, sessões por telefone
+
+import os, base64, uuid, re
+from flask import Flask, request, render_template, jsonify, send_from_directory, url_for
 from openai import OpenAI
 
-# PDF reader (opcional)
-try:
-    from pypdf import PdfReader
-except Exception:
-    PdfReader = None
+APP_VERSION = "2025-08-31a"
 
-# ---- Configs (ajustáveis por ENV)
-KB_DIR = os.getenv("KB_DIR", "kb")
-OUT    = os.getenv("KB_OUT", "kb/kb_index.json")
-EMB_MODEL = os.getenv("KB_EMB_MODEL", "text-embedding-3-small")
+# ---------- Flask app (precisa existir como variável chamada 'app') ----------
+app = Flask(__name__, template_folder="templates", static_folder="static")
+app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024  # 20MB total upload
 
-# limites para não estourar memória
-CHUNK_SIZE     = int(os.getenv("KB_CHUNK_SIZE", "900"))
-CHUNK_OVERLAP  = int(os.getenv("KB_CHUNK_OVERLAP", "150"))
-BATCH_SIZE     = int(os.getenv("KB_BATCH_SIZE", "16"))
-MAX_CHARS_FILE = int(os.getenv("KB_MAX_CHARS_FILE", "400000"))  # ~400k chars por arquivo
-MIN_CHUNK_LEN  = int(os.getenv("KB_MIN_CHUNK_LEN", "40"))       # ignora trechos muito curtos
+# Pasta para uploads (efêmera no Render, mas serve para visualizar se precisar)
+UPLOAD_DIR = os.path.join(os.getcwd(), "uploads")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-def norm_ws(s: str) -> str:
-    # normaliza espaços e quebras
-    s = re.sub(r"\r\n?", "\n", s)
-    s = re.sub(r"[ \t]+", " ", s)
-    s = re.sub(r"\n{3,}", "\n\n", s)
-    return s.strip()
+# Remover proxies do ambiente (alguns hosts injetam e quebram o SDK novo)
+for k in ("HTTP_PROXY", "http_proxy", "HTTPS_PROXY", "https_proxy"):
+    os.environ.pop(k, None)
 
-def chunk_stream(text: str, size: int, overlap: int) -> Iterable[str]:
-    """Gera trechos sem guardar todos em memória de uma vez."""
-    text = norm_ws(text)
-    if not text:
-        return
-    i, n = 0, len(text)
-    while i < n:
-        j = min(n, i + size)
-        piece = text[i:j].strip()
-        if len(piece) >= MIN_CHUNK_LEN:
-            yield piece
-        if j == n:
-            break
-        i = max(0, j - overlap)
+# ---------- Config OpenAI (via Environment no Render) ----------
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+TEMP = float(os.getenv("OPENAI_TEMPERATURE", "0.2"))
+SEED = int(os.getenv("OPENAI_SEED", "123"))
 
-def read_text_txt(path: str) -> Iterable[str]:
-    """Lê .txt/.md sem carregar tudo: agrega em buffers de ~64k e faz chunk."""
-    buf = []
-    total = 0
-    with open(path, "r", encoding="utf-8", errors="ignore") as f:
-        for line in f:
-            buf.append(line)
-            total += len(line)
-            # a cada 64k chars, faz chunk e esvazia
-            if total >= 65536:
-                block = "".join(buf)
-                for c in chunk_stream(block[:MAX_CHARS_FILE], CHUNK_SIZE, CHUNK_OVERLAP):
-                    yield c
-                buf, total = [], 0
-        if buf:
-            block = "".join(buf)
-            for c in chunk_stream(block[:MAX_CHARS_FILE], CHUNK_SIZE, CHUNK_OVERLAP):
-                yield c
+client = OpenAI(api_key=OPENAI_API_KEY)
 
-def read_text_pdf(path: str) -> Iterable[str]:
-    """Lê PDF por página (se pypdf disponível). Faz chunk por página."""
-    if not PdfReader:
-        return
+# ---------- Memória simples por telefone (só em memória do processo) ----------
+SESSIONS = {}  # { phone: [ {"role": "...", "content": ...}, ... ] }
+
+# ---------- Prompts ----------
+ASSISTANT_SYSTEM = (
+    "Você é técnico de campo da Quanton3D (impressão 3D SLA/DLP). "
+    "Fale em PT-BR, tom direto de oficina, educado, passo-a-passo.\n"
+    "Modo Certeiro: se faltar dado crítico, faça APENAS 1 pergunta objetiva e pare, aguardando resposta.\n"
+    "Se houver imagem, descreva o que observa e relacione com o defeito (sem checklist genérico fora do contexto).\n"
+    "Quando o tema for LCD/tela, priorize testes: papel branco, grade/pixel, limpeza suave, difusor/backlight/FEP.\n"
+    "Evite culpar 'resina com defeito' antes de validar parâmetros, mecânica e óptica.\n"
+    "Sempre termine com bloco 'O QUE FAZER AGORA' (3 a 5 passos claros).\n"
+)
+
+# ---------- Utilidades ----------
+def _allowed_file(filename: str) -> bool:
+    ext = (filename.rsplit(".", 1)[-1] if "." in filename else "").lower()
+    return ext in {"jpg", "jpeg", "png", "webp"}
+
+def _detect_image_type(header: bytes):
+    # assinatura simples (compat com Python 3.13 sem imghdr)
+    if header.startswith(b"\xFF\xD8\xFF"):
+        return "jpeg", "image/jpeg"
+    if header.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "png", "image/png"
+    if header[:4] == b"RIFF" and header[8:12] == b"WEBP":
+        return "webp", "image/webp"
+    return None, None
+
+def _file_to_dataurl_and_size(fs):
+    data = fs.read()
+    if not data:
+        return None, 0
+    kind, mime = _detect_image_type(data[:16])
+    if not kind:
+        raise ValueError("Formato inválido. Envie JPG, PNG ou WEBP.")
+    b64 = base64.b64encode(data).decode("utf-8")
+    return f"data:{mime};base64,{b64}", len(data)
+
+# ---------- Rotas básicas ----------
+@app.get("/")
+def index():
+    return render_template("index.html", app_version=APP_VERSION)
+
+@app.get("/healthz")
+def healthz():
+    return "ok", 200
+
+@app.get("/diag")
+def diag():
+    return jsonify({
+        "version": APP_VERSION,
+        "openai_key_set": bool(OPENAI_API_KEY),
+        "model": MODEL,
+        "temperature": TEMP,
+        "seed": SEED
+    }), 200
+
+@app.get("/uploads/<path:fname>")
+def get_upload(fname):
+    return send_from_directory(UPLOAD_DIR, fname)
+
+# esta rota permite usar url_for('static_files', filename='printers.json') no HTML
+@app.get("/static/<path:filename>")
+def static_files(filename):
+    return send_from_directory(app.static_folder, filename)
+
+@app.get("/reset")
+def reset():
+    phone = (request.args.get("phone") or "").strip()
+    if not phone:
+        return jsonify({"ok": False, "error": "Informe ?phone=numero"}), 400
+    SESSIONS.pop(phone, None)
+    return jsonify({"ok": True, "phone": phone, "cleared": True})
+
+# ---------- Chat ----------
+@app.post("/chat")
+def chat():
     try:
-        r = PdfReader(path)
-    except Exception:
-        return
-    acc = []
-    acc_len = 0
-    for page in r.pages:
-        try:
-            t = page.extract_text() or ""
-        except Exception:
-            t = ""
-        if not t.strip():
-            continue
-        acc.append(t)
-        acc_len += len(t)
-        # a cada ~50k chars agregados, chunk e limpa
-        if acc_len >= 50000:
-            block = norm_ws("\n".join(acc))[:MAX_CHARS_FILE]
-            for c in chunk_stream(block, CHUNK_SIZE, CHUNK_OVERLAP):
-                yield c
-            acc, acc_len = [], 0
-    # resto
-    if acc:
-        block = norm_ws("\n".join(acc))[:MAX_CHARS_FILE]
-        for c in chunk_stream(block, CHUNK_SIZE, CHUNK_OVERLAP):
-            yield c
+        phone   = (request.form.get("phone") or "").strip()
+        scope   = (request.form.get("scope") or "desconhecido").strip()
+        resin   = (request.form.get("resin") or "").strip()
+        printer = (request.form.get("printer") or "").strip()
+        problem = (request.form.get("problem") or "").strip()
 
-def iterate_chunks(path: str) -> Iterable[Tuple[str, str]]:
-    """Retorna (source, chunk_text) de cada arquivo suportado."""
-    ext = os.path.splitext(path)[1].lower()
-    base = os.path.basename(path)
-    if ext in (".txt", ".md"):
-        for c in read_text_txt(path):
-            yield (base, c)
-    elif ext == ".pdf":
-        for c in read_text_pdf(path):
-            yield (base, c)
-    else:
-        return
+        if not phone:
+            return jsonify({"ok": False, "error": "Informe o telefone."}), 400
+        if not problem:
+            return jsonify({"ok": False, "error": "Descreva o problema."}), 400
+        if not OPENAI_API_KEY:
+            return jsonify({"ok": False, "error": "OPENAI_API_KEY ausente no servidor."}), 500
 
-def main():
-    if not os.path.isdir(KB_DIR):
-        print(f"Pasta '{KB_DIR}' não existe. Crie e coloque .txt/.md/.pdf.")
-        sys.exit(1)
+        # Fotos (até 5, máx 3MB cada)
+        images = []
+        if "photos" in request.files:
+            for i, fs in enumerate(request.files.getlist("photos")[:5]):
+                if not fs or fs.filename == "" or not _allowed_file(fs.filename):
+                    continue
+                size_hint = fs.content_length or 0
+                if size_hint and size_hint > 3 * 1024 * 1024:
+                    return jsonify({"ok": False, "error": f"Imagem {i+1} excede 3MB."}), 400
+                dataurl, real_size = _file_to_dataurl_and_size(fs)
+                if real_size > 3 * 1024 * 1024:
+                    return jsonify({"ok": False, "error": f"Imagem {i+1} excede 3MB."}), 400
+                images.append(dataurl)
 
-    files = [os.path.join(KB_DIR, f) for f in os.listdir(KB_DIR)
-             if os.path.splitext(f)[1].lower() in (".txt",".md",".pdf")]
+        # Mensagem de usuário (texto + imagens) — ativa visão
+        user_text = (
+            f"Telefone: {phone}\n"
+            f"Escopo informado: {scope}\n"
+            f"Resina: {resin or '-'}\n"
+            f"Impressora: {printer or '-'}\n"
+            f"Problema: {problem}\n"
+            "Contexto: suporte técnico Quanton3D (SLA/DLP)."
+        )
+        content = [{"type": "text", "text": user_text}]
+        for url in images:
+            content.append({"type": "image_url", "image_url": {"url": url}})
 
-    if not files:
-        print("Nenhum arquivo em kb/.")
-        sys.exit(1)
+        # Monta histórico por telefone
+        history = SESSIONS.setdefault(phone, [])
+        messages = [{"role": "system", "content": ASSISTANT_SYSTEM}] + history + [{"role": "user", "content": content}]
 
-    client = OpenAI()
+        # Chamada ao modelo
+        resp = client.chat.completions.create(
+            model=MODEL,
+            temperature=TEMP,
+            seed=SEED,
+            messages=messages,
+        )
+        reply = (resp.choices[0].message.content or "").strip()
 
-    chunks_meta: List[Dict] = []
-    vectors: List[List[float]] = []
+        # Guarda no histórico (mantemos texto do usuário e resposta)
+        history.append({"role": "user", "content": user_text})
+        history.append({"role": "assistant", "content": reply})
 
-    buffer_texts: List[str] = []
-    buffer_meta:  List[Dict] = []
+        return jsonify({"ok": True, "reply": reply, "version": APP_VERSION})
 
-    def flush():
-        nonlocal buffer_texts, buffer_meta, vectors, chunks_meta
-        if not buffer_texts:
-            return
-        emb = client.embeddings.create(model=EMB_MODEL, input=buffer_texts)
-        for i, d in enumerate(emb.data):
-            vectors.append(d.embedding)
-            chunks_meta.append({
-                "id": uuid.uuid4().hex,
-                "text": buffer_texts[i],
-                "source": buffer_meta[i]["source"]
-            })
-        buffer_texts, buffer_meta = [], []
+    except Exception as e:
+        app.logger.exception("erro no /chat")
+        return jsonify({"ok": False, "error": str(e)}), 500
 
-    for path in files:
-        try:
-            total_chars = 0
-            for source, c in iterate_chunks(path):
-                if total_chars >= MAX_CHARS_FILE:
-                    break
-                total_chars += len(c)
 
-                buffer_texts.append(c)
-                buffer_meta.append({"source": source})
-
-                if len(buffer_texts) >= BATCH_SIZE:
-                    flush()
-        except MemoryError:
-            # mesmo que um arquivo dispare MemoryError, salvamos o que já deu
-            flush()
-            print(f"[aviso] MemoryError em {path}. Pulei o restante.")
-            continue
-
-    flush()  # final
-
-    os.makedirs(os.path.dirname(OUT), exist_ok=True)
-    out = {
-        "model": EMB_MODEL,
-        "chunks": chunks_meta,
-        "vectors": vectors
-    }
-    with open(OUT, "w", encoding="utf-8") as f:
-        json.dump(out, f, ensure_ascii=False)
-
-    print(f"OK: {OUT}  trechos: {len(chunks_meta)}")
-
+# ---------- Main (apenas para rodar localmente) ----------
 if __name__ == "__main__":
-    main()
+    # Local: python app.py -> abre em http://127.0.0.1:5000
+    app.run(host="0.0.0.0", port=5000, debug=True)

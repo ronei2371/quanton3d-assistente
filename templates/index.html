@@ -1,259 +1,258 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>IA Quanton3D — Suporte Técnico 3D</title>
-
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}" sizes="any" />
-
-  <!-- Fonte & CSS -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='site.css') }}" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>IA Quanton3D® — Suporte técnico 3D</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='site.css') }}">
 </head>
 <body>
-
-  <!-- HEADER / FAIXA -->
-  <header class="brand">
-    <div class="brand-inner">
-      <img class="brand-logo" src="{{ url_for('static', filename='logo.png') }}" alt="Quanton3D" />
-      <div class="brand-text">
-        <div class="brand-title">IA Quanton3D<span class="reg">®</span></div>
-        <div class="brand-tagline">Suporte Técnico 3D • SLA/DLP</div>
+  <!-- Faixa superior -->
+  <header class="q3d-topbar">
+    <div class="q3d-topbar__in">
+      <div class="q3d-brand">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Quanton3D" class="q3d-logo" onerror="this.style.display='none'">
+        <div class="q3d-titlewrap">
+          <h1 class="q3d-title">IA Quanton3D<sup>®</sup></h1>
+          <div class="q3d-tagline">Suporte técnico 3D</div>
+        </div>
       </div>
-      <nav class="brand-links">
-        <a href="https://quanton3d.com.br" target="_blank" rel="noopener">Site Quanton3D</a>
-        <a href="#" id="toggle-modo">Modo Certeiro</a>
-      </nav>
+
+      <div class="q3d-actions">
+        <button class="q3d-ghost" id="btnShowTerms">Termos de uso</button>
+        <button class="q3d-ghost" id="btnShowStory">Nossa história</button>
+      </div>
     </div>
   </header>
 
-  <!-- HERO (banner com fotos) -->
-  <section class="hero">
-    <div class="hero-slide">
-      <!-- Apenas coloque os arquivos em static/hero/ com estes nomes -->
-      <img src="{{ url_for('static', filename='hero/spark.webp') }}" alt="Spark" />
-      <img src="{{ url_for('static', filename='hero/alchemist-pink.webp') }}" alt="Alchemist Pink" />
-      <img src="{{ url_for('static', filename='hero/alchemist-violet.webp') }}" alt="Alchemist Violet" />
-      <img src="{{ url_for('static', filename='hero/iron.png') }}" alt="Iron" />
-      <img src="{{ url_for('static', filename='hero/flex.png') }}" alt="Flex" />
-      <img src="{{ url_for('static', filename='hero/dental.webp') }}" alt="Dental" />
+  <main class="q3d-main">
+    <div class="q3d-grid">
+      <!-- Coluna esquerda: Formulário -->
+      <section class="q3d-card">
+        <h2 class="q3d-h2">Identificação</h2>
+        <p class="q3d-hint"><strong>O telefone identifica seu histórico.</strong> Use sempre o mesmo.</p>
+
+        <form id="chatForm" autocomplete="off">
+          <input type="hidden" name="scope" id="scope" value="desconhecido">
+
+          <div class="q3d-field">
+            <label for="phone" class="q3d-label">Telefone</label>
+            <input type="tel" id="phone" name="phone" placeholder="11999999999" class="q3d-input" required>
+          </div>
+
+          <h3 class="q3d-h3">Parâmetros de impressão Quanton3D</h3>
+          <div class="q3d-two">
+            <div class="q3d-field">
+              <label for="resin" class="q3d-label">Resina</label>
+              <input id="resin" name="resin" class="q3d-input" placeholder="Ex.: Spark">
+            </div>
+
+            <div class="q3d-field">
+              <label for="printer" class="q3d-label">Impressora</label>
+              <input id="printer" name="printer" class="q3d-input" placeholder="Ex.: Saturn 3">
+              <!-- Se preferir, troque por <select id="printer"> e carregue printers.json -->
+            </div>
+          </div>
+
+          <div class="q3d-field">
+            <label for="problem" class="q3d-label q3d-biglabel">Descreva seu problema</label>
+            <textarea id="problem" name="problem" rows="4" class="q3d-textarea" placeholder="Ex.: delaminação entre camadas; primeira camada soltando; manchas no LCD..." required></textarea>
+          </div>
+
+          <div class="q3d-actionsline">
+            <button type="submit" id="btnSend" class="q3d-primary">Enviar</button>
+            <button type="button" id="btnReset" class="q3d-ghost">Limpar histórico</button>
+          </div>
+
+          <div class="q3d-field">
+            <label class="q3d-label">Imagens (até 5 — máx 3MB cada)</label>
+            <input type="file" id="photos" name="photos" accept=".jpg,.jpeg,.png,.webp" multiple class="q3d-input-file">
+            <div id="photoCount" class="q3d-hint">0 imagens selecionadas</div>
+            <div class="q3d-hint">As imagens anexadas vão junto com a <u>próxima</u> pergunta.</div>
+          </div>
+        </form>
+      </section>
+
+      <!-- Coluna direita: Chat -->
+      <section class="q3d-card">
+        <h2 class="q3d-h2">Atendimento</h2>
+        <div id="chatBox" class="q3d-chat"></div>
+      </section>
     </div>
-  </section>
-
-  <main class="wrap">
-
-    <!-- Aviso / Termos (checkbox no formulário) -->
-    <section class="panel notice">
-      <label class="checkline">
-        <input type="checkbox" id="accept" />
-        <span>Eu li e aceito os <a href="#" id="show-terms">termos de uso</a> e a <a href="#" id="show-privacy">política de privacidade</a>.</span>
-      </label>
-    </section>
-
-    <!-- FORM -->
-    <form id="form" class="panel" enctype="multipart/form-data">
-      <div class="grid">
-        <div class="col">
-          <label>Telefone (WhatsApp)</label>
-          <input id="phone" name="phone" type="tel" inputmode="numeric" placeholder="(31) 9 0000-0000" required />
-          <small>Use sempre o mesmo telefone — ele vincula seu histórico.</small>
-        </div>
-        <div class="col">
-          <label>Onde está o problema?</label>
-          <select id="scope" name="scope">
-            <option value="">Selecione…</option>
-            <option value="LCD">LCD / Backlight / Tela</option>
-            <option value="Adesao">Adesão / Primeiras camadas</option>
-            <option value="Suportes">Suportes / Geometria</option>
-            <option value="Geral">Geral</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="grid">
-        <div class="col">
-          <label>Resina (opcional — catálogo Quanton3D em breve)</label>
-          <input id="resin" name="resin" type="text" placeholder="Ex.: Q3D Dental / Flex / Tough…" />
-        </div>
-        <div class="col">
-          <label>Impressora (opcional — catálogo em breve)</label>
-          <input id="printer" name="printer" list="printer-list" placeholder="Ex.: Anycubic Photon Mono X, Elegoo Saturn…" />
-          <datalist id="printer-list"></datalist>
-        </div>
-      </div>
-
-      <div>
-        <label>Descreva o problema</label>
-        <textarea id="problem" name="problem" rows="5" placeholder="Explique o que está acontecendo…" required></textarea>
-      </div>
-
-      <div>
-        <label>Imagens (JPG/PNG/WEBP, máx 5 — 3MB cada)</label>
-        <input id="photos" name="photos" type="file" accept=".jpg,.jpeg,.png,.webp" multiple />
-        <small>Dica: foto da tela acesa ajuda MUITO nos casos de LCD/backlight.</small>
-      </div>
-
-      <div class="actions">
-        <button id="btn-reset" type="button" class="btn ghost">Reset do meu histórico</button>
-        <button id="btn-send" class="btn primary" disabled>Enviar</button>
-      </div>
-    </form>
-
-    <!-- RESPOSTAS -->
-    <section id="chat" class="panel">
-      <div class="panel-title">Respostas</div>
-      <div id="msgs" class="msgs"></div>
-    </section>
-
-    <footer class="footer">
-      © QUANTON3D — todos os direitos reservados •
-      <a href="#" id="show-terms-2">Direitos autorais</a> •
-      <a href="#" id="show-privacy-2">Privacidade</a>
-    </footer>
   </main>
 
-  <!-- DIALOGOS -->
-  <dialog id="dlg-terms" class="dialog">
-    <h3>Termos de Uso – Bot Quanton3D</h3>
-    <p>• O bot é propriedade exclusiva da Quanton3D.<br>
-       • Uso permitido apenas para suporte em impressão 3D.<br>
-       • É proibida a cópia, modificação ou redistribuição.<br>
-       • As informações são apoio técnico e não substituem decisões profissionais.<br>
-       • Violação implica em bloqueio de acesso e medidas legais.</p>
-    <div class="dialog-actions"><button class="btn" data-close>Fechar</button></div>
-  </dialog>
+  <!-- Rodapé curto -->
+  <footer class="q3d-footer">
+    <div>© Quanton3D — Conteúdo exclusivo. Reprodução proibida sem autorização.</div>
+    <div class="q3d-muted">Versão: {{ app_version }}</div>
+  </footer>
 
-  <dialog id="dlg-privacy" class="dialog">
-    <h3>Privacidade</h3>
-    <p>Usamos os dados somente para orientar o suporte. Você pode solicitar a remoção do histórico a qualquer momento.</p>
-    <div class="dialog-actions"><button class="btn" data-close>Fechar</button></div>
-  </dialog>
-
-  <!-- GATE: abre ao carregar e bloqueia até aceitar -->
-  <dialog id="dlg-gate" class="dialog">
-    <h3>Bem-vindo!</h3>
-    <p>Para continuar, é necessário aceitar nossos termos e política.</p>
-    <label class="checkline">
-      <input type="checkbox" id="gate-check" />
-      <span>Eu aceito os <a href="#" id="gate-terms">termos de uso</a> e a <a href="#" id="gate-privacy">política de privacidade</a>.</span>
-    </label>
-    <div class="dialog-actions">
-      <button class="btn primary" id="gate-accept">Aceito e continuar</button>
+  <!-- Modal: Termos -->
+  <div class="q3d-modal" id="modalTerms" hidden>
+    <div class="q3d-modal__backdrop"></div>
+    <div class="q3d-modal__panel">
+      <h3>📌 Termo de Uso – Bot Quanton3D</h3>
+      <ul class="q3d-ul">
+        <li>O bot é propriedade exclusiva da Quanton3D.</li>
+        <li>Uso permitido apenas para suporte em impressão 3D.</li>
+        <li>É proibida a cópia, modificação ou redistribuição.</li>
+        <li>As respostas são apoio técnico; não substituem decisões profissionais.</li>
+        <li>Violação implica bloqueio de acesso e medidas legais.</li>
+      </ul>
+      <label class="q3d-check">
+        <input type="checkbox" id="chkAccept"> Li e aceito os Termos de Uso.
+      </label>
+      <div class="q3d-actionsline">
+        <button class="q3d-primary" id="btnAccept" disabled>Aceito e continuar</button>
+        <button class="q3d-ghost" id="btnCloseTerms">Fechar</button>
+      </div>
     </div>
-  </dialog>
+  </div>
+
+  <!-- Modal/Drawer: Nossa História -->
+  <div class="q3d-modal" id="modalStory" hidden>
+    <div class="q3d-modal__backdrop"></div>
+    <div class="q3d-modal__panel">
+      <h3>Conheça a história de Nhor e filhos com Ronei</h3>
+      <p>Um laço de amor, trabalho e curiosidade — a força por trás da Quanton3D. 💙</p>
+      <p>Se quiser, escreva aqui uma pergunta sobre nossa história que eu respondo com carinho.</p>
+      <textarea id="storyAsk" rows="3" class="q3d-textarea" placeholder="Pergunte algo sobre nossa história..."></textarea>
+      <div class="q3d-actionsline">
+        <button class="q3d-ghost" id="btnCloseStory">Fechar</button>
+      </div>
+    </div>
+  </div>
 
   <script>
-  let modoCerteiro = true;
+    // ---- Termos: bloquear uso até aceitar (salvo no localStorage)
+    const modalTerms = document.getElementById('modalTerms');
+    const btnShowTerms = document.getElementById('btnShowTerms');
+    const btnCloseTerms = document.getElementById('btnCloseTerms');
+    const btnAccept = document.getElementById('btnAccept');
+    const chkAccept = document.getElementById('chkAccept');
 
-  const accept = document.getElementById('accept');
-  const btnSend = document.getElementById('btn-send');
+    function showTerms() { modalTerms.hidden = false; }
+    function hideTerms() { modalTerms.hidden = true; }
 
-  // ===== Modais auxiliares
-  function wireDialog(linkId, dlgId){
-    const link = document.getElementById(linkId);
-    const dlg  = document.getElementById(dlgId);
-    const close = () => dlg.close();
-    link.addEventListener('click', e => { e.preventDefault(); dlg.showModal(); });
-    dlg.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', close));
-  }
-  wireDialog('show-terms','dlg-terms'); wireDialog('show-privacy','dlg-privacy');
-  wireDialog('show-terms-2','dlg-terms'); wireDialog('show-privacy-2','dlg-privacy');
+    btnShowTerms.addEventListener('click', showTerms);
+    btnCloseTerms.addEventListener('click', hideTerms);
+    chkAccept.addEventListener('change', () => btnAccept.disabled = !chkAccept.checked);
+    btnAccept.addEventListener('click', () => {
+      localStorage.setItem('q3d_terms', '1');
+      hideTerms();
+    });
 
-  // ===== GATE (bloqueio inicial)
-  const dlgGate = document.getElementById('dlg-gate');
-  const gateCheck = document.getElementById('gate-check');
-  const gateAccept = document.getElementById('gate-accept');
-  document.getElementById('gate-terms').addEventListener('click', e=>{e.preventDefault(); document.getElementById('dlg-terms').showModal();});
-  document.getElementById('gate-privacy').addEventListener('click', e=>{e.preventDefault(); document.getElementById('dlg-privacy').showModal();});
-
-  function setAccepted(v){
-    localStorage.setItem('q3d_terms_ok', v ? '1' : '0');
-    accept.checked = !!v;
-    btnSend.disabled = !v;
-  }
-
-  // Estado inicial
-  document.addEventListener('DOMContentLoaded', () => {
-    const ok = localStorage.getItem('q3d_terms_ok') === '1';
-    setAccepted(ok);
-    if(!ok) dlgGate.showModal();
-  });
-
-  gateAccept.addEventListener('click', () => {
-    if(!gateCheck.checked){ alert('Marque a caixa de aceite.'); return; }
-    setAccepted(true);
-    dlgGate.close();
-  });
-
-  // Checkbox do painel também controla
-  accept.addEventListener('change', () => setAccepted(accept.checked));
-
-  // Toggle modo
-  document.getElementById('toggle-modo').addEventListener('click', e => {
-    e.preventDefault();
-    modoCerteiro = !modoCerteiro;
-    e.target.textContent = modoCerteiro ? 'Modo Certeiro' : 'Modo Livre';
-  });
-
-  // Lista de impressoras
-  fetch('{{ url_for("static", filename="printers.json") }}')
-    .then(r => r.ok ? r.json() : [])
-    .then(list => {
-      const dl = document.getElementById('printer-list');
-      (list || []).forEach(n => { const o=document.createElement('option'); o.value=n; dl.appendChild(o); });
-    }).catch(()=>{});
-
-  // Reset histórico
-  document.getElementById('btn-reset').addEventListener('click', () => {
-    const phone = document.getElementById('phone').value.trim();
-    if(!phone){ alert('Informe o telefone.'); return; }
-    window.open(`/reset?phone=${encodeURIComponent(phone)}`, '_blank');
-  });
-
-  // Envio
-  document.getElementById('form').addEventListener('submit', async ev => {
-    ev.preventDefault();
-    if(!accept.checked){ alert('Você precisa aceitar os termos.'); return; }
-
-    const fd = new FormData();
-    fd.append('phone',  (document.getElementById('phone').value || '').trim());
-    fd.append('scope',  (document.getElementById('scope').value || '').trim());
-    fd.append('resin',  (document.getElementById('resin').value || '').trim());
-    fd.append('printer',(document.getElementById('printer').value || '').trim());
-    fd.append('problem',(document.getElementById('problem').value || '').trim());
-    const files = document.getElementById('photos').files;
-    for(let i=0;i<Math.min(files.length,5);i++){ fd.append('photos', files[i]); }
-
-    btnSend.disabled = true; btnSend.textContent = 'Enviando…';
-    try{
-      const r = await fetch('/chat', { method:'POST', body: fd });
-      const j = await r.json();
-      const text = j.reply || j.answer || j.error || '(sem resposta)';
-      addMsg('Você', document.getElementById('problem').value);
-      addMsg('Assistente', text);
-    }catch(e){
-      addMsg('Assistente', 'Falha ao enviar. Tente novamente.');
-    }finally{
-      btnSend.disabled = !accept.checked; btnSend.textContent = 'Enviar';
+    if (localStorage.getItem('q3d_terms') !== '1') {
+      showTerms();
     }
-  });
 
-  function addMsg(role, text){
-    const box = document.createElement('div');
-    box.className = 'msg ' + (role==='Você' ? 'user':'bot');
-    box.innerHTML = `<div class="who">${role}:</div><div class="bubble">${escapeHtml(text)}</div>`;
-    document.getElementById('msgs').prepend(box);
-  }
-  function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
+    // ---- História
+    const modalStory = document.getElementById('modalStory');
+    const btnShowStory = document.getElementById('btnShowStory');
+    const btnCloseStory = document.getElementById('btnCloseStory');
+    btnShowStory.addEventListener('click', () => modalStory.hidden = false);
+    btnCloseStory.addEventListener('click', () => modalStory.hidden = true);
 
-  // ===== HERO rotativo (troca as imagens a cada 5s)
-  const heroImgs = document.querySelectorAll('.hero-slide img');
-  function showHero(i){ heroImgs.forEach((im,k)=>im.style.opacity = k===i ? '1':'0'); }
-  if(heroImgs.length){ let idx=0; showHero(0); setInterval(()=>{ idx=(idx+1)%heroImgs.length; showHero(idx); }, 5000); }
+    // ---- Form & Chat
+    const form = document.getElementById('chatForm');
+    const phone = document.getElementById('phone');
+    const resin = document.getElementById('resin');
+    const printer = document.getElementById('printer');
+    const problem = document.getElementById('problem');
+    const photos = document.getElementById('photos');
+    const photoCount = document.getElementById('photoCount');
+    const btnSend = document.getElementById('btnSend');
+    const btnReset = document.getElementById('btnReset');
+    const chatBox = document.getElementById('chatBox');
+
+    photos.addEventListener('change', () => {
+      const n = photos.files?.length || 0;
+      photoCount.textContent = n + (n === 1 ? " imagem selecionada" : " imagens selecionadas");
+    });
+
+    function appendMsg(role, text) {
+      const item = document.createElement('div');
+      item.className = 'msg ' + (role === 'user' ? 'user' : 'bot');
+      item.innerHTML = (role==='user' ? '<div class="who">Você</div>' : '<div class="who">Assistente Quanton3D</div>') +
+                       '<div class="bubble">' + (text||'').replace(/\n/g,'<br>') + '</div>';
+      chatBox.appendChild(item);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    btnReset.addEventListener('click', async () => {
+      if (!phone.value.trim()) { alert('Informe o telefone para limpar o histórico deste número.'); return; }
+      try {
+        await fetch(`/reset?phone=${encodeURIComponent(phone.value.trim())}`);
+        chatBox.innerHTML = '';
+        appendMsg('bot', 'Histórico limpo para o telefone informado. Pode continuar!');
+      } catch (e) {
+        appendMsg('bot', 'Não consegui limpar agora. Tente novamente.');
+      }
+    });
+
+    form.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      if (localStorage.getItem('q3d_terms') !== '1') {
+        showTerms();
+        return;
+      }
+      if (!phone.value.trim()) { alert('Informe o telefone.'); return; }
+      if (!problem.value.trim()) { alert('Descreva o problema.'); return; }
+
+      btnSend.disabled = true;
+      appendMsg('user', problem.value.trim());
+
+      const fd = new FormData();
+      fd.append('phone', phone.value.trim());
+      fd.append('scope', document.getElementById('scope').value);
+      fd.append('resin', resin.value.trim());
+      fd.append('printer', printer.value.trim());
+      fd.append('problem', problem.value.trim());
+
+      // anexos
+      if (photos.files && photos.files.length) {
+        for (let i=0; i<Math.min(photos.files.length, 5); i++) {
+          fd.append('photos', photos.files[i]);
+        }
+      }
+
+      try {
+        const r = await fetch('/chat', { method: 'POST', body: fd });
+        const data = await r.json();
+        if (!data.ok) {
+          appendMsg('bot', 'Erro: ' + (data.error || 'Falha ao responder.'));
+        } else {
+          appendMsg('bot', data.reply || data.answer || '(sem texto)');
+        }
+      } catch (err) {
+        appendMsg('bot', 'Conexão falhou. Tente novamente.');
+      } finally {
+        btnSend.disabled = false;
+        // mantenho o texto para permitir conversa contínua; limpe as fotos
+        photos.value = '';
+        photoCount.textContent = '0 imagens selecionadas';
+        problem.focus();
+      }
+    });
+
+    // (Opcional) Carregar lista de impressoras de /static/printers.json se existir
+    fetch('{{ url_for("static_files", filename="printers.json") }}')
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(list => {
+        // se quiser mudar para <select>, adapte aqui.
+        // por ora, só sugere via datalist:
+        const dl = document.createElement('datalist');
+        dl.id = 'printersList';
+        (list || []).forEach(name => {
+          const o = document.createElement('option');
+          o.value = name;
+          dl.appendChild(o);
+        });
+        document.body.appendChild(dl);
+        printer.setAttribute('list','printersList');
+      })
+      .catch(()=>{ /* silencioso se não existir */ });
   </script>
 </body>
 </html>
