@@ -1,4 +1,4 @@
-# app.py — Quanton3D Assistente (v2025-08-31b)
+# app.py — Quanton3D Assistente (v2025-08-31c)
 import os, base64, uuid, re, json
 from pathlib import Path
 
@@ -25,34 +25,44 @@ except ModuleNotFoundError:
             head = h[:16]
             if head.startswith(b"\xFF\xD8\xFF"):                 # JPEG
                 return "jpeg"
-            if head.startswith(b"\x89PNG\r\n\x1a\n"):           # PNG
+            if head.startswith(b"\x89PNG\r\n\x1a\n"):            # PNG
                 return "png"
-            if head[:4] == b"RIFF" and head[8:12] == b"WEBP":   # WEBP
+            if head[:4] == b"RIFF" and head[8:12] == b"WEBP":    # WEBP
                 return "webp"
             return None
 
-APP_VERSION = "2025-08-31b"
+APP_VERSION = "2025-08-31c"
 
 # --- Pastas e Flask ----------------------------------------------------------
-BASE_DIR    = os.getcwd()
-UPLOAD_DIR  = os.path.join(BASE_DIR, "uploads")
+BASE_DIR   = os.getcwd()
+UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# Cria o app (FAÇA APENAS UMA VEZ)
 app = Flask(__name__, template_folder="templates", static_folder="static")
-app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024  # 20MB total por requisição
+app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024  # 20MB por requisição
 
 # --- Ambiente OpenAI ---------------------------------------------------------
-# Evita que variáveis de proxy quebrem o SDK novo
+# Remove proxies do ambiente para evitar bug do SDK
 for k in ("HTTP_PROXY", "http_proxy", "HTTPS_PROXY", "https_proxy"):
     os.environ.pop(k, None)
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
-MODEL_NAME     = os.getenv("OPENAI_MODEL", "gpt-4o-mini")  # mantenha igual PC/Render
+MODEL_NAME     = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 TEMPERATURE    = float(os.getenv("OPENAI_TEMPERATURE", "0.2"))
 SEED           = int(os.getenv("OPENAI_SEED", "123"))
 
 client = OpenAI(api_key=OPENAI_API_KEY)
+
+# --- Termos de uso (pode desligar com REQUIRE_TOS=0 no Render) --------------
+REQUIRE_TOS = (os.getenv("REQUIRE_TOS", "1") == "1")
+
+def has_tos_accept(form) -> bool:
+    # aceita vários nomes de campo (checkbox)
+    val = (
+        form.get("tos") or form.get("tos_accept") or
+        form.get("terms") or form.get("terms_accept") or ""
+    )
+    return str(val).strip().lower() in {"1","true","on","yes","sim"}
 
 # --- Admin: bloqueio por telefone -------------------------------------------
 BLOCKED_PATH = Path("blocked.json")
@@ -62,7 +72,6 @@ def normalize_phone(p: str) -> str:
     return re.sub(r"\D+", "", p or "")
 
 def load_blocked():
-    """Carrega lista de bloqueados do arquivo."""
     global BLOCKED
     if BLOCKED_PATH.exists():
         try:
@@ -75,7 +84,6 @@ def load_blocked():
         BLOCKED = set()
 
 def save_blocked():
-    """Salva lista de bloqueados no arquivo."""
     try:
         BLOCKED_PATH.write_text(
             json.dumps(sorted(BLOCKED), ensure_ascii=False, indent=2),
@@ -84,13 +92,14 @@ def save_blocked():
     except Exception as e:
         app.logger.error(f"Falha ao salvar blocked.json: {e}")
 
+load_blocked()
+
 # --- Utilidades --------------------------------------------------------------
 def allowed_file(filename: str) -> bool:
     ext = (filename.rsplit(".", 1)[-1] if "." in filename else "").lower()
     return ext in {"jpg", "jpeg", "png", "webp"}
 
 def _file_to_dataurl_and_size(fs):
-    """Lê FileStorage -> (data_url, bytes_len). Valida tipo por assinatura."""
     data = fs.read()
     if not data:
         return None, 0
@@ -123,7 +132,7 @@ def index():
     try:
         return render_template("index.html", app_version=APP_VERSION)
     except TemplateNotFound:
-        # fallback simples se faltar template
+        # fallback simples
         return (
             f"<h1>Quanton3D Assistente</h1>"
             f"<p>Backend ativo. Versão {APP_VERSION}</p>", 200
@@ -150,7 +159,6 @@ def get_upload(fname):
 # --- Admin (página simples + bloquear/desbloquear) --------------------------
 @app.get("/admin")
 def admin_page():
-    # se existir templates/admin.html, usa; senão, usa um fallback simples
     try:
         return render_template("admin.html")
     except TemplateNotFound:
@@ -189,9 +197,6 @@ def admin_unblock():
     save_blocked()
     return f"{phone} desbloqueado.", 200
 
-# Inicializa a lista ao subir o app
-load_blocked()
-
 # --- Chat -------------------------------------------------------------------
 @app.post("/chat")
 def chat():
@@ -202,20 +207,26 @@ def chat():
         printer = (request.form.get("printer") or "").strip()
         problem = (request.form.get("problem") or "").strip()
 
-        # Bloqueio
+        # Normaliza e checa bloqueio
         phone = normalize_phone(phone)
         if phone in BLOCKED:
             return jsonify(ok=False, error="Acesso não autorizado. Contate a Quanton3D."), 403
 
+        # Termos de uso (se exigido)
+        if REQUIRE_TOS and not has_tos_accept(request.form):
+            return jsonify(ok=False, error="É necessário aceitar os termos de uso."), 400
+
+        # Validações simples
         if not phone:
             return jsonify(ok=False, error="Informe o telefone."), 400
         if not problem:
             return jsonify(ok=False, error="Descreva o problema."), 400
 
         # Imagens (aceita 'images' ou 'photos')
-        field_name = "images" if "images" in request.files else "photos"
-        files = request.files.getlist(field_name) if field_name in request.files else []
+        field_name = "images" if "images" in request.files else ("photos" if "photos" in request.files else None)
+        files = request.files.getlist(field_name) if field_name else []
         images_dataurls, total_bytes = [], 0
+
         for i, fs in enumerate(files[:5]):
             # limite 3MB por imagem
             size_hint = fs.content_length or 0
@@ -234,7 +245,7 @@ def chat():
         # Sinaliza “LCD” se texto falar em tela/LCD ou se tem imagem
         lcd_hint = ("lcd" in problem.lower()) or ("tela" in problem.lower()) or (len(images_dataurls) > 0)
 
-        # Texto que vai junto das imagens
+        # Texto que acompanha as imagens
         user_text = (
             f"Telefone: {phone}\n"
             f"Resina: {resin or '-'}\n"
@@ -244,6 +255,7 @@ def chat():
             "Contexto: suporte técnico Quanton3D (SLA/DLP)."
         )
 
+        # Monta conteúdo (texto + imagens) para visão
         content = [{"type": "text", "text": user_text}]
         for url in images_dataurls:
             content.append({"type": "image_url", "image_url": {"url": url}})
@@ -260,11 +272,12 @@ def chat():
         )
         answer = (resp.choices[0].message.content or "").strip()
 
+        # >>> retornos CERTOS (sem '}' sobrando) <<<
         return jsonify(ok=True, answer=answer, version=APP_VERSION, model=MODEL_NAME)
 
     except Exception as e:
-        app.logger.exception("erro no /chat")
-        return jsonify(ok=False, error=str(e)), 500
+        app.logger.exception("Erro no /chat")
+        return jsonify(ok=False, error=str(e), version=APP_VERSION, model=MODEL_NAME), 500
 
 # --- Dev local ---------------------------------------------------------------
 if __name__ == "__main__":
