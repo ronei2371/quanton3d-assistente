@@ -1,5 +1,18 @@
 # -*- coding: utf-8 -*-
 # v2025-08-31a — compat Python 3.13, OpenAI 1.x, visão por imagens, sessões por telefone
+import json, re  # já pode existir; garanta que estejam importados
+
+def normalize_phone(p: str) -> str:
+    """Mantém só dígitos do telefone."""
+    return re.sub(r"\D+", "", p or "")
+
+# Arquivo com a denylist (telefones bloqueados)
+BLOCKED_FILE = os.path.join(os.path.dirname(__file__), "blocked.json")
+try:
+    with open(BLOCKED_FILE, "r", encoding="utf-8") as f:
+        BLOCKED = set(json.load(f))
+except Exception:
+    BLOCKED = set()
 
 import os, base64, uuid, re
 from flask import Flask, request, render_template, jsonify, send_from_directory, url_for
@@ -10,6 +23,62 @@ APP_VERSION = "2025-08-31a"
 # ---------- Flask app (precisa existir como variável chamada 'app') ----------
 app = Flask(__name__, template_folder="templates", static_folder="static")
 app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024  # 20MB total upload
+# ==================== ADMIN: BLOQUEIO POR TELEFONE ====================
+import os, json, re
+from flask import request, jsonify, abort
+
+# token de admin (defina no Render: Settings → Environment → ADMIN_TOKEN)
+ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", "")
+
+# normaliza telefone para só dígitos
+def normalize_phone(p: str) -> str:
+    return re.sub(r"\D+", "", p or "")
+
+# arquivo que guarda a lista de telefones bloqueados (persistente no repo)
+BASE_DIR     = os.path.dirname(__file__)
+BLOCKED_FILE = os.path.join(BASE_DIR, "blocked.json")
+
+# carrega bloqueados na inicialização
+try:
+    with open(BLOCKED_FILE, "r", encoding="utf-8") as _f:
+        BLOCKED = set(json.load(_f))
+except Exception:
+    BLOCKED = set()
+
+def _save_blocked():
+    """Salva a lista de bloqueados no arquivo JSON."""
+    with open(BLOCKED_FILE, "w", encoding="utf-8") as _f:
+        json.dump(sorted(BLOCKED), _f, ensure_ascii=False, indent=2)
+
+# ---- endpoints admin -------------------------------------------------
+@app.post("/admin/block")
+def admin_block():
+    token = request.headers.get("X-Admin-Token", "")
+    if not ADMIN_TOKEN or token != ADMIN_TOKEN:
+        abort(401)  # não autorizado
+
+    num = normalize_phone(request.form.get("phone"))
+    if not num:
+        abort(400)  # requisição ruim
+
+    BLOCKED.add(num)
+    _save_blocked()
+    return {"ok": True, "blocked": sorted(BLOCKED)}
+
+@app.post("/admin/unblock")
+def admin_unblock():
+    token = request.headers.get("X-Admin-Token", "")
+    if not ADMIN_TOKEN or token != ADMIN_TOKEN:
+        abort(401)
+
+    num = normalize_phone(request.form.get("phone"))
+    if not num:
+        abort(400)
+
+    BLOCKED.discard(num)
+    _save_blocked()
+    return {"ok": True, "blocked": sorted(BLOCKED)}
+# ================== FIM ADMIN: BLOQUEIO POR TELEFONE ===================
 
 # Pasta para uploads (efêmera no Render, mas serve para visualizar se precisar)
 UPLOAD_DIR = os.path.join(os.getcwd(), "uploads")
@@ -111,14 +180,18 @@ def chat():
         resin   = (request.form.get("resin") or "").strip()
         printer = (request.form.get("printer") or "").strip()
         problem = (request.form.get("problem") or "").strip()
-
+ phone = normalize_phone(phone)                   # usa a função do bloco ADMIN
+        if phone in BLOCKED:
+            return jsonify(ok=False, error="Acesso não autorizado. Contate a Quanton3D."), 403
         if not phone:
             return jsonify({"ok": False, "error": "Informe o telefone."}), 400
         if not problem:
             return jsonify({"ok": False, "error": "Descreva o problema."}), 400
         if not OPENAI_API_KEY:
             return jsonify({"ok": False, "error": "OPENAI_API_KEY ausente no servidor."}), 500
-
+ phone = normalize_phone(phone)                   # usa a função do bloco ADMIN
+        if phone in BLOCKED:
+            return jsonify(ok=False, error="Acesso não autorizado. Contate a Quanton3D."), 403
         # Fotos (até 5, máx 3MB cada)
         images = []
         if "photos" in request.files:
