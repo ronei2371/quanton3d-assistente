@@ -1,20 +1,19 @@
-# app.py
-# Quanton3D Assistente – v2025-08-31c
-# - Bloqueio por telefone (admin: /admin, /admin/block, /admin/unblock, /admin/list)
-# - Compatível Python 3.13 (fallback do imghdr)
-# - OpenAI SDK 1.x (sem proxies)
-# - Visão por imagem (até 5 imagens, 3MB cada)
-# - /diag e /healthz para diagnósticos
+# app.py — Quanton3D Assistente (v2025-08-31b)
+import os, base64, uuid, re, json
+from pathlib import Path
 
-import os, json, base64, uuid, re, logging
-from flask import Flask, render_template, request, jsonify, send_from_directory, url_for, abort
+from flask import (
+    Flask, render_template, render_template_string,
+    request, jsonify, send_from_directory, url_for
+)
+from jinja2 import TemplateNotFound
 from openai import OpenAI
 
-# ---- Compat: Python 3.13 removeu imghdr; criamos um fallback simples
+# --- Compat: Python 3.13 removeu imghdr; recriamos o suficiente (JPEG/PNG/WEBP)
 try:
-    import imghdr  # ok em Python <= 3.12
+    import imghdr  # ok até 3.12
 except ModuleNotFoundError:
-    class imghdr:  # fallback básico (JPEG/PNG/WEBP)
+    class imghdr:  # compat simples
         @staticmethod
         def what(file=None, h=None):
             if h is None and hasattr(file, "read"):
@@ -32,121 +31,66 @@ except ModuleNotFoundError:
                 return "webp"
             return None
 
-APP_VERSION = "2025-08-31c"
+APP_VERSION = "2025-08-31b"
 
-# ---- Flask
-app = Flask(__name__, template_folder="templates", static_folder="static")
-app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024  # 20MB total (uploads)
-
-# Cria pasta de uploads
-UPLOAD_DIR = os.path.join(os.getcwd(), "uploads")
+# --- Pastas e Flask ----------------------------------------------------------
+BASE_DIR    = os.getcwd()
+UPLOAD_DIR  = os.path.join(BASE_DIR, "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# Remove proxies do ambiente para evitar erro "proxies" no client OpenAI
+# Cria o app (FAÇA APENAS UMA VEZ)
+app = Flask(__name__, template_folder="templates", static_folder="static")
+app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024  # 20MB total por requisição
+
+# --- Ambiente OpenAI ---------------------------------------------------------
+# Evita que variáveis de proxy quebrem o SDK novo
 for k in ("HTTP_PROXY", "http_proxy", "HTTPS_PROXY", "https_proxy"):
     os.environ.pop(k, None)
 
-# ---- ENV
-OPENAI_API_KEY   = os.getenv("OPENAI_API_KEY", "")
-MODEL_NAME       = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
-TEMPERATURE      = float(os.getenv("OPENAI_TEMPERATURE", "0.2"))
-SEED             = int(os.getenv("OPENAI_SEED", "123"))
-ADMIN_TOKEN      = os.getenv("ADMIN_TOKEN", "")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+MODEL_NAME     = os.getenv("OPENAI_MODEL", "gpt-4o-mini")  # mantenha igual PC/Render
+TEMPERATURE    = float(os.getenv("OPENAI_TEMPERATURE", "0.2"))
+SEED           = int(os.getenv("OPENAI_SEED", "123"))
 
-# OpenAI client
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-# ---- SYSTEM PROMPTS
-ASSISTANT_SYSTEM = """
-Você é técnico de campo da Quanton3D. Estilo: direto, oficina, prático.
-REGRAS:
-- Se faltar dado essencial, faça APENAS 1 pergunta objetiva e PARE (aguarde resposta).
-- Se houver IMAGEM, descreva o que observa e relacione com o defeito.
-- Evite checklists genéricos fora do contexto.
-- Priorize diagnóstico por testes práticos.
+# --- Admin: bloqueio por telefone -------------------------------------------
+BLOCKED_PATH = Path("blocked.json")
+BLOCKED: set[str] = set()
 
-PROTOCOLO-LCD (quando tema/ imagem sugerirem LCD):
-1) Teste do PAPEL BRANCO (cuba fora) para uniformidade:
-   - Faixas/zonas que se repetem = suspeitar de DIFUSOR/LED (backlight).
-   - Pontos/linhas fixos = PIXELS MORTOS (LCD).
-2) Teste de GRADE/pattern: procurar quadrados apagados/linhas.
-3) Limpeza suave do LCD: microfibra + IPA 99%, sem encharcar, sem pressão.
-4) Checar FEP (opacidades/riscos) e vazamento de resina nas bordas do LCD.
-5) Concluir objetivamente: difusor/LED x LCD x reflexo/ângulo.
-
-No final, traga “O QUE FAZER AGORA” em 3–5 passos objetivos.
-"""
-
-SYSTEM_PROMPT = (
-    "Você é o Assistente Técnico Quanton3D (SLA/DLP). Português-BR. "
-    "Fale curto, direto e educado. Se faltar informação crítica, faça 1 pergunta e pare."
-)
-
-# ==================== ADMIN: BLOQUEIO POR TELEFONE ====================
 def normalize_phone(p: str) -> str:
     return re.sub(r"\D+", "", p or "")
 
-# Persistência do arquivo de bloqueados
-# Se um Disk '/data' estiver presente no Render, use-o. Senão, usa a pasta do app.
-BLOCKED_DIR = os.getenv("BLOCKED_DIR", "/data")
-if not os.path.isdir(BLOCKED_DIR):
-    BLOCKED_DIR = os.path.dirname(__file__)
-BLOCKED_FILE = os.path.join(BLOCKED_DIR, "blocked.json")
+def load_blocked():
+    """Carrega lista de bloqueados do arquivo."""
+    global BLOCKED
+    if BLOCKED_PATH.exists():
+        try:
+            data = json.loads(BLOCKED_PATH.read_text(encoding="utf-8"))
+            BLOCKED = set(map(normalize_phone, data))
+        except Exception as e:
+            app.logger.error(f"Falha ao ler blocked.json: {e}")
+            BLOCKED = set()
+    else:
+        BLOCKED = set()
 
-def _load_blocked():
+def save_blocked():
+    """Salva lista de bloqueados no arquivo."""
     try:
-        with open(BLOCKED_FILE, "r", encoding="utf-8") as f:
-            return set(json.load(f))
-    except Exception:
-        return set()
-
-def _save_blocked(blocked: set):
-    try:
-        with open(BLOCKED_FILE, "w", encoding="utf-8") as f:
-            json.dump(sorted(blocked), f, ensure_ascii=False, indent=2)
+        BLOCKED_PATH.write_text(
+            json.dumps(sorted(BLOCKED), ensure_ascii=False, indent=2),
+            encoding="utf-8"
+        )
     except Exception as e:
         app.logger.error(f"Falha ao salvar blocked.json: {e}")
 
-BLOCKED = _load_blocked()
-
-@app.post("/admin/block")
-def admin_block():
-    token = request.headers.get("X-Admin-Token", "")
-    if not ADMIN_TOKEN or token != ADMIN_TOKEN:
-        abort(401)
-    num = normalize_phone(request.form.get("phone"))
-    if not num:
-        abort(400)
-    BLOCKED.add(num)
-    _save_blocked(BLOCKED)
-    return {"ok": True, "blocked": sorted(BLOCKED)}
-
-@app.post("/admin/unblock")
-def admin_unblock():
-    token = request.headers.get("X-Admin-Token", "")
-    if not ADMIN_TOKEN or token != ADMIN_TOKEN:
-        abort(401)
-    num = normalize_phone(request.form.get("phone"))
-    if not num:
-        abort(400)
-    BLOCKED.discard(num)
-    _save_blocked(BLOCKED)
-    return {"ok": True, "blocked": sorted(BLOCKED)}
-
-@app.get("/admin/list")
-def admin_list():
-    token = request.headers.get("X-Admin-Token", "")
-    if not ADMIN_TOKEN or token != ADMIN_TOKEN:
-        abort(401)
-    return {"ok": True, "blocked": sorted(BLOCKED)}
-# ================== FIM ADMIN: BLOQUEIO POR TELEFONE ===================
-
-# ---- Utilidades de upload/visão
+# --- Utilidades --------------------------------------------------------------
 def allowed_file(filename: str) -> bool:
     ext = (filename.rsplit(".", 1)[-1] if "." in filename else "").lower()
     return ext in {"jpg", "jpeg", "png", "webp"}
 
 def _file_to_dataurl_and_size(fs):
+    """Lê FileStorage -> (data_url, bytes_len). Valida tipo por assinatura."""
     data = fs.read()
     if not data:
         return None, 0
@@ -157,15 +101,33 @@ def _file_to_dataurl_and_size(fs):
     b64  = base64.b64encode(data).decode("utf-8")
     return f"data:{mime};base64,{b64}", len(data)
 
-# ------------------- ROTAS BÁSICAS -------------------
+# --- Prompt do Assistente ----------------------------------------------------
+ASSISTANT_SYSTEM = """
+Você é o Assistente Técnico Quanton3D (SLA/DLP), direto de oficina, gentil e objetivo.
+- Modo Certeiro: se faltar dado crítico, faça APENAS 1 pergunta objetiva e PARE.
+- Se houver IMAGENS: descreva o que observa e use testes práticos. Evite checklist genérico.
+- Não culpe “resina com defeito” antes de validar mecânica/óptica/parametrização.
+- Sempre feche com: O QUE FAZER AGORA (3–5 passos práticos).
+
+PROTOCOLO LCD (foto de tela acesa ou escopo lcd):
+1) Teste PAPEL BRANCO (sem cuba): faixas repetidas = difusor/LED; pontos/linhas finas = pixels mortos (LCD).
+2) Teste de GRADE/pattern: procurar quadrados apagados/linhas.
+3) Limpeza suave: microfibra + IPA 99%, sem encharcar, sem pressão.
+4) Conferir FEP (opacidade/riscos) e vazamento de resina nas bordas do LCD.
+5) Concluir: difusor/LED x LCD x reflexo/ângulo, sem generalidades.
+"""
+
+# --- Rotas básicas -----------------------------------------------------------
 @app.get("/")
 def index():
-    return render_template("index.html", app_version=APP_VERSION)
-
-@app.get("/admin")
-def admin_page():
-    # página simples de administração (templates/admin.html)
-    return render_template("admin.html")
+    try:
+        return render_template("index.html", app_version=APP_VERSION)
+    except TemplateNotFound:
+        # fallback simples se faltar template
+        return (
+            f"<h1>Quanton3D Assistente</h1>"
+            f"<p>Backend ativo. Versão {APP_VERSION}</p>", 200
+        )
 
 @app.get("/healthz")
 def healthz():
@@ -179,55 +141,100 @@ def diag():
         "model": MODEL_NAME,
         "temperature": TEMPERATURE,
         "seed": SEED
-    }), 200
+    })
 
 @app.get("/uploads/<path:fname>")
 def get_upload(fname):
     return send_from_directory(UPLOAD_DIR, fname)
 
-# ------------------- CHAT -------------------
+# --- Admin (página simples + bloquear/desbloquear) --------------------------
+@app.get("/admin")
+def admin_page():
+    # se existir templates/admin.html, usa; senão, usa um fallback simples
+    try:
+        return render_template("admin.html")
+    except TemplateNotFound:
+        return render_template_string("""
+<!doctype html><meta charset="utf-8">
+<title>Admin — Quanton3D</title>
+<h1>Admin — Bloqueio por telefone</h1>
+<p>Digite o telefone com DDI+DDD+Número (somente números). Ex.: 5531983500634</p>
+<input id="phone" placeholder="55319xxxxxxxx" style="padding:8px;width:320px">
+<button onclick="go('block')">Bloquear</button>
+<button onclick="go('unblock')">Desbloquear</button>
+<script>
+  function go(action){
+    const p = document.getElementById('phone').value.trim();
+    if(!p){ alert('Informe o telefone.'); return; }
+    location.href = `/admin/${action}?phone=${encodeURIComponent(p)}`;
+  }
+</script>
+""")
+
+@app.get("/admin/block")
+def admin_block():
+    phone = normalize_phone(request.args.get("phone", ""))
+    if not phone:
+        return "Informe ?phone=559999999999", 400
+    BLOCKED.add(phone)
+    save_blocked()
+    return f"{phone} bloqueado.", 200
+
+@app.get("/admin/unblock")
+def admin_unblock():
+    phone = normalize_phone(request.args.get("phone", ""))
+    if not phone:
+        return "Informe ?phone=559999999999", 400
+    BLOCKED.discard(phone)
+    save_blocked()
+    return f"{phone} desbloqueado.", 200
+
+# Inicializa a lista ao subir o app
+load_blocked()
+
+# --- Chat -------------------------------------------------------------------
 @app.post("/chat")
 def chat():
-    if not OPENAI_API_KEY:
-        return jsonify(ok=False, error="OPENAI_API_KEY ausente no servidor."), 500
-
     try:
-        # 1) lê os campos do formulário
+        # Campos do formulário
         phone   = (request.form.get("phone")   or "").strip()
         resin   = (request.form.get("resin")   or "").strip()
         printer = (request.form.get("printer") or "").strip()
         problem = (request.form.get("problem") or "").strip()
+
+        # Bloqueio
+        phone = normalize_phone(phone)
+        if phone in BLOCKED:
+            return jsonify(ok=False, error="Acesso não autorizado. Contate a Quanton3D."), 403
 
         if not phone:
             return jsonify(ok=False, error="Informe o telefone."), 400
         if not problem:
             return jsonify(ok=False, error="Descreva o problema."), 400
 
-        # 2) bloqueio por telefone (admin)
-        phone = normalize_phone(phone)
-        if phone in BLOCKED:
-            return jsonify(ok=False, error="Acesso não autorizado. Contate a Quanton3D."), 403
-
-        # 3) imagens (até 5; 3MB cada)
-        files = request.files.getlist("images")
+        # Imagens (aceita 'images' ou 'photos')
+        field_name = "images" if "images" in request.files else "photos"
+        files = request.files.getlist(field_name) if field_name in request.files else []
         images_dataurls, total_bytes = [], 0
         for i, fs in enumerate(files[:5]):
-            if not fs or fs.filename == "":
-                continue
+            # limite 3MB por imagem
             size_hint = fs.content_length or 0
-            if size_hint > 3 * 1024 * 1024:
+            if size_hint and size_hint > 3 * 1024 * 1024:
                 return jsonify(ok=False, error=f"Imagem {i+1} excede 3MB."), 400
+
             dataurl, real_size = _file_to_dataurl_and_size(fs)
             if dataurl:
-                total_bytes += real_size
                 if real_size > 3 * 1024 * 1024:
                     return jsonify(ok=False, error=f"Imagem {i+1} excede 3MB."), 400
                 images_dataurls.append(dataurl)
+                total_bytes += real_size
 
-        # 4) heurística LCD
+        app.logger.info(f"/chat imagens_recebidas={len(images_dataurls)} bytes_totais={total_bytes}")
+
+        # Sinaliza “LCD” se texto falar em tela/LCD ou se tem imagem
         lcd_hint = ("lcd" in problem.lower()) or ("tela" in problem.lower()) or (len(images_dataurls) > 0)
 
-        # 5) monta conteúdo p/ modelo
+        # Texto que vai junto das imagens
         user_text = (
             f"Telefone: {phone}\n"
             f"Resina: {resin or '-'}\n"
@@ -236,11 +243,12 @@ def chat():
             f"Problema: {problem}\n"
             "Contexto: suporte técnico Quanton3D (SLA/DLP)."
         )
+
         content = [{"type": "text", "text": user_text}]
         for url in images_dataurls:
             content.append({"type": "image_url", "image_url": {"url": url}})
 
-        # 6) chamada OpenAI
+        # Chamada ao modelo
         resp = client.chat.completions.create(
             model=MODEL_NAME,
             temperature=TEMPERATURE,
@@ -248,24 +256,17 @@ def chat():
             messages=[
                 {"role": "system", "content": ASSISTANT_SYSTEM},
                 {"role": "user",   "content": content},
-                {"role": "system", "content": SYSTEM_PROMPT},
             ],
         )
         answer = (resp.choices[0].message.content or "").strip()
 
-        return jsonify(ok=True, answer=answer, version=APP_VERSION, model=MODEL_NAME})
+        return jsonify(ok=True, answer=answer, version=APP_VERSION, model=MODEL_NAME)
 
     except Exception as e:
         app.logger.exception("erro no /chat")
         return jsonify(ok=False, error=str(e)), 500
 
-# ------------------- ESTÁTICOS -------------------
-@app.get("/static/<path:filename>")
-def static_files(filename):
-    return send_from_directory(app.static_folder, filename)
-
-# ---- LOCAL
+# --- Dev local ---------------------------------------------------------------
 if __name__ == "__main__":
-    # local: set OPENAI_API_KEY no seu terminal antes de rodar
-    # $env:OPENAI_API_KEY="sua_chave"
+    # Rodar localmente: python app.py
     app.run(host="0.0.0.0", port=5000, debug=True)
