@@ -1,236 +1,281 @@
 <!doctype html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>IA Quanton3D — Suporte técnico 3D</title>
-<link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='site.css') }}">
-<style>
-:root{--primary:#0bb7ff;--bg:#0b1220;--card:#121a2a}
-body{background:#0b1220;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial;color:#eaf1ff}
-#topbar{background:linear-gradient(90deg,#0c6df7,#1ac8ff);height:76px;display:flex;align-items:center;padding:0 16px;box-shadow:0 2px 20px rgba(0,0,0,.25)}
-#topbar h1{margin:0;font-size:1.25rem;font-weight:800;letter-spacing:.5px;color:#fff;line-height:1.1}
-#topbar .brand{display:flex;align-items:center;gap:.65rem}
-#topbar .brand img{width:32px;height:32px;border-radius:8px}
-#navbtns{margin-left:auto;display:flex;gap:.5rem}
-#navbtns .chip{background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.24);padding:.4rem .75rem;border-radius:999px;font-size:.85rem;cursor:pointer;text-decoration:none}
-.container{max-width:980px;margin:22px auto;padding:0 16px}
-.card{background:var(--card);border:1px solid #1e2a44;border-radius:14px;padding:16px;color:#cad5ff}
-label{display:block;font-weight:600;margin:.35rem 0 .25rem}
-input,select,textarea{width:100%;background:#0f1626;color:#eaf1ff;border:1px solid #26324f;border-radius:10px;padding:.75rem}
-textarea{min-height:140px;resize:vertical}
-.actions{display:flex;align-items:center;gap:.5rem;margin-top:10px}
-button.primary{background:var(--primary);color:#041423;border:0;border-radius:999px;padding:.7rem 1.2rem;font-weight:800;cursor:pointer}
-small.muted{color:#95a3c7}
-
-/* BLOQUEIO (gate obrigatório) */
-#gate-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);z-index:1000;display:none}
-#gate{position:fixed;z-index:1001;inset:0;display:none;align-items:center;justify-content:center}
-#gate .box{width:min(680px,92vw);background:#0f182a;color:#eaf1ff;border:1px solid #21406a;border-radius:16px;padding:18px}
-#gate h2{margin:0 0 8px;font-size:1.15rem}
-#gate ul{margin:.5rem 0 1rem 1.1rem}
-#gate .row{display:flex;align-items:center;gap:.5rem}
-#gate button{margin-left:auto}
-
-/* MODAL “Nossa história” */
-.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:900;display:none}
-.modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:901}
-.modal .box{width:min(720px,92vw);background:#0f182a;color:#eaf1ff;border:1px solid #20466f;border-radius:16px;padding:18px}
-.modal .row{display:flex;gap:.5rem;margin-top:.75rem}
-.modal button{white-space:nowrap}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>IA Quanton3D — Suporte técnico 3D</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='site.css') }}" />
 </head>
 <body>
 
-<header id="topbar">
-  <div class="brand">
-    <img src="{{ url_for('static', filename='logo.png') }}" alt="Quanton3D">
-    <h1>IA Quanton3D®<br><small style="font-weight:600;opacity:.85">Suporte técnico 3D</small></h1>
-  </div>
-  <div id="navbtns">
-    <a href="#" class="chip" id="btn-terms">Termos de uso</a>
-    <a href="#" class="chip" id="btn-story">Nossa história</a>
-    <span class="chip">v {{ app_version }}</span>
-  </div>
-</header>
-
-<main class="container">
-  <form id="chat-form" class="card" enctype="multipart/form-data">
-    <h3 style="margin:0 0 8px">Identificação</h3>
-    <div style="display:grid;gap:12px;grid-template-columns:1fr 1fr">
-      <div>
-        <label>Telefone (WhatsApp)</label>
-        <input id="phone" name="phone" placeholder="(31) 9 0000-0000" required>
-        <small class="muted">Use sempre o mesmo telefone — ele vincula seu histórico.</small>
+  <!-- Topo fino e claro -->
+  <header class="topbar">
+    <div class="wrap topbar__content">
+      <div class="brand">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Quanton3D" class="brand__logo" />
+        <div class="brand__text">
+          <div class="brand__name">IA Quanton3D<span class="reg">®</span></div>
+          <div class="brand__sub">Suporte técnico 3D</div>
+        </div>
       </div>
-      <div>
-        <label>Onde está o problema?</label>
-        <select id="scope" name="scope" required>
-          <option value="" selected>Selecione...</option>
-          <option value="lcd">LCD / backlight</option>
-          <option value="adesao">Primeira camada</option>
-          <option value="delaminacao">Delaminação</option>
-          <option value="outros">Outros</option>
-        </select>
+
+      <nav class="actions">
+        <button class="chip" id="btnTos" type="button">Termos de uso</button>
+        <button class="chip" id="btnStory" type="button">Nossa história</button>
+        <span class="badge">v {{ app_version }}</span>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Conteúdo -->
+  <main class="wrap">
+    <section class="card">
+      <h1 class="title">Identificação</h1>
+
+      <form id="frm" class="grid" enctype="multipart/form-data">
+        <!-- Coluna A -->
+        <div class="col">
+          <div class="field">
+            <label class="label" for="phone">Telefone (WhatsApp)</label>
+            <input id="phone" name="phone" class="input" placeholder="(31) 9 0000-0000" autocomplete="tel" />
+            <small class="hint">Use sempre o mesmo telefone — ele vincula seu histórico.</small>
+          </div>
+
+          <div class="field">
+            <label class="label" for="resin">Resina (opcional — catálogo Quanton3D em breve)</label>
+            <input id="resin" name="resin" class="input" placeholder="Ex.: Spark / Alchemist / Flex..." />
+          </div>
+
+          <div class="field">
+            <label class="label" for="problem">Descreva o problema</label>
+            <textarea id="problem" name="problem" class="textarea" rows="6"
+              placeholder="Ex.: delaminação entre camadas; primeira camada soltando; manchas no LCD..."></textarea>
+          </div>
+        </div>
+
+        <!-- Coluna B -->
+        <div class="col">
+          <div class="field">
+            <label class="label" for="scope">Onde está o problema?</label>
+            <select id="scope" name="scope" class="select">
+              <option value="">Selecione...</option>
+              <option>adesão/base</option>
+              <option>suportes</option>
+              <option>parâmetros</option>
+              <option>lavagem/pós-cura</option>
+              <option>lcd/tela/backlight</option>
+              <option>outros</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label class="label" for="printer">Impressora (opcional — catálogo em breve)</label>
+            <input id="printer" name="printer" class="input" list="printersList"
+                   placeholder="Ex.: Anycubic Photon Mono X, Elegoo Saturn..." />
+            <datalist id="printersList"></datalist>
+          </div>
+
+          <div class="field">
+            <label class="label">Imagens (JPG/PNG/WEBP, máx 5 — 3MB cada)</label>
+            <input id="photos" name="photos" class="input" type="file" accept=".jpg,.jpeg,.png,.webp" multiple />
+            <small class="hint">Dica: foto da tela acesa ajuda MUITO nos casos de LCD/backlight.</small>
+          </div>
+        </div>
+
+        <!-- Linha final -->
+        <div class="row actions-row">
+          <label class="check">
+            <input type="checkbox" id="accept" />
+            <span>Li e aceito os <a href="#" id="lnkTos">termos de uso</a> e a
+              <a href="#" id="lnkPrivacy">política de privacidade</a>.</span>
+          </label>
+
+          <div class="buttons">
+            <a class="link" id="resetLink" href="#" title="Limpa só o seu histórico">Reset do meu histórico</a>
+            <button id="btnSend" class="btn btn-primary" type="submit" disabled>Enviar</button>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <!-- Timeline de respostas -->
+    <section id="feed" class="feed"></section>
+  </main>
+
+  <!-- Rodapé com direitos -->
+  <footer class="footer">
+    <div class="wrap footer__content">
+      <div>© QUANTON3D — todos os direitos reservados</div>
+      <div class="footer__links">
+        <a href="#" id="ftTos">Direitos autorais</a>
+        <span>•</span>
+        <a href="#" id="ftPrivacy">Privacidade</a>
       </div>
     </div>
+  </footer>
 
-    <div style="display:grid;gap:12px;grid-template-columns:1fr 1fr;margin-top:8px">
-      <div>
-        <label>Resina (opcional — catálogo em breve)</label>
-        <input id="resin" name="resin" placeholder="Ex.: Spark / Alchemist / Flex...">
+  <!-- Modal: Termos -->
+  <div class="modal" id="modalTos" hidden>
+    <div class="modal__box">
+      <h2>Termo de Uso – Bot Quanton3D</h2>
+      <div class="modal__body">
+        <ul class="legal">
+          <li>O bot é propriedade exclusiva da Quanton3D.</li>
+          <li>Uso permitido apenas para suporte em impressão 3D.</li>
+          <li>É proibida a cópia, modificação ou redistribuição.</li>
+          <li>As informações são apoio técnico e não substituem decisões profissionais.</li>
+          <li>Violação implica em bloqueio de acesso e medidas legais.</li>
+        </ul>
       </div>
-      <div>
-        <label>Impressora (opcional — catálogo em breve)</label>
-        <input id="printer" name="printer" placeholder="Ex.: Anycubic Photon Mono X, Elegoo Saturn...">
+      <div class="modal__actions">
+        <button class="btn btn-secondary" data-close>Fechar</button>
+        <button class="btn btn-primary" id="agree">Aceito</button>
       </div>
-    </div>
-
-    <label style="margin-top:10px">Descreva o problema</label>
-    <textarea id="problem" name="problem" placeholder="Ex.: delaminação entre camadas; primeira camada soltando; manchas no LCD..." required></textarea>
-
-    <label style="margin-top:10px">Imagens (JPG/PNG/WEBP, máx 5 — 3MB cada)</label>
-    <input type="file" id="images" name="images" accept=".jpg,.jpeg,.png,.webp" multiple>
-    <small class="muted">Dica: foto da tela acesa ajuda muito nos casos de LCD/backlight.</small>
-
-    <div class="actions">
-      <label style="display:flex;align-items:center;gap:.45rem;margin:0">
-        <input id="tos-check" type="checkbox">
-        <span>Li e aceito os <a href="#" id="inline-terms">termos de uso</a> e a <a href="/privacidade" target="_blank">política de privacidade</a>.</span>
-      </label>
-      <button id="send" class="primary" type="submit" disabled>Enviar</button>
-      <a id="reset-hist" class="chip" href="#" style="margin-left:auto;text-decoration:none">Reset do meu histórico</a>
-    </div>
-
-    <div id="answer" class="card" style="margin-top:14px;display:none"></div>
-  </form>
-</main>
-
-<!-- GATE (obrigatório aceitar) -->
-<div id="gate-backdrop"></div>
-<div id="gate" role="dialog" aria-modal="true">
-  <div class="box">
-    <h2>📌 Termos de Uso – Bot Quanton3D</h2>
-    <p>Antes de continuar, leia e concorde:</p>
-    <ul>
-      <li>O bot é propriedade exclusiva da Quanton3D.</li>
-      <li>Uso permitido apenas para suporte técnico de impressão 3D.</li>
-      <li>Proibida a cópia, modificação ou redistribuição.</li>
-      <li>As respostas são apoio técnico e não substituem decisões profissionais.</li>
-      <li>Violação pode implicar bloqueio de acesso e medidas legais.</li>
-    </ul>
-    <div class="row">
-      <label style="display:flex;align-items:center;gap:.5rem">
-        <input id="gate-check" type="checkbox"> <span>Li e concordo com os termos acima.</span>
-      </label>
-      <button id="gate-accept" class="primary" disabled>Concordo e continuar</button>
     </div>
   </div>
-</div>
 
-<!-- MODAL “Nossa história” -->
-<div id="story-backdrop" class="modal-backdrop"></div>
-<div id="story" class="modal" role="dialog" aria-modal="true" aria-labelledby="story-title">
-  <div class="box">
-    <h2 id="story-title">Conheça a história de Nhor e filhos com Ronei</h2>
-    <p>Um laço de amor, trabalho e curiosidade — a força por trás da Quanton3D. 💙</p>
-    <label>Se quiser, deixe sua pergunta que eu respondo com carinho:</label>
-    <textarea id="story-q" placeholder="Digite sua pergunta aqui..." rows="3"></textarea>
-    <div class="row">
-      <button id="story-close">Fechar</button>
-      <button id="story-send" class="primary">Enviar</button>
+  <!-- Modal: Privacidade (texto breve) -->
+  <div class="modal" id="modalPrivacy" hidden>
+    <div class="modal__box">
+      <h2>Privacidade</h2>
+      <div class="modal__body">
+        Usamos os dados informados (telefone, descrição e imagens) somente para
+        realizar o suporte técnico. Não vendemos seus dados. Para excluir, use
+        “Reset do meu histórico”.
+      </div>
+      <div class="modal__actions">
+        <button class="btn btn-primary" data-close>Ok</button>
+      </div>
     </div>
-    <div id="story-ans" class="card" style="margin-top:10px;display:none"></div>
   </div>
-</div>
 
-<script>
-const TOS_KEY = "q3d_tos_v1";
+  <!-- Modal: Nossa história -->
+  <div class="modal" id="modalStory" hidden>
+    <div class="modal__box">
+      <h2>Conheça a história de Nhor e filhos com Ronei</h2>
+      <div class="modal__body">
+        <p>Um laço de amor, trabalho e curiosidade — a força por trás da Quanton3D. 💙</p>
+        <label class="label" for="story-input">Se quiser, deixe sua pergunta que eu respondo com carinho:</label>
+        <textarea id="story-input" class="textarea" rows="4" placeholder="Ex.: Como nasceu a Quanton3D?"></textarea>
+        <div id="story-output" class="story-output"></div>
+      </div>
+      <div class="modal__actions">
+        <button class="btn btn-secondary" data-close>Fechar</button>
+        <button class="btn btn-primary" id="sendStory">Enviar</button>
+      </div>
+    </div>
+  </div>
 
-// Gate (bloqueio)
-function showGate(){document.getElementById('gate-backdrop').style.display='block';document.getElementById('gate').style.display='flex'}
-function hideGate(){document.getElementById('gate-backdrop').style.display='none';document.getElementById('gate').style.display='none'}
-function initGate(){
-  const accepted = localStorage.getItem(TOS_KEY)==='1';
-  const tosInline = document.getElementById('tos-check');
-  const sendBtn = document.getElementById('send');
+  <script>
+    // util
+    const $ = (sel) => document.querySelector(sel);
+    const soDigitos = (s) => (s || '').replace(/\D/g, '');
 
-  tosInline.checked = false;       // nunca vem marcado
-  sendBtn.disabled = true;         // começa travado
+    // habilita botão ao aceitar
+    const accept = $('#accept');
+    const btnSend = $('#btnSend');
+    accept.addEventListener('change', () => btnSend.disabled = !accept.checked);
 
-  if(!accepted){ showGate(); }     // se nunca aceitou, bloqueia a página
+    // modais
+    function openModal(id){ const m=$(id); if(m) m.hidden=false; }
+    function closeModals(){ document.querySelectorAll('.modal').forEach(m=>m.hidden=true); }
+    document.addEventListener('click', (e)=>{
+      if(e.target.matches('[data-close]') || e.target.classList.contains('modal')) closeModals();
+    });
 
-  // lógica do gate
-  const gateCk = document.getElementById('gate-check');
-  const gateAccept = document.getElementById('gate-accept');
-  gateCk.addEventListener('change',()=>{ gateAccept.disabled = !gateCk.checked; });
-  gateAccept.addEventListener('click',()=>{
-    localStorage.setItem(TOS_KEY,'1');
-    tosInline.checked = true;      // marca a caixa inline
-    sendBtn.disabled = false;      // libera envio
-    hideGate();
-  });
+    // Termos & Privacidade (topo e rodapé)
+    $('#btnTos').onclick = () => openModal('#modalTos');
+    $('#lnkTos').onclick = (e)=>{e.preventDefault(); openModal('#modalTos');};
+    $('#ftTos').onclick  = (e)=>{e.preventDefault(); openModal('#modalTos');};
+    $('#agree').onclick  = ()=>{ accept.checked = true; btnSend.disabled = false; closeModals(); };
 
-  // reabrir termos pelos links
-  document.getElementById('btn-terms').addEventListener('click',(e)=>{e.preventDefault();showGate();});
-  document.getElementById('inline-terms').addEventListener('click',(e)=>{e.preventDefault();showGate();});
+    $('#lnkPrivacy').onclick = (e)=>{e.preventDefault(); openModal('#modalPrivacy');};
+    $('#ftPrivacy').onclick  = (e)=>{e.preventDefault(); openModal('#modalPrivacy');};
 
-  // se desmarcar a caixa inline, trava de novo
-  tosInline.addEventListener('change',()=>{ sendBtn.disabled = !tosInline.checked; });
+    // História
+    $('#btnStory').onclick = ()=> openModal('#modalStory');
+    $('#sendStory').onclick = async ()=>{
+      const phone = soDigitos($('#phone').value) || 'anon';
+      const q     = ($('#story-input').value || '').trim();
+      const out   = $('#story-output');
+      if(!q){ out.textContent = 'Escreva sua pergunta.'; return; }
 
-  // reset do histórico (precisa do telefone)
-  document.getElementById('reset-hist').addEventListener('click',(e)=>{
-    e.preventDefault();
-    const phone = document.getElementById('phone').value.trim();
-    if(!phone){ alert('Informe seu telefone antes de resetar.'); return; }
-    fetch(`/reset?phone=${encodeURIComponent(phone)}`).then(()=>alert('Histórico apagado para este telefone.'));
-  });
-}
+      out.textContent = 'Enviando...';
+      const fd = new FormData();
+      fd.append('phone', phone);
+      fd.append('question', q);
 
-// Envio principal
-document.getElementById('chat-form').addEventListener('submit',async (e)=>{
-  e.preventDefault();
-  const fd = new FormData();
-  fd.append('phone',document.getElementById('phone').value.trim());
-  fd.append('scope',document.getElementById('scope').value);
-  fd.append('resin',document.getElementById('resin').value.trim());
-  fd.append('printer',document.getElementById('printer').value.trim());
-  fd.append('problem',document.getElementById('problem').value.trim());
-  const files = document.getElementById('images').files;
-  for(let i=0;i<Math.min(files.length,5);i++){ fd.append('images',files[i]); }
-  const res = await fetch('/chat',{method:'POST',body:fd});
-  const data = await res.json();
-  const box = document.getElementById('answer');
-  box.style.display='block';
-  box.textContent = data.ok ? (data.reply || data.answer || '(sem texto)') : ('Erro: '+(data.error||'desconhecido'));
-});
+      try{
+        const r = await fetch('/story', { method:'POST', body: fd });
+        const j = await r.json();
+        if(!j.ok) throw new Error(j.error || 'Falha');
+        out.textContent = j.answer || '(sem resposta)';
+      }catch(err){
+        out.textContent = 'Erro: ' + err.message;
+      }
+    };
 
-// Modal “Nossa história”
-function openStory(){document.getElementById('story-backdrop').style.display='block';document.getElementById('story').style.display='flex'}
-function closeStory(){document.getElementById('story-backdrop').style.display='none';document.getElementById('story').style.display='none'}
-document.getElementById('btn-story').addEventListener('click',openStory);
-document.getElementById('story-close').addEventListener('click',closeStory);
+    // Reset do histórico
+    const resetA = $('#resetLink');
+    resetA.onclick = (e)=>{
+      e.preventDefault();
+      const p = soDigitos($('#phone').value || '');
+      if(!p){ alert('Informe o telefone na página primeiro.'); return; }
+      window.open(`/reset?phone=${p}`, '_blank');
+    };
 
-document.getElementById('story-send').addEventListener('click',async ()=>{
-  const q = document.getElementById('story-q').value.trim();
-  const phone = document.getElementById('phone').value.trim();
-  if(!q){ alert('Digite sua pergunta.'); return; }
-  if(!phone){ alert('Informe seu telefone na página principal primeiro.'); return; }
-  const fd = new FormData();
-  fd.append('phone',phone);
-  fd.append('scope','historia');
-  fd.append('resin','');
-  fd.append('printer','');
-  fd.append('problem',q);
-  const res = await fetch('/chat',{method:'POST',body:fd});
-  const data = await res.json();
-  const ans = document.getElementById('story-ans');
-  ans.style.display='block';
-  ans.textContent = data.ok ? (data.reply || data.answer || '(sem texto)') : ('Erro: '+(data.error||'desconhecido'));
-});
+    // Envio do suporte
+    const frm = $('#frm');
+    const feed = $('#feed');
+    frm.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      if(!accept.checked){ openModal('#modalTos'); return; }
 
-document.addEventListener('DOMContentLoaded',initGate);
-</script>
+      const fd = new FormData();
+      const phone = soDigitos($('#phone').value || '');
+      const problem = ($('#problem').value || '').trim();
+      if(!phone){ alert('Informe o telefone.'); return; }
+      if(!problem){ alert('Descreva o problema.'); return; }
+
+      fd.append('phone',   phone);
+      fd.append('scope',   $('#scope').value || '');
+      fd.append('resin',   $('#resin').value || '');
+      fd.append('printer', $('#printer').value || '');
+      fd.append('problem', problem);
+
+      const files = $('#photos').files;
+      for(let i=0;i<files.length && i<5;i++){ fd.append('photos', files[i]); }
+
+      const card = document.createElement('div');
+      card.className = 'msg';
+      card.innerHTML = `<div class="msg__you"><b>Você:</b> ${problem}</div><div class="msg__bot">Enviando...</div>`;
+      feed.prepend(card);
+
+      try{
+        const r = await fetch('/chat', { method:'POST', body: fd });
+        const j = await r.json();
+        const bot = card.querySelector('.msg__bot');
+        if(!j.ok) bot.textContent = 'Erro: ' + (j.error || 'Falha');
+        else     bot.innerHTML    = `<b>Assistente:</b> ${j.reply || j.answer || '(sem resposta)'}`;
+      }catch(err){
+        card.querySelector('.msg__bot').textContent = 'Erro: ' + err.message;
+      }
+    });
+
+    // sugere impressoras (se existir o arquivo)
+    (async ()=>{
+      try{
+        const res = await fetch('{{ url_for("static", filename="printers.json") }}', {cache:'no-store'});
+        if(!res.ok) return;
+        const arr = await res.json();
+        const dl = $('#printersList');
+        arr.slice(0,500).forEach(v=>{
+          const o=document.createElement('option'); o.value=v; dl.appendChild(o);
+        });
+      }catch(_){}
+    })();
+  </script>
 </body>
 </html>
