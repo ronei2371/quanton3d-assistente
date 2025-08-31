@@ -99,6 +99,46 @@ input[type="file"] { background:#fff; }
 .feed {
   margin-top: 16px; border-top:1px dashed var(--border);
   padding-top: 14px; max-height: 360px; overflow:auto;
+/* === TOS Modal (Termos de uso) ================================ */
+#modalTOS{
+  position:fixed; inset:0; display:none;
+  background:rgba(0,0,0,.55);
+  backdrop-filter:saturate(120%) blur(2px);
+  z-index:1000;
+}
+#modalTOS.open{ display:flex; align-items:center; justify-content:center; }
+
+#modalTOS .box{
+  width:min(720px,92vw);
+  background:var(--panel,#fff);
+  color:var(--text,#0c1730);
+  border:1px solid var(--border,#e6ecff);
+  border-radius:16px;
+  padding:24px 22px;
+  box-shadow:0 10px 40px rgba(0,0,0,.25);
+}
+#modalTOS h3{ margin:0 0 8px 0; font-weight:800; font-size:20px; }
+#modalTOS p, #modalTOS ul{ margin:8px 0; line-height:1.5; }
+#modalTOS ul{ padding-left:18px; }
+
+#modalTOS .tos-check{
+  display:flex; align-items:center; gap:10px; margin-top:10px;
+  font-weight:600;
+}
+
+#modalTOS .actions{
+  display:flex; gap:12px; justify-content:flex-end; margin-top:16px;
+}
+#btnTOSClose{
+  background:transparent; border:1px solid var(--border,#e6ecff);
+  color:var(--text,#0c1730); border-radius:12px; padding:.75rem 1.1rem; cursor:pointer;
+}
+#btnTOSAgree{
+  background:var(--primary,#20b8ff); color:#fff; border:0;
+  border-radius:12px; padding:.75rem 1.25rem; cursor:pointer;
+}
+#btnTOSAgree:disabled{ opacity:.5; cursor:not-allowed; }
+
 }
 .bubble { padding: 12px 14px; margin: 6px 0; border-radius: 12px; background:#fff; border:1px solid var(--border); }
 .bubble.you { background:#e9faff; }

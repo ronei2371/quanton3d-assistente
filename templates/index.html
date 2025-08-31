@@ -267,5 +267,46 @@
     // init
     ensureTOS();
   </script>
+<!-- Modal de Termos de Uso -->
+<div id="modalTOS" role="dialog" aria-modal="true" aria-labelledby="tosTitle">
+  <div class="box">
+    <h3 id="tosTitle">Termos de uso – Bot Quanton3D</h3>
+    <ul>
+      <li>O bot é propriedade exclusiva da Quanton3D.</li>
+      <li>Uso permitido apenas para suporte em impressão 3D.</li>
+      <li>É proibida a cópia, modificação ou redistribuição.</li>
+      <li>As informações são apoio técnico e não substituem decisões profissionais.</li>
+      <li>Violação implica bloqueio e medidas legais.</li>
+    </ul>
+
+    <label class="tos-check">
+      <input type="checkbox" id="tosCheck"> Li e concordo com os termos de uso e a política de privacidade.
+    </label>
+
+    <div class="actions">
+      <button type="button" id="btnTOSClose">Fechar</button>
+      <button type="button" id="btnTOSAgree" disabled>Aceito e continuar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Força exibir até aceitar
+  const LS_KEY_TOS = "q3d_tos_ok_v2"; // mudei a chave pra forçar de novo se precisar
+  const modal   = document.getElementById('modalTOS');
+  const chk     = document.getElementById('tosCheck');
+  const agree   = document.getElementById('btnTOSAgree');
+  const closeBt = document.getElementById('btnTOSClose');
+
+  function openTOS(){ modal.classList.add('open'); document.body.style.overflow='hidden'; }
+  function closeTOS(){ modal.classList.remove('open'); document.body.style.overflow=''; }
+
+  if (!localStorage.getItem(LS_KEY_TOS)) openTOS();
+
+  chk?.addEventListener('change', () => { agree.disabled = !chk.checked; });
+  agree?.addEventListener('click', () => { localStorage.setItem(LS_KEY_TOS,'1'); closeTOS(); });
+  closeBt?.addEventListener('click', closeTOS);
+</script>
+
 </body>
 </html>
