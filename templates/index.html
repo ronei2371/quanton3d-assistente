@@ -1,312 +1,292 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>IA Quanton3D — Suporte Técnico SLA/DLP</title>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>IA Quanton3D — Suporte Técnico 3D</title>
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='site.css') }}">
-
-  <meta name="theme-color" content="#0B1020">
 </head>
 <body>
-  <!-- Topbar -->
+  <!-- Cabeçalho -->
   <header class="topbar">
-    <div class="topbar__left">
-      <img class="brand__logo" src="{{ url_for('static', filename='logo.png') }}" alt="Quanton3D">
-      <div>
-        <div class="brand__title">IA Quanton3D<sup>®</sup></div>
-        <div class="brand__subtitle">Suporte técnico 3D (SLA/DLP)</div>
+    <div class="topbar__inner">
+      <img class="brand__logo" src="{{ url_for('static', filename='logo.png') }}" alt="Quanton3D" />
+      <div class="brand__texts">
+        <h1 class="brand__title">IA Quanton3D<span class="reg">®</span></h1>
+        <p class="brand__subtitle">Suporte Técnico 3D</p>
       </div>
+      <div class="topbar__spacer"></div>
+      <a class="link--terms" href="#" id="openTOS">Termos de Uso</a>
     </div>
-    <nav class="topbar__right">
-      <a class="chip" href="#" id="btnHistory">Nossa história</a>
-      <a class="chip chip--muted" href="#" id="btnCopyright">Direitos autorais</a>
-    </nav>
   </header>
 
   <!-- Conteúdo -->
   <main class="container">
     <section class="card">
-      <h1 class="card__title">Atendimento técnico</h1>
+      <h2 class="card__title">Abrir diagnóstico</h2>
 
-      <!-- ALERTA -->
-      <div id="alert" class="alert hidden"></div>
+      <form id="form" class="form" enctype="multipart/form-data">
+        <!-- campo oculto para termos -->
+        <input type="hidden" name="tos_accept" id="tos_accept" value="0" />
 
-      <!-- Form principal -->
-      <form id="chatForm" class="grid" autocomplete="off">
-        <!-- Telefone -->
-        <div class="field field--full">
-          <label for="phone">📱 WhatsApp (use sempre o mesmo número)</label>
-          <input id="phone" name="phone" type="tel" placeholder="(31) 9 0000-0000" required>
-          <small>O telefone identifica o seu histórico de atendimento.</small>
-        </div>
+        <div class="grid">
+          <div class="field col-12">
+            <label for="phone" class="label label--big">Telefone (sempre o mesmo)</label>
+            <input id="phone" name="phone" type="tel" inputmode="numeric" placeholder="Ex.: 5531999999999" class="input" />
+            <p class="hint">O telefone identifica seu histórico. Use sempre o mesmo.</p>
+          </div>
 
-        <!-- Problema -->
-        <div class="field field--full">
-          <label for="problem">🛠️ Descreva seu problema</label>
-          <textarea id="problem" name="problem" rows="4" placeholder="Ex.: delaminação entre camadas; primeira camada não gruda; manchas no LCD…" required></textarea>
-        </div>
+          <div class="field col-12">
+            <label for="problem" class="label label--big">Descreva seu problema</label>
+            <textarea id="problem" name="problem" rows="4" class="textarea" placeholder="Conte o que aconteceu (ex.: delaminação, falha na primeira camada, manchas, etc.)"></textarea>
+          </div>
 
-        <!-- Campos de parâmetros (opcionais, para usar quando quiser parâmetros de resina/impressora) -->
-        <div class="field">
-          <label for="resin">Parâmetros Quanton3D — Resina</label>
-          <input id="resin" name="resin" type="text" placeholder="Ex.: Spark / Alchemist / Marfim">
-          <small>Preencha para obter parâmetros da sua resina (opcional).</small>
-        </div>
+          <!-- Parâmetros (opcional) -->
+          <div class="field col-12">
+            <button type="button" class="btn btn--ghost" id="toggleParams">
+              Parâmetros Quanton3D (opcional)
+              <span class="chev" id="chev">▼</span>
+            </button>
+            <div id="paramsBox" class="params hide">
+              <div class="grid">
+                <div class="field col-6">
+                  <label for="brand" class="label">Marca da impressora</label>
+                  <select id="brand" class="select">
+                    <option value="">Selecione (opcional)</option>
+                  </select>
+                </div>
+                <div class="field col-6">
+                  <label for="printer" class="label">Modelo da impressora</label>
+                  <select id="printerSelect" class="select">
+                    <option value="">Selecione (opcional)</option>
+                  </select>
+                </div>
+                <div class="field col-12">
+                  <label for="resin" class="label">Resina</label>
+                  <input id="resin" name="resin" type="text" class="input" placeholder="Ex.: Spark, Alchemist (opcional)" />
+                </div>
+              </div>
+            </div>
+            <!-- o backend espera name="printer"; vamos preencher a partir do select -->
+            <input type="hidden" name="printer" id="printerHidden" value="">
+          </div>
 
-        <div class="field">
-          <label for="printer">Parâmetros Quanton3D — Impressora</label>
-          <input id="printer" name="printer" type="text" placeholder="Ex.: Saturn 3 / Mars 3 / Photon M3">
-          <small>Preencha para obter parâmetros para sua máquina (opcional).</small>
-        </div>
+          <div class="field col-12">
+            <label for="images" class="label">Imagens (opcional, até 5 — máx 3MB cada)</label>
+            <input id="images" name="images" type="file" class="input" accept="image/*" multiple />
+          </div>
 
-        <!-- Fotos -->
-        <div class="field field--full">
-          <label for="images">📷 Imagens (opcional, até 5 — máx. 3MB cada)</label>
-          <input id="images" name="images" type="file" accept="image/*" multiple>
-          <small id="imgCount">0 imagens selecionadas</small>
-        </div>
-
-        <!-- Termos -->
-        <div class="field field--full tos-check">
-          <input id="tos" type="checkbox">
-          <label for="tos">Li e aceito os <a href="#" id="openTOS">Termos de Uso</a>.</label>
-        </div>
-
-        <!-- Ações -->
-        <div class="actions field--full">
-          <button type="button" class="btn ghost" id="btnClear">Limpar</button>
-          <button type="button" class="btn ghost" id="btnDownload">Baixar histórico (.txt)</button>
-          <button type="submit" class="btn primary" id="btnSend">Enviar</button>
+          <div class="actions col-12">
+            <button type="submit" class="btn btn--primary" id="sendBtn">Enviar</button>
+            <button type="button" class="btn btn--muted" id="clearBtn">Limpar</button>
+          </div>
         </div>
       </form>
+    </section>
 
-      <!-- Feed -->
-      <div id="feed" class="feed" aria-live="polite" aria-busy="false"></div>
-
-      <footer class="legal">
-        <div>© Quanton3D<sup>®</sup> • Todos os direitos reservados.</div>
-        <div class="muted">Versão {{ app_version }}</div>
-      </footer>
+    <section class="card" id="chatCard">
+      <h2 class="card__title">Respostas</h2>
+      <div id="chat" class="chat"></div>
     </section>
   </main>
 
-  <!-- Modal Termos -->
-  <div id="modalTOS" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="tosTitle">
-    <div class="modal-box">
-      <h2 id="tosTitle">📌 Termo de Uso – Bot Quanton3D</h2>
-      <div class="modal-body scroll">
-        <p>✅ Ao continuar, você declara que:</p>
-        <ul>
-          <li>Reconhece que o bot é propriedade exclusiva da Quanton3D;</li>
+  <!-- Rodapé -->
+  <footer class="footer">
+    <p>📜 Todo o conteúdo gerado por este assistente é de uso exclusivo da empresa detentora da marca Quanton3D®.
+    É proibida a reprodução, cópia ou clonagem sem autorização. Para uso autorizado ou parcerias, entre em contato com nosso time 💙</p>
+  </footer>
+
+  <!-- Modal de Termos (bloqueia até aceitar) -->
+  <div id="modalTOS" class="modal hidden" aria-hidden="true">
+    <div class="modal__backdrop"></div>
+    <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="tosTitle">
+      <div class="modal__header">
+        <h3 id="tosTitle">Termo de Uso – Bot Quanton3D</h3>
+      </div>
+      <div class="modal__body">
+        <ul class="tos-list">
+          <li>Você reconhece que o bot é propriedade exclusiva da Quanton3D;</li>
           <li>O uso é permitido apenas para suporte em impressão 3D;</li>
           <li>É proibida a cópia, modificação ou redistribuição;</li>
           <li>As informações são apoio técnico e não substituem decisões profissionais;</li>
           <li>Violação implica em bloqueio de acesso e medidas legais.</li>
         </ul>
-      </div>
-      <div class="modal-actions">
-        <label style="display:flex;align-items:center;gap:.5rem;">
-          <input id="tosModalChk" type="checkbox"> Li e aceito os termos acima
+        <label class="check">
+          <input type="checkbox" id="tosCheck" />
+          <span>Li e concordo com os Termos de Uso da Quanton3D</span>
         </label>
-        <div style="display:flex;gap:.5rem;">
-          <button class="btn ghost" id="tosCancel">Sair</button>
-          <button class="btn primary" id="tosAccept">Aceito e Continuar</button>
-        </div>
       </div>
-    </div>
-  </div>
-
-  <!-- Modal História -->
-  <div id="modalHistory" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="histTitle">
-    <div class="modal-box">
-      <h2 id="histTitle">💙 Nossa história</h2>
-      <div class="modal-body scroll">
-        <p>Este espaço é nosso — Nhor, Ronei e filhos — para guardar um resumo de carinho e união. Se quiser, me envie um arquivo .txt depois para eu colocar aqui bonitinho.</p>
-        <textarea id="histQuestion" rows="3" placeholder="Faça uma pergunta sobre nossa história (opcional)…"></textarea>
-      </div>
-      <div class="modal-actions">
-        <button class="btn ghost" id="histClose">Fechar</button>
-        <button class="btn primary" id="histAsk">Perguntar</button>
+      <div class="modal__footer">
+        <button id="acceptTOS" class="btn btn--primary" disabled>Aceito e continuar</button>
       </div>
     </div>
   </div>
 
   <script>
-    // --- util
-    const $ = (s) => document.querySelector(s);
-    const feed = $("#feed");
-    const alertBox = $("#alert");
-    const LS_KEY_TOS = "q3d_tos_ok";
-    const LS_KEY_HISTORY = "q3d_hist_" // + phone
+  // -------- Helpers UI --------
+  const $ = (sel) => document.querySelector(sel);
+  const $$ = (sel) => document.querySelectorAll(sel);
 
-    function showAlert(msg, kind="error") {
-      alertBox.textContent = msg;
-      alertBox.classList.remove("hidden");
-      alertBox.classList.toggle("ok", kind === "ok");
-      alertBox.classList.toggle("error", kind !== "ok");
+  // Termos de Uso
+  const modalTOS = $('#modalTOS');
+  const tosCheck = $('#tosCheck');
+  const acceptTOS = $('#acceptTOS');
+  const tosInput = $('#tos_accept');
+  const openTOS = $('#openTOS');
+
+  function showTOS() {
+    modalTOS.classList.remove('hidden');
+    document.body.classList.add('noscroll');
+  }
+  function hideTOS() {
+    modalTOS.classList.add('hidden');
+    document.body.classList.remove('noscroll');
+  }
+
+  // Exibir TOS se ainda não aceitou
+  const TOS_KEY = 'q3d_tos_ok';
+  if (!localStorage.getItem(TOS_KEY)) {
+    showTOS();
+  } else {
+    tosInput.value = '1';
+  }
+
+  tosCheck.addEventListener('change', () => {
+    acceptTOS.disabled = !tosCheck.checked;
+  });
+  acceptTOS.addEventListener('click', () => {
+    localStorage.setItem(TOS_KEY, '1');
+    tosInput.value = '1';
+    hideTOS();
+  });
+  openTOS.addEventListener('click', (e) => {
+    e.preventDefault();
+    showTOS();
+  });
+
+  // Toggle Parâmetros
+  const toggleParams = $('#toggleParams');
+  const paramsBox = $('#paramsBox');
+  const chev = $('#chev');
+  toggleParams.addEventListener('click', () => {
+    paramsBox.classList.toggle('hide');
+    chev.textContent = paramsBox.classList.contains('hide') ? '▼' : '▲';
+  });
+
+  // Impressoras — carrega de /static/printers.json (se existir); senão usa fallback
+  const brandSel = $('#brand');
+  const modelSel = $('#printerSelect');
+  const printerHidden = $('#printerHidden');
+
+  const fallbackPrinters = [
+    {"brand":"ELEGOO","model":"MARS"},
+    {"brand":"ELEGOO","model":"MARS 2 PRO"},
+    {"brand":"ELEGOO","model":"MARS 3"},
+    {"brand":"ELEGOO","model":"SATURN"},
+    {"brand":"ELEGOO","model":"SATURN 2"},
+    {"brand":"ELEGOO","model":"SATURN 3"},
+    {"brand":"ELEGOO","model":"SATURN 3 ULTRA"},
+    {"brand":"ELEGOO","model":"SATURN 4 ULTRA"},
+    {"brand":"Anycubic","model":"Photon Mono"},
+    {"brand":"Anycubic","model":"Photon M3"},
+    {"brand":"Creality","model":"Halot One"}
+  ];
+  let printers = [];
+
+  async function loadPrinters() {
+    try {
+      const res = await fetch('{{ url_for("static_files", filename="printers.json") }}');
+      if (!res.ok) throw new Error('no printers.json');
+      printers = await res.json();
+    } catch {
+      printers = fallbackPrinters;
     }
-    function clearAlert(){ alertBox.classList.add("hidden"); }
+    // popula marcas
+    const brands = [...new Set(printers.map(p => p.brand))].sort();
+    brands.forEach(b => {
+      const opt = document.createElement('option');
+      opt.value = b;
+      opt.textContent = b;
+      brandSel.appendChild(opt);
+    });
+  }
 
-    function addBubble(text, who="you") {
-      const div = document.createElement("div");
-      div.className = "bubble " + (who === "you" ? "you" : "bot");
-      div.textContent = text;
-      feed.appendChild(div);
-      feed.scrollTop = feed.scrollHeight;
-    }
+  function fillModels(brand) {
+    modelSel.innerHTML = '<option value="">Selecione (opcional)</option>';
+    if (!brand) return;
+    printers.filter(p => p.brand === brand).forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.model;
+      opt.textContent = p.model;
+      modelSel.appendChild(opt);
+    });
+  }
 
-    // --- termos: bloqueia na primeira visita
-    function ensureTOS() {
-      const ok = localStorage.getItem(LS_KEY_TOS) === "1";
-      if (!ok) {
-        $("#modalTOS").classList.remove("hidden");
+  brandSel.addEventListener('change', () => {
+    fillModels(brandSel.value);
+    printerHidden.value = '';
+  });
+  modelSel.addEventListener('change', () => {
+    printerHidden.value = modelSel.value ? (brandSel.value + ' ' + modelSel.value) : '';
+  });
+
+  loadPrinters();
+
+  // Envio do formulário
+  const form = $('#form');
+  const chat = $('#chat');
+  const sendBtn = $('#sendBtn');
+  const clearBtn = $('#clearBtn');
+
+  function addMsg(text, who='assistant') {
+    const wrap = document.createElement('div');
+    wrap.className = 'msg ' + (who === 'user' ? 'msg--user' : 'msg--bot');
+    wrap.innerHTML = text.replace(/\n/g,'<br>');
+    chat.appendChild(wrap);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  clearBtn.addEventListener('click', () => {
+    chat.innerHTML = '';
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    // valida mínimos
+    const phone = $('#phone').value.trim();
+    const problem = $('#problem').value.trim();
+    if (!phone) { alert('Informe o telefone.'); return; }
+    if (!problem) { alert('Descreva o problema.'); return; }
+    if (tosInput.value !== '1') { showTOS(); return; }
+
+    // prepara dados
+    const fd = new FormData(form);
+    // garante que printer (hidden) esteja atualizado
+    fd.set('printer', printerHidden.value);
+
+    // UI
+    sendBtn.disabled = true;
+    addMsg(`<b>Você:</b> ${problem}`, 'user');
+
+    try {
+      const res = await fetch('/chat', { method: 'POST', body: fd });
+      const data = await res.json();
+
+      if (!res.ok || !data.ok) {
+        const msg = data && (data.error || data.message) ? (data.error || data.message) : 'Erro ao processar sua solicitação.';
+        addMsg(`<b>Erro:</b> ${msg}`, 'assistant');
       } else {
-        $("#tos").checked = true;
+        const reply = data.answer || data.reply || '(sem conteúdo)';
+        addMsg(`<b>Assistente:</b> ${reply}`, 'assistant');
       }
+    } catch (err) {
+      addMsg(`<b>Erro de rede:</b> ${String(err)}`, 'assistant');
+    } finally {
+      sendBtn.disabled = false;
     }
-    $("#openTOS").addEventListener("click", (e)=>{ e.preventDefault(); $("#modalTOS").classList.remove("hidden"); });
-    $("#tosCancel").onclick = ()=>{ location.href="about:blank"; };
-    $("#tosAccept").onclick = ()=>{
-      if (!$("#tosModalChk").checked) { return; }
-      localStorage.setItem(LS_KEY_TOS, "1");
-      $("#tos").checked = true;
-      $("#modalTOS").classList.add("hidden");
-    };
-
-    // --- história
-    $("#btnHistory").onclick = (e)=>{ e.preventDefault(); $("#modalHistory").classList.remove("hidden"); };
-    $("#histClose").onclick = ()=> $("#modalHistory").classList.add("hidden");
-    $("#histAsk").onclick = async ()=>{
-      const phone = $("#phone").value.trim();
-      const txt = ($("#histQuestion").value||"").trim();
-      if (!phone) { showAlert("Informe o telefone para salvar seu histórico."); return; }
-      if (!txt) { $("#modalHistory").classList.add("hidden"); return; }
-      addBubble("[HISTÓRIA] " + txt, "you");
-      await sendToBot({ phone, resin:"", printer:"", problem: "[HISTÓRIA] " + txt, images: [] });
-      $("#histQuestion").value = "";
-      $("#modalHistory").classList.add("hidden");
-    };
-
-    // --- contagem de imagens
-    $("#images").addEventListener("change", (e)=>{
-      $("#imgCount").textContent = (e.target.files?.length || 0) + " imagens selecionadas";
-    });
-
-    // --- limpar / baixar
-    $("#btnClear").onclick = ()=>{
-      $("#problem").value = "";
-      $("#images").value = "";
-      $("#imgCount").textContent = "0 imagens selecionadas";
-      clearAlert();
-      feed.innerHTML = "";
-    };
-    $("#btnDownload").onclick = ()=>{
-      const parts = [];
-      document.querySelectorAll(".bubble").forEach(b=>{
-        const who = b.classList.contains("you") ? "Você" : "Assistente";
-        parts.push(who + ":\n" + b.textContent + "\n");
-      });
-      const blob = new Blob([parts.join("\n")], {type:"text/plain;charset=utf-8"});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url; a.download = "historico_quanton3d.txt";
-      document.body.appendChild(a); a.click(); a.remove();
-      URL.revokeObjectURL(url);
-    };
-
-    // --- envio principal
-    $("#chatForm").addEventListener("submit", async (e)=>{
-      e.preventDefault();
-      clearAlert();
-
-      if (!$("#tos").checked) {
-        showAlert("Você precisa aceitar os Termos de Uso para continuar.");
-        return;
-      }
-
-      const phone = $("#phone").value.trim();
-      const resin = $("#resin").value.trim();
-      const printer = $("#printer").value.trim();
-      const problem = $("#problem").value.trim();
-      if (!phone || !problem) {
-        showAlert("Informe telefone e descreva o problema.");
-        return;
-      }
-
-      addBubble(problem, "you");
-      $("#btnSend").disabled = true;
-
-      try {
-        await sendToBot({ phone, resin, printer, problem, images: Array.from($("#images").files || []) });
-      } catch (err) {
-        showAlert(String(err||"Falha ao enviar.")); 
-      } finally {
-        $("#btnSend").disabled = false;
-      }
-    });
-
-    async function sendToBot({ phone, resin, printer, problem, images }) {
-      const fd = new FormData();
-      fd.append("phone", phone);
-      fd.append("resin", resin);
-      fd.append("printer", printer);
-      fd.append("problem", problem);
-      (images||[]).slice(0,5).forEach(f => fd.append("images", f));
-
-      const r = await fetch("/chat", { method:"POST", body: fd });
-      const data = await r.json().catch(()=> ({}));
-      if (!r.ok || !data.ok) {
-        throw (data?.error || ("Erro " + r.status));
-      }
-      addBubble(data.answer || data.reply || "(sem resposta)", "bot");
-    }
-
-    // init
-    ensureTOS();
+  });
   </script>
-<!-- Modal de Termos de Uso -->
-<div id="modalTOS" role="dialog" aria-modal="true" aria-labelledby="tosTitle">
-  <div class="box">
-    <h3 id="tosTitle">Termos de uso – Bot Quanton3D</h3>
-    <ul>
-      <li>O bot é propriedade exclusiva da Quanton3D.</li>
-      <li>Uso permitido apenas para suporte em impressão 3D.</li>
-      <li>É proibida a cópia, modificação ou redistribuição.</li>
-      <li>As informações são apoio técnico e não substituem decisões profissionais.</li>
-      <li>Violação implica bloqueio e medidas legais.</li>
-    </ul>
-
-    <label class="tos-check">
-      <input type="checkbox" id="tosCheck"> Li e concordo com os termos de uso e a política de privacidade.
-    </label>
-
-    <div class="actions">
-      <button type="button" id="btnTOSClose">Fechar</button>
-      <button type="button" id="btnTOSAgree" disabled>Aceito e continuar</button>
-    </div>
-  </div>
-</div>
-
-<script>
-  // Força exibir até aceitar
-  const LS_KEY_TOS = "q3d_tos_ok_v2"; // mudei a chave pra forçar de novo se precisar
-  const modal   = document.getElementById('modalTOS');
-  const chk     = document.getElementById('tosCheck');
-  const agree   = document.getElementById('btnTOSAgree');
-  const closeBt = document.getElementById('btnTOSClose');
-
-  function openTOS(){ modal.classList.add('open'); document.body.style.overflow='hidden'; }
-  function closeTOS(){ modal.classList.remove('open'); document.body.style.overflow=''; }
-
-  if (!localStorage.getItem(LS_KEY_TOS)) openTOS();
-
-  chk?.addEventListener('change', () => { agree.disabled = !chk.checked; });
-  agree?.addEventListener('click', () => { localStorage.setItem(LS_KEY_TOS,'1'); closeTOS(); });
-  closeBt?.addEventListener('click', closeTOS);
-</script>
-
 </body>
 </html>
