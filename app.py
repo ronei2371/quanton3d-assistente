@@ -1,323 +1,229 @@
-# v2025-08-29h ‚Äî Par√¢metros (CSV), consultas /params, Modo Certeiro, vis√£o por imagens, compat OpenAI 1.x
-import os, re, csv, io, uuid, base64, json
-from flask import Flask, request, jsonify, render_template, send_from_directory, url_for
+import os, re, uuid, base64, json
+from typing import List, Dict, Any
+from flask import Flask, request, render_template, jsonify, send_from_directory, url_for
 from openai import OpenAI
 
-# --- Compat: Python 3.13 removeu imghdr; implemento m√≠nimo (jpeg/png/webp)
+# ---- Compat: imghdr removido no Python 3.13
 try:
-    import imghdr  # ok at√© 3.12
+    import imghdr
 except ModuleNotFoundError:
-    class imghdr:  # compat simples
+    class imghdr:
         @staticmethod
         def what(file=None, h=None):
             if h is None and hasattr(file, "read"):
-                pos = file.tell()
-                h = file.read(16)
-                file.seek(pos)
-            if not isinstance(h, (bytes, bytearray)):
-                return None
+                pos = file.tell(); h = file.read(16); file.seek(pos)
+            if not isinstance(h, (bytes, bytearray)): return None
             head = h[:16]
-            if head.startswith(b"\xFF\xD8\xFF"):                 # JPEG
-                return "jpeg"
-            if head.startswith(b"\x89PNG\r\n\x1a\n"):           # PNG
-                return "png"
-            if head[:4] == b"RIFF" and head[8:12] == b"WEBP":   # WEBP
-                return "webp"
+            if head.startswith(b"\xFF\xD8\xFF"): return "jpeg"
+            if head.startswith(b"\x89PNG\r\n\x1a\n"): return "png"
+            if head[:4] == b"RIFF" and head[8:12] == b"WEBP": return "webp"
             return None
 
-APP_VERSION = "2025-08-29h"
-
-# -----------------------------------------------------------------------------
-# Configura√ß√£o b√°sica
-# -----------------------------------------------------------------------------
+# ---------------------- Config
+APP_VERSION = "2025-08-30a"
 app = Flask(__name__, template_folder="templates", static_folder="static")
-app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024  # 20MB upload total
-
-# Evita interfer√™ncia de proxy com o SDK novo
-for k in ("HTTP_PROXY", "http_proxy", "HTTPS_PROXY", "https_proxy"):
-    os.environ.pop(k, None)
-
-OPENAI_API_KEY   = os.getenv("OPENAI_API_KEY", "")
-OPENAI_MODEL     = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
-OPENAI_TEMP      = float(os.getenv("OPENAI_TEMPERATURE", "0.2"))
-OPENAI_SEED      = int(os.getenv("OPENAI_SEED", "123"))
-
-client = OpenAI(api_key=OPENAI_API_KEY)
-
-# Onde guardamos uploads (Render: disco ef√™mero durante a execu√ß√£o)
+app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024
 UPLOAD_DIR = os.path.join(os.getcwd(), "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# -----------------------------------------------------------------------------
-# Base de par√¢metros (CSV)
-# -----------------------------------------------------------------------------
-DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
-os.makedirs(DATA_DIR, exist_ok=True)
-PARAMS_CSV = os.path.join(DATA_DIR, "params.csv")
+# remove proxies herdados (evita erro no SDK novo)
+for k in ("HTTP_PROXY","http_proxy","HTTPS_PROXY","https_proxy"):
+    os.environ.pop(k, None)
 
-# Cache em mem√≥ria
-PARAMS = []          # lista de dicts (linhas do CSV)
-BRANDS = set()
-MODELS = set()
-RESINS = set()
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY","")
+MODEL = os.getenv("OPENAI_MODEL","gpt-4o-mini")
+TEMP  = float(os.getenv("OPENAI_TEMPERATURE","0.2"))
+SEED  = int(os.getenv("OPENAI_SEED","123"))
 
-CSV_COLUMNS = [
-    "brand",             # Marca da impressora (ex.: ANYCUBIC, ELEGOO, CREALITY...)
-    "model",             # Modelo (ex.: PHOTON MONO M3 MAX)
-    "resin",             # Nome da resina (ex.: QUANTON3D ATHOM WASHABLE)
-    "layer_height_mm",   # Altura de camada (mm) ‚Äî ex.: 0.05
-    "exp_layer_s",       # Tempo de exposi√ß√£o por camada (s)
-    "exp_base_s",        # Tempo de exposi√ß√£o da base (s)
-    "off_delay_s",       # Retardo desligar UV (s)
-    "on_delay_base_s",   # Retardo ligar UV base (s)
-    "rest_before_lift_s",
-    "rest_after_lift_s",
-    "rest_after_retract_s",
-    "uv_power_pct"       # Pot√™ncia UV (%), se aplic√°vel
-]
+RAG_TOPK      = int(os.getenv("RAG_TOPK","4"))
+RAG_MIN_SCORE = float(os.getenv("RAG_MIN_SCORE","0.18"))
+RAG_STRICT    = os.getenv("RAG_STRICT","1") not in ("0","false","False","no","NO")
 
-def _norm(s: str) -> str:
-    return (s or "").strip().lower()
+client = OpenAI(api_key=OPENAI_API_KEY)
 
-def load_params_csv():
-    """Carrega data/params.csv para mem√≥ria. Ignora linhas vazias."""
-    global PARAMS, BRANDS, MODELS, RESINS
-    PARAMS, BRANDS, MODELS, RESINS = [], set(), set(), set()
-    if not os.path.exists(PARAMS_CSV):
-        # arquivo ainda n√£o criado; segue vazio (rotas retornar√£o listagens vazias)
-        return
-    with io.open(PARAMS_CSV, "r", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            item = {k: (row.get(k, "") or "").strip() for k in CSV_COLUMNS}
-            PARAMS.append(item)
-            BRANDS.add(item["brand"])
-            MODELS.add(item["model"])
-            RESINS.add(item["resin"])
+# ---------- RAG
+import rag
+try:
+    ok, n_chunks = rag.init(client, "kb/kb_index.json")
+except Exception:
+    ok, n_chunks = (False, 0)
 
-def find_params(brand=None, model=None, resin=None, max_results=10):
-    """Busca por marca/modelo/resina por contains (case-insensitive)."""
-    bq, mq, rq = _norm(brand), _norm(model), _norm(resin)
-    hits = []
-    for item in PARAMS:
-        score = 0
-        if bq and bq in _norm(item["brand"]):  score += 1
-        if mq and mq in _norm(item["model"]):  score += 1
-        if rq and rq in _norm(item["resin"]):  score += 1
-        # Se n√£o veio nenhum filtro, n√£o retorna tudo pra n√£o poluir
-        if (bq or mq or rq) and score > 0:
-            hits.append((score, item))
-    hits.sort(key=lambda x: -x[0])
-    return [h[1] for h in hits[:max_results]]
+# ---------- HistÛrico simples por telefone (memÛria do processo)
+HISTORY: Dict[str, List[Dict[str,str]]] = {}
 
-# Carrega na subida
-load_params_csv()
-
-# -----------------------------------------------------------------------------
-# Sistema do assistente
-# -----------------------------------------------------------------------------
+# ---------- Prompts fixos (regras)
 ASSISTANT_SYSTEM = """
-Voc√™ √© t√©cnico de campo da Quanton3D. Estilo: direto de oficina, frases curtas e acion√°veis.
-
-MODO CERTEIRO:
-- Se FALTAR dado essencial para orientar, fa√ßa APENAS 1 pergunta objetiva e PARE (aguarde).
-- S√≥ pergunte marca/modelo/resina quando (a) o usu√°rio pedir PAR√ÇMETROS/PERFIL/EXPOSI√á√ÉO, ou (b) for imposs√≠vel orientar sem isso.
-- Para defeitos comuns (rachadura, delamina√ß√£o, buracos, warping, ades√£o, etc.), N√ÉO exija marca/resina por padr√£o; siga o protocolo.
-
-PROTOCOLO-LCD (tela acesa ou escopo 'lcd'):
-1) Teste do papel branco (cuba fora) para UNIFORMIDADE (faixas repetidas = difusor/LED; pontos fixos = pixels mortos do LCD).
-2) Teste de grade/pixel (quadrados/linhas apagadas).
-3) Limpeza suave (microfibra + IPA 99%, sem encharcar/press√£o).
-4) Checar FEP (opacidade/riscos) e vazamento de resina.
-5) Concluir: difusor/LED x LCD x reflexo/√¢ngulo. Dar pr√≥ximos passos objetivos.
-
-PROTOCOLO-GERAL:
-- Ordem: ades√£o -> nivelamento -> exposi√ß√£o -> suportes -> FEP -> velocidades -> temperatura ambiente -> resina.
-- Sempre termine com 'O QUE FAZER AGORA' (3 a 5 passos pr√°ticos).
+VocÍ È suporte tÈcnico da Quanton3D, especialista em impress„o 3D SLA/DLP e resinas Quanton3D.
+Regras de atendimento (siga SEMPRE):
+- Responda em portuguÍs do Brasil, pr·tico e educado, tom de tÈcnico de bancada.
+- Se faltar dado essencial, faÁa APENAS 1 pergunta objetiva e PARE.
+- Nunca invente valores ou par‚metros. Se n„o souber com certeza, diga que vai encaminhar para validaÁ„o.
+- Quando houver imagens, descreva o que observa antes de concluir.
+- Quando houver CONTEXTO da base (RAG) no formato [KB1], [KB2]Ö:
+  ï Use primeiro esses trechos para construir a resposta.
+  ï Mencione "Fontes: [KB1] [KB2]Ö" no final. N√O crie fonte.
+- LCD/backlight: priorize teste do papel branco, grade/pixels, limpeza microfibra+IPA 99%, checar vazamento nas bordas e opacidade do FEP.
+Finalize SEMPRE com ìO QUE FAZER AGORAî (3ñ5 passos).
 """
 
-def allowed_file(filename: str) -> bool:
-    ext = (filename.rsplit(".", 1)[-1] if "." in filename else "").lower()
-    return ext in {"jpg", "jpeg", "png", "webp"}
+def _allowed_file(filename: str) -> bool:
+    ext = (filename.rsplit(".",1)[-1] if "." in filename else "").lower()
+    return ext in {"jpg","jpeg","png","webp"}
 
-def _file_to_dataurl_and_size(fs):
+def _file_to_dataurl(fs):
     data = fs.read()
-    if not data:
-        return None, 0
+    if not data: return None, 0
     kind = imghdr.what(None, h=data)
-    if kind not in {"jpeg", "png", "webp"}:
-        raise ValueError("Formato inv√°lido. Envie JPG, PNG ou WEBP.")
-    mime = {"jpeg": "image/jpeg", "png": "image/png", "webp": "image/webp"}[kind]
-    b64  = base64.b64encode(data).decode("utf-8")
+    if kind not in {"jpeg","png","webp"}:
+        raise ValueError("Formato inv·lido. Envie JPG, PNG ou WEBP.")
+    mime = {"jpeg":"image/jpeg","png":"image/png","webp":"image/webp"}[kind]
+    b64 = base64.b64encode(data).decode("utf-8")
     return f"data:{mime};base64,{b64}", len(data)
 
-def save_uploads(files):
-    urls = []
-    for f in files[:5]:
-        if not f or f.filename == "":
-            continue
-        if not allowed_file(f.filename):
-            continue
-        safe = re.sub(r"[^a-zA-Z0-9_.-]", "_", f.filename)
-        fname = f"{uuid.uuid4().hex}_{safe}"
-        path = os.path.join(UPLOAD_DIR, fname)
-        f.save(path)
-        urls.append(url_for("get_upload", fname=fname, _external=True))
-    return urls
-
-# -----------------------------------------------------------------------------
-# Rotas utilit√°rias
-# -----------------------------------------------------------------------------
+# -------- Rotas est·ticas
 @app.get("/uploads/<path:fname>")
-def get_upload(fname):
-    return send_from_directory(UPLOAD_DIR, fname)
+def get_upload(fname): return send_from_directory(UPLOAD_DIR, fname)
+
+@app.get("/")
+def index(): return render_template("index.html", app_version=APP_VERSION)
 
 @app.get("/healthz")
-def healthz():
-    return "ok", 200
+def healthz(): return "ok", 200
 
 @app.get("/diag")
 def diag():
     return jsonify({
         "openai_key_set": bool(OPENAI_API_KEY),
         "version": APP_VERSION,
-        "model": OPENAI_MODEL,
-        "temperature": OPENAI_TEMP,
-        "seed": OPENAI_SEED,
-        "params_loaded": len(PARAMS)
+        "model": MODEL,
+        "temperature": TEMP,
+        "seed": SEED,
+        "rag_loaded": ok,
+        "rag_chunks": n_chunks,
+        "rag_topk": RAG_TOPK,
+        "rag_min_score": RAG_MIN_SCORE,
+        "rag_strict": RAG_STRICT
     }), 200
 
 @app.get("/reset")
 def reset():
-    # Reseta contexto por telefone (se voc√™ guardar hist√≥rico por telefone em cache/DB)
-    # Mantemos no-op por enquanto para compat.
-    return jsonify({"ok": True}), 200
+    phone = (request.args.get("phone") or "").strip()
+    if phone and phone in HISTORY:
+        HISTORY.pop(phone, None)
+        return "reset", 200
+    return "ok", 200
 
-# -----------------------------------------------------------------------------
-# Rotas de PAR√ÇMETROS
-# -----------------------------------------------------------------------------
-@app.get("/params")
-def params_lookup():
-    brand = request.args.get("brand", "").strip()
-    model = request.args.get("model", "").strip()
-    resin = request.args.get("resin", "").strip()
-    results = find_params(brand, model, resin, max_results=20)
-    return jsonify({"ok": True, "count": len(results), "items": results})
-
-@app.get("/params/list")
-def params_list():
-    return jsonify({
-        "ok": True,
-        "brands": sorted(BRANDS),
-        "models": sorted(MODELS),
-        "resins": sorted(RESINS),
-        "columns": CSV_COLUMNS
-    })
-
-# -----------------------------------------------------------------------------
-# Rota principal de chat
-# -----------------------------------------------------------------------------
+# ------------- CHAT
 @app.post("/chat")
 def chat():
     try:
-        phone   = (request.form.get("phone")   or "").strip()
-        scope   = (request.form.get("scope")   or "").strip().lower()
-        resin   = (request.form.get("resin")   or "").strip()
+        phone   = (request.form.get("phone") or "").strip()
+        scope   = (request.form.get("scope") or "desconhecido").strip()
+        resin   = (request.form.get("resin") or "").strip()
         printer = (request.form.get("printer") or "").strip()
         problem = (request.form.get("problem") or "").strip()
 
-        if not phone:
-            return jsonify({"ok": False, "error": "Informe o telefone."}), 400
-        if not problem:
-            return jsonify({"ok": False, "error": "Descreva o problema."}), 400
+        if not phone:   return jsonify({"ok":False,"error":"Informe o telefone."}), 400
+        if not problem: return jsonify({"ok":False,"error":"Descreva o problema."}), 400
 
-        # Uploads (campo "photos")
+        # uploads (atÈ 5 imagens, 3MB cada)
         image_urls = []
         if "photos" in request.files:
-            image_urls = save_uploads(request.files.getlist("photos"))
+            for fs in request.files.getlist("photos")[:5]:
+                if not fs or fs.filename == "": continue
+                if not _allowed_file(fs.filename): continue
+                size_hint = fs.content_length or 0
+                if size_hint > 3*1024*1024:
+                    return jsonify({"ok":False,"error":"Imagem excede 3MB."}), 400
+                dataurl, real_size = _file_to_dataurl(fs)
+                if real_size > 3*1024*1024:
+                    return jsonify({"ok":False,"error":"Imagem excede 3MB."}), 400
+                # salva no /uploads para eventualmente referenciar
+                fname = f"{uuid.uuid4().hex}_{re.sub(r'[^a-zA-Z0-9_.-]','_', fs.filename)}"
+                with open(os.path.join(UPLOAD_DIR, fname), "wb") as f:
+                    f.write(base64.b64decode(dataurl.split(",")[1]))
+                image_urls.append(url_for("get_upload", fname=fname, _external=True))
 
-        # Monta conte√∫do para vis√£o
-        user_text = (
-            f"Telefone: {phone}\n"
-            f"Escopo: {scope or '-'}\n"
-            f"Resina: {resin or '-'}\n"
-            f"Impressora: {printer or '-'}\n"
+        # ===== RAG: consulta base
+        query_text = (
+            f"Escopo: {scope}\nImpressora: {printer or '-'}\nResina: {resin or '-'}\n"
             f"Problema: {problem}\n"
         )
-        content = [{"type": "text", "text": user_text}]
+        rag_hits = []
+        try:
+            rag_hits = rag.search(query_text, top_k=RAG_TOPK, min_score=RAG_MIN_SCORE)
+        except Exception:
+            rag_hits = []
+
+        ctx_lines, cite_lines = [], []
+        for i, h in enumerate(rag_hits, 1):
+            tag = f"[KB{i}]"
+            ctx_lines.append(f"{tag} {h['text']}".strip())
+            cite_lines.append(f"{tag} {h['source']}")
+
+        kb_context = "\n\n".join(ctx_lines)
+        kb_citations = " ".join(c.split()[0] for c in cite_lines) if cite_lines else ""
+        kb_footer = ""
+        if cite_lines:
+            kb_footer = "\n\nFontes: " + "  ".join(cite_lines)
+
+        # ===== validaÁ„o: se RAG estrito e sem base relevante, peÁa confirmaÁ„o
+        if RAG_STRICT and not rag_hits:
+            text = (
+                "Preciso validar antes: n„o encontrei referÍncia na nossa base para responder com seguranÁa.\n"
+                "Pode enviar mais detalhes (modelo da impressora, resina, alturas/tempos) ou uma foto? "
+                "Se preferir, encaminho para um tÈcnico humano agora."
+            )
+            # ainda assim continuamos, mas marcamos contexto vazio:
+            kb_context = ""
+
+        # monta conte˙do para vis„o (texto + imagens)
+        content = [{
+            "type": "text",
+            "text": (
+                f"Telefone: {phone}\nEscopo: {scope}\nImpressora: {printer or '-'}\nResina: {resin or '-'}\n"
+                f"Problema: {problem}\n"
+                "Contexto de atendimento Quanton3D."
+            )
+        }]
         for u in image_urls:
-            content.append({"type": "image_url", "image_url": {"url": u}})
-
-        # Detecta inten√ß√£o de PAR√ÇMETROS
-        wants_params = False
-        txt_low = (problem + " " + scope).lower()
-        if any(k in txt_low for k in ["parametro", "par√¢metro", "exposi", "perfil", "configura", "setting", "exposure"]):
-            wants_params = True
-
-        # Se pediu par√¢metros e temos marca/resina/modelo no texto do usu√°rio, tenta buscar
-        params_block = ""
-        if wants_params and (printer or resin):
-            # Tenta quebrar printer em brand/model (ex.: "ANYCUBIC PHOTON MONO M3 MAX")
-            brand_guess, model_guess = "", ""
-            if printer:
-                parts = printer.strip().split()
-                if len(parts) >= 2:
-                    brand_guess = parts[0]
-                    model_guess = " ".join(parts[1:])
-                else:
-                    brand_guess = printer
-
-            results = find_params(brand_guess or printer, model_guess or "", resin)
-            if results:
-                best = results[0]
-                params_block = (
-                    "Par√¢metros sugeridos (da base Quanton3D):\n"
-                    f"- Marca: {best['brand']} | Modelo: {best['model']} | Resina: {best['resin']}\n"
-                    f"- Altura cam.: {best['layer_height_mm']} mm | Exp. camada: {best['exp_layer_s']} s | Base: {best['exp_base_s']} s\n"
-                    f"- Delays: off {best['off_delay_s']}s | on_base {best['on_delay_base_s']}s | "
-                    f"desc_lift {best['rest_before_lift_s']}s / {best['rest_after_lift_s']}s / {best['rest_after_retract_s']}s\n"
-                    f"- UV: {best['uv_power_pct']}%\n"
-                    "Use como ponto de partida; ajuste fino pela pe√ßa/ambiente."
-                )
-                # Injeta contexto com par√¢metros
-                content.insert(0, {"type": "text", "text": params_block})
-            else:
-                params_block = "N√£o encontrei par√¢metros na base para essa combina√ß√£o. Se quiser, me passe Marca/Modelo/Resina mais exatos."
+            content.append({"type":"image_url","image_url":{"url":u}})
 
         messages = [
-            {"role": "system", "content": ASSISTANT_SYSTEM},
-            {"role": "user",   "content": content}
+            {"role":"system","content": ASSISTANT_SYSTEM},
+            {"role":"system","content":
+                ("Contexto da base (RAG). Use se relevante e CITE como [KB1], [KB2]Ö; "
+                 "se vazio, responda com boas pr·ticas e peÁa confirmaÁ„o:\n" +
+                 (kb_context or "ó sem contexto ó"))
+            },
+            {"role":"user","content": content},
         ]
 
-        # Chamada ao modelo
         resp = client.chat.completions.create(
-            model=OPENAI_MODEL,
-            temperature=OPENAI_TEMP,
-            seed=OPENAI_SEED,
+            model=MODEL,
+            temperature=TEMP,
+            seed=SEED,
+            top_p=0.8,
+            max_tokens=700,
             messages=messages
         )
-        reply = (resp.choices[0].message.content or "").strip()
+        answer = (resp.choices[0].message.content or "").strip()
+        # acrescenta as fontes quando houver
+        if kb_footer and "[KB" in answer and "Fontes:" not in answer:
+            answer += kb_footer
 
-        return jsonify({
-            "ok": True,
-            "reply": reply,
-            "version": APP_VERSION,
-            "used_params": bool(params_block),
-            "images": len(image_urls)
-        })
+        # guarda histÛrico leve
+        HISTORY.setdefault(phone, []).append({"u": problem, "a": answer})
+
+        return jsonify({"ok": True, "reply": answer, "version": APP_VERSION, "citations": cite_lines})
+
     except Exception as e:
         app.logger.exception("erro no /chat")
-        # erro amig√°vel para interface
-        return jsonify({"ok": False, "error": str(e)}), 500
+        return jsonify({"ok":False,"error":str(e)}), 500
 
-# -----------------------------------------------------------------------------
-# P√°gina principal (aproveita seu template atual)
-# -----------------------------------------------------------------------------
-@app.get("/")
-def index():
-    # Se o seu template j√° existe, essa linha mant√©m.
-    return render_template("index.html", app_version=APP_VERSION)
+# ---- est·ticos
+@app.get("/static/<path:filename>")
+def static_files(filename): return send_from_directory(app.static_folder, filename)
 
-# -----------------------------------------------------------------------------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)

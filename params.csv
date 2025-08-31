@@ -1,0 +1,5 @@
+brand,model,resin,layer_height_mm,exp_layer_s,exp_base_s,off_delay_s,on_delay_base_s,rest_before_lift_s,rest_after_lift_s,rest_after_retract_s,uv_power_pct
+ANYCUBIC,PHOTON MONO M3 MAX,QUANTON3D ATHOM WASHABLE,0.05,2.8,35,0,0,0,0,0,70
+ELEGOO,SATURN 3,QUANTON3D ALCHEMIST ELEGOO,0.05,2.5,30,0,0,0,0,0,70
+CREALITY,LD-002R,QUANTON3D ALCHEMIST CREALITY,0.05,2.9,35,0,0,0,0,0,70
+PHROZEN,SONIC MINI 8K,QUANTON3D ALCHEMIST PHROZEN,0.05,2.2,28,0,0,0,0,0,70
