@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# v2025-08-31a — compat Python 3.13, OpenAI 1.x, visão por imagens, sessões por telefone
+# 2025-08-31b — compat Python 3.13, OpenAI 1.x, visão por imagens, sessões por telefone
 import json, re  # já pode existir; garanta que estejam importados
 
 def normalize_phone(p: str) -> str:
