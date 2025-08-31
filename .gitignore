@@ -28,3 +28,5 @@ data/
 .env
 
 setkey.ps1
+
+*.lnk
