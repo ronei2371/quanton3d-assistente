@@ -1,24 +1,28 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Termo de Uso – Quanton3D</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='site.css') }}?v=3">
+  <link rel="stylesheet" href="{{ url_for('static', filename='site.css') }}?v=4">
   <style>
     body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
-      background: radial-gradient(80% 80% at 50% 20%, #0e2a4a 0%, #081327 55%, #050a16 100%);}
-    .card{width:min(720px,92vw);background:rgba(12,14,24,.92);border:1px solid #0ea5ff30;
-      box-shadow:0 8px 40px #00c2ff2a, inset 0 0 0 1px #ffffff05;border-radius:14px;padding:28px;color:#e9eef6}
-    h1{font-size:1.8rem;margin:0 0 10px;color:#74d0ff}
-    p,li{font-size:1.05rem;line-height:1.65}
-    .actions{display:flex;gap:12px;margin-top:18px;flex-wrap:wrap}
+      background: radial-gradient(80% 80% at 50% 20%, #0e2a4a 0%, #0a1530 55%, #030814 100%);}
+    .card{width:min(780px,92vw);background:rgba(12,14,24,.92);border:1px solid #0ea5ff30;
+      box-shadow:0 8px 40px #00c2ff2a,inset 0 0 0 1px #ffffff08;border-radius:14px;padding:28px;color:#e9eef6}
+    h1{font-size:1.9rem;margin:0 0 14px;color:#74d0ff}
+    p,li{font-size:1.08rem;line-height:1.65}
+    .actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px}
     .btn{padding:12px 18px;border:0;border-radius:8px;cursor:pointer;font-weight:700}
     .btn-primary{background:#00c04b;color:#fff}
     .btn-outline{background:transparent;color:#8bd2ff;border:1px solid #177bd1}
-    .contrato{margin-top:14px;background:#0b1224;border:1px solid #24406b;border-radius:10px;padding:14px;max-height:260px;overflow:auto;display:none}
+    .contrato{margin-top:14px;background:#0b1224;border:1px solid #24406b;border-radius:10px;padding:14px;max-height:260px;overflow:auto;display:none;white-space:pre-wrap}
     .hint{font-size:.9rem;color:#9bb6d8;margin-top:8px}
   </style>
+  <script>
+    // já aceitou na versão v2? vai direto pro bot
+    if (localStorage.getItem('q3d_terms_v2') === 'true') location.replace('/chat');
+  </script>
 </head>
 <body>
   <div class="card">
@@ -34,7 +38,7 @@
 
     <div class="actions">
       <button class="btn btn-primary" id="aceito">👉 Aceito e Continuar</button>
-      <button class="btn btn-outline" id="ver-contrato">📄 Ver contrato completo</button>
+      <button class="btn btn-outline" id="ver">📄 Ver contrato completo</button>
     </div>
     <div class="hint">Ao aceitar, você concorda com os termos acima e com o contrato completo.</div>
 
@@ -42,24 +46,15 @@
   </div>
 
   <script>
-    // se já aceitou antes, pula para o bot
-    if (localStorage.getItem('termo_aceito') === 'true') {
-      window.location.href = '/chat';
-    }
-
     document.getElementById('aceito').onclick = () => {
-      localStorage.setItem('termo_aceito', 'true');
-      window.location.href = '/chat';
+      localStorage.setItem('q3d_terms_v2', 'true');
+      location.replace('/chat');
     };
-
     const area = document.getElementById('contrato');
-    document.getElementById('ver-contrato').onclick = async () => {
-      if (area.style.display === 'block') {
-        area.style.display = 'none';
-        return;
-      }
+    document.getElementById('ver').onclick = async () => {
+      if (area.style.display === 'block') { area.style.display = 'none'; return; }
       try {
-        const r = await fetch('/static/contrato.txt?v=3');
+        const r = await fetch('/static/contrato.txt?v=4');
         area.textContent = await r.text();
         area.style.display = 'block';
       } catch (e) {
