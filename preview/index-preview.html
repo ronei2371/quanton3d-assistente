@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preview IA Quanton3D</title>
+  <link rel="stylesheet" href="site.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar__left">
+      <img class="brand__logo" src="logo.png" alt="Quanton3D">
+      <div>
+        <div class="brand__title">IA Quanton3D®</div>
+        <div class="brand__subtitle">Suporte técnico 3D • SLA/DLP</div>
+      </div>
+    </div>
+    <div class="topbar__right">
+      <span class="chip">Visual Preview</span>
+    </div>
+  </header>
+
+  <main class="container">
+    <form class="card">
+      <h2 class="card__title">Identificação</h2>
+
+      <div class="grid">
+        <div class="field">
+          <label>📱 Telefone (WhatsApp)</label>
+          <input type="tel" placeholder="(31) 9 0000-0000">
+        </div>
+        <div class="field">
+          <label>📍 Onde está o problema?</label>
+          <select>
+            <option>Selecione…</option>
+            <option>Tela LCD</option>
+            <option>Adesão</option>
+            <option>Suportes</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>🧪 Resina</label>
+          <input type="text" placeholder="Ex.: Spark, Alchemist...">
+        </div>
+        <div class="field">
+          <label>🖨️ Impressora</label>
+          <input type="text" placeholder="Ex.: Anycubic, Elegoo...">
+        </div>
+        <div class="field field--full">
+          <label>✏️ Descreva o problema</label>
+          <textarea rows="4" placeholder="Ex.: primeira camada soltando..."></textarea>
+        </div>
+        <div class="field field--full">
+          <label>📎 Imagens</label>
+          <input type="file" multiple>
+        </div>
+      </div>
+
+      <label class="tos-check">
+        <input type="checkbox"> Li e aceito os termos de uso
+      </label>
+
+      <div class="actions">
+        <button type="button" class="btn ghost">Reset</button>
+        <button type="submit" class="btn primary">Enviar</button>
+      </div>
+    </form>
+  </main>
+</body>
+</html>
