@@ -1,10 +1,11 @@
+
 <!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Termo de Uso – Quanton3D</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='site.css') }}?v=4">
+  <link rel="stylesheet" href="{{ url_for('static', filename='site.css') }}?v=5">
   <style>
     body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
       background: radial-gradient(80% 80% at 50% 20%, #0e2a4a 0%, #0a1530 55%, #030814 100%);}
@@ -20,8 +21,9 @@
     .hint{font-size:.9rem;color:#9bb6d8;margin-top:8px}
   </style>
   <script>
-    // já aceitou na versão v2? vai direto pro bot
-    if (localStorage.getItem('q3d_terms_v2') === 'true') location.replace('/chat');
+    if (localStorage.getItem('q3d_terms_v3') === 'true') {
+      location.replace('/chat');
+    }
   </script>
 </head>
 <body>
@@ -47,14 +49,14 @@
 
   <script>
     document.getElementById('aceito').onclick = () => {
-      localStorage.setItem('q3d_terms_v2', 'true');
+      localStorage.setItem('q3d_terms_v3', 'true');
       location.replace('/chat');
     };
     const area = document.getElementById('contrato');
     document.getElementById('ver').onclick = async () => {
       if (area.style.display === 'block') { area.style.display = 'none'; return; }
       try {
-        const r = await fetch('/static/contrato.txt?v=4');
+        const r = await fetch('/static/contrato.txt?v=5');
         area.textContent = await r.text();
         area.style.display = 'block';
       } catch (e) {

@@ -4,4 +4,4 @@ services:
     name: quanton3d-assistente
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
+    startCommand: gunicorn app:app --workers=2 --threads=8 --timeout=120
