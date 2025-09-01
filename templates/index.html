@@ -314,5 +314,37 @@
       }
     });
   </script>
+
+<!-- Termo de Uso - aparece antes do chat -->
+<div id="termo-container" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+background-color: rgba(0, 0, 0, 0.85); color: white; display: flex; justify-content: center; align-items: center; z-index: 9999;">
+  <div style="background-color: #1e1e1e; padding: 30px; border-radius: 10px; max-width: 600px; text-align: left;">
+    <h2>📌 Termo de Uso – Bot Quanton3D</h2>
+    <p>✅ Ao continuar, você declara que:</p>
+    <ul>
+      <li>Reconhece que o bot é propriedade exclusiva da Quanton3D;</li>
+      <li>O uso é permitido apenas para suporte em impressão 3D;</li>
+      <li>É proibida a cópia, modificação ou redistribuição;</li>
+      <li>As informações são apoio técnico e não substituem decisões profissionais;</li>
+      <li>Violação implica em bloqueio de acesso e medidas legais.</li>
+    </ul>
+    <button onclick="aceitarTermo()" style="margin-top: 20px; padding: 10px 20px; background-color: #00c04b; border: none; color: white; font-weight: bold; border-radius: 5px; cursor: pointer;">👉 Aceito e Continuar</button>
+  </div>
+</div>
+
+<script>
+function aceitarTermo() {
+  localStorage.setItem("termo_aceito", "true");
+  document.getElementById("termo-container").style.display = "none";
+}
+window.onload = function() {
+  if (localStorage.getItem("termo_aceito") !== "true") {
+    document.getElementById("termo-container").style.display = "flex";
+  } else {
+    document.getElementById("termo-container").style.display = "none";
+  }
+}
+</script>
+
 </body>
 </html>
