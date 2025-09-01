@@ -1,0 +1,384 @@
+📋 CONTRATO DE LICENÇA DE USO DE
+SOFTWARE
+
+QUANTON3D – BOT ELIO (VERSÃO COMERCIAL OTIMIZADA)
+LICENCIANTE: Quanton3D, pessoa jurídica inscrita no CNPJ sob nº 11.165.962/0001-17,
+com sede na Av. Dom Pedro II, nº 5056, Jardim Montanhês, Belo Horizonte/MG, CEP 30750-
+000, doravante denominada "LICENCIANTE".
+LICENCIADO: Pessoa física ou jurídica que venha a utilizar o software objeto deste
+contrato, doravante denominada "LICENCIADO".
+
+📄 CLÁUSULA 1 – OBJETO E DEFINIÇÕES
+1.1. OBJETO
+O presente contrato tem por objeto a concessão, pela LICENCIANTE, de licença de uso do
+software denominado "Bot ELIO - Assistente Inteligente Quanton3D", desenvolvido com
+tecnologia de inteligência artificial, destinado ao suporte técnico especializado em
+impressão 3D SLA.
+1.2. DEFINIÇÕES
+ •   Software: Sistema de inteligência artificial Bot ELIO e todas suas funcionalidades
+ •   Licença: Direito de uso não exclusivo, intransferível e temporário
+ •   Usuário Autorizado: Pessoa física designada pelo LICENCIADO para operar o software
+ •   Dados Técnicos: Informações, algoritmos e base de conhecimento do software
+ •   Período de Vigência: Prazo de validade da licença conforme plano contratado
+1.3. PROTEÇÃO LEGAL
+O software constitui obra intelectual protegida pelas seguintes legislações:
+ • Lei nº 9.609/98 – Lei de Software
+ • Lei nº 9.610/98 – Lei de Direitos Autorais
+ • Lei nº 9.279/96 – Lei da Propriedade Industrial
+ • Lei nº 13.709/18 – Lei Geral de Proteção de Dados (LGPD)
+🏆 CLÁUSULA 2 – PROPRIEDADE INTELECTUAL E
+PROTEÇÃO
+2.1. TITULARIDADE EXCLUSIVA
+O software, incluindo código-fonte, algoritmos, base de conhecimento e interface, é de
+titularidade exclusiva da LICENCIANTE, sendo vedada qualquer forma de:
+  • Reprodução, cópia ou distribuição não autorizada
+  • Modificação, adaptação ou criação de obras derivadas
+  • Engenharia reversa, descompilação ou desassembly
+  • Sublicenciamento ou cessão a terceiros
+
+2.2. PROTEÇÃO INDEPENDENTE DE REGISTRO
+Conforme art. 2º da Lei nº 9.609/98, a proteção ao programa de computador independe de
+registro formal, bastando a comprovação de autoria pela LICENCIANTE.
+2.3. PENALIDADES POR VIOLAÇÃO
+A violação dos direitos autorais e industriais sujeita o LICENCIADO às penalidades previstas
+nos arts. 102 a 110 da Lei nº 9.610/98 e art. 195 da Lei nº 9.279/96, incluindo indenização
+por perdas e danos.
+
+🤝 CLÁUSULA 3 – CONCESSÃO DE LICENÇA E
+MODALIDADES
+3.1. NATUREZA DA LICENÇA
+A LICENCIANTE concede ao LICENCIADO uma licença de uso não exclusiva, intransferível
+e revogável, limitada às condições previstas no plano contratado.
+3.2. MODALIDADES DE LICENÇA
+PLANO BÁSICO:
+ •   Vigência: Mensal, renovação automática
+ •   Usuários: 1 (um) usuário autorizado
+ •   Suporte: Horário comercial (8h às 18h, dias úteis)
+ •   Funcionalidades: Consultas básicas de troubleshooting
+ •   Valor: R$ 197,00/mês
+PLANO PROFISSIONAL:
+ •   Vigência: Anual, com desconto de 20%
+ •   Usuários: Até 3 (três) usuários autorizados
+ •   Suporte: Prioritário (resposta em até 4h úteis)
+ •   Funcionalidades: Consultas avançadas + relatórios
+ •   Valor: R$ 1.890,00/ano (equivale a R$ 157,50/mês)
+PLANO ENTERPRISE:
+ •   Vigência: Anual ou plurianual
+ •   Usuários: Ilimitados na empresa
+ •   Suporte: 24/7 com SLA garantido
+ •   Funcionalidades: Todas + customizações
+ •   Valor: Sob consulta (mínimo R$ 4.970,00/ano)
+3.3. PERÍODO DE AVALIAÇÃO
+Todos os planos incluem período de teste gratuito de 14 (quatorze) dias, com
+funcionalidades completas, para avaliação da adequação às necessidades do LICENCIADO.
+3.4. LIMITAÇÕES DE USO
+ •   Uso restrito aos usuários autorizados cadastrados
+ •   Vedado compartilhamento de credenciais de acesso
+ •   Uso exclusivo para atividades relacionadas à impressão 3D
+ •   Proibido uso para desenvolvimento de software concorrente
+
+💰 CLÁUSULA 4 – VALORES, PAGAMENTO E REAJUSTE
+4.1. VALORES E FORMAS DE PAGAMENTO
+ •   Plano Básico: R$ 197,00 mensais, vencimento todo dia 15
+ •   Plano Profissional: R$ 1.890,00 anuais, à vista ou 12x sem juros
+ •   Plano Enterprise: Valor personalizado, condições especiais
+4.2. FORMAS DE PAGAMENTO ACEITAS
+ •   Cartão de crédito (Visa, Mastercard, Elo)
+ •   PIX (desconto de 5% para pagamento à vista)
+ •   Boleto bancário (apenas planos anuais)
+ •   Transferência bancária (empresas)
+4.3. REAJUSTE ANUAL
+Os valores serão reajustados anualmente pelo IPCA (Índice de Preços ao Consumidor
+Amplo) ou índice oficial que vier a substituí-lo.
+4.4. INADIMPLÊNCIA
+ •   Atraso superior a 15 (quinze) dias: suspensão automática do acesso
+ •   Atraso superior a 30 (trinta) dias: rescisão automática do contrato
+ •   Cobrança de multa de 2% + juros de 1% ao mês sobre valor em atraso
+
+🛡️ CLÁUSULA 5 – CONFIDENCIALIDADE E PROTEÇÃO DE
+DADOS
+5.1. SIGILO ABSOLUTO
+O LICENCIADO compromete-se a manter absoluto sigilo sobre:
+ • Algoritmos e funcionamento interno do software
+ • Base de conhecimento e dados técnicos
+ • Informações comerciais e estratégicas da LICENCIANTE
+ • Metodologias e processos proprietários
+5.2. CONFORMIDADE COM LGPD
+Quando o software processar dados pessoais:
+ • Aplicam-se integralmente as disposições da LGPD
+ • LICENCIADO atua como controlador dos dados de seus clientes
+ • LICENCIANTE atua como operador, seguindo instruções do LICENCIADO
+ •   Vedado qualquer uso incompatível com finalidades autorizadas
+5.3. PENALIDADES POR VIOLAÇÃO
+Violação de confidencialidade sujeita o LICENCIADO a:
+ • Indenização de R$ 50.000,00 por violação comprovada
+ • Ressarcimento de todos os prejuízos causados
+ • Responsabilização civil e penal conforme art. 195, XI da Lei nº 9.279/96
+
+
+⚖️ CLÁUSULA 6 – RESPONSABILIDADES E GARANTIAS
+6.1. GARANTIAS DA LICENCIANTE
+A LICENCIANTE garante que o software:
+ • Disponibilidade: 99% ao mês (SLA garantido)
+ • Precisão técnica: Informações baseadas em conhecimento especializado
+ • Atualizações: Melhorias contínuas incluídas na licença
+ • Suporte técnico: Conforme nível do plano contratado
+6.2. RESPONSABILIDADES DO LICENCIADO
+O LICENCIADO reconhece que:
+ • O software é ferramenta de apoio técnico-consultivo
+ • Deve ser operado por profissionais qualificados em impressão 3D
+ • As decisões finais são de responsabilidade do usuário
+ • Aplicação prática deve considerar especificidades de cada caso
+6.3. LIMITAÇÃO DE RESPONSABILIDADE
+ •   LICENCIANTE não se responsabiliza por decisões baseadas exclusivamente no software
+ •   Responsabilidade limitada ao valor pago nos últimos 12 meses
+ •   Excludem-se danos indiretos, lucros cessantes ou danos morais
+ •   LICENCIADO deve manter seguro de responsabilidade profissional
+6.4. INDENIZAÇÃO CRUZADA
+O LICENCIADO indenizará a LICENCIANTE por:
+•   Reclamações de terceiros decorrentes de uso inadequado
+•   Violações de propriedade intelectual ou confidencialidade
+•   Uso para fins concorrenciais ou desenvolvimento de produtos similares
+•   Todas as despesas legais e custos de defesa
+
+🔧 CLÁUSULA 7 – SUPORTE TÉCNICO E ATUALIZAÇÕES
+7.1. NÍVEIS DE SUPORTE INCLUÍDOS
+PLANO BÁSICO:
+•   Suporte via chat/email (horário comercial)
+•   Tempo de resposta: até 24h úteis
+•   Base de conhecimento online
+•   Tutoriais em vídeo
+PLANO PROFISSIONAL:
+•   Suporte prioritário via chat/email/telefone
+•   Tempo de resposta: até 4h úteis
+•   Treinamento inicial de 2 horas
+•   Acesso a webinars mensais
+PLANO ENTERPRISE:
+•   Suporte 24/7 via todos os canais
+•   Tempo de resposta: até 1h (crítico), 4h (normal)
+•   Gerente de conta dedicado
+•   Treinamento personalizado ilimitado
+7.2. ATUALIZAÇÕES E MELHORIAS
+•   Atualizações de segurança: Automáticas e obrigatórias
+•   Novas funcionalidades: Incluídas sem custo adicional
+•   Melhorias na base de conhecimento: Contínuas
+•   Comunicação prévia: 15 dias para mudanças significativas
+7.3. DESCONTINUAÇÃO DE FUNCIONALIDADES
+A LICENCIANTE poderá modificar ou descontinuar funcionalidades mediante:
+ • Aviso prévio de 90 (noventa) dias
+ • Justificativa técnica ou comercial
+ • Migração assistida quando aplicável
+ • Sem obrigação de compensação financeira
+
+
+🔍 CLÁUSULA 8 – AUDITORIA E MONITORAMENTO
+8.1. DIREITO DE AUDITORIA
+A LICENCIANTE poderá, mediante justificativa e aviso prévio de 15 dias:
+ • Solicitar relatórios de uso do software
+ • Verificar conformidade com termos contratuais
+ • Auditar número de usuários e dispositivos
+ • Verificar cumprimento de obrigações de confidencialidade
+8.2. COLABORAÇÃO DO LICENCIADO
+O LICENCIADO compromete-se a:
+ • Fornecer informações solicitadas em até 10 dias úteis
+ • Permitir acesso remoto para verificações técnicas
+ • Manter registros de uso por 24 meses
+ • Colaborar integralmente com processo de auditoria
+8.3. CONSEQUÊNCIAS DE NÃO CONFORMIDADE
+Identificadas violações, o LICENCIADO terá 30 dias para:
+ • Regularizar situação identificada
+ • Pagar valores devidos (se aplicável)
+ • Implementar medidas corretivas
+ • Caso contrário, rescisão imediata do contrato
+
+
+📊 CLÁUSULA 9 – INDICADORES DE QUALIDADE (SLA)
+9.1. DISPONIBILIDADE GARANTIDA
+ •   Plano Básico: 98% de disponibilidade mensal
+ •   Plano Profissional: 99% de disponibilidade mensal
+ •   Plano Enterprise: 99.5% de disponibilidade mensal
+9.2. TEMPO DE RESPOSTA DE SUPORTE
+ •   Plano Básico: 24h úteis (email/chat)
+ •   Plano Profissional: 4h úteis (todos os canais)
+ •   Plano Enterprise: 1h (crítico), 4h (normal)
+9.3. COMPENSAÇÕES POR DESCUMPRIMENTO
+Indisponibilidade superior ao SLA:
+ • 24-48h: Desconto de 10% na mensalidade
+ • 48-72h: Desconto de 25% na mensalidade
+ • Acima de 72h: Desconto de 50% + extensão gratuita
+Suporte fora do SLA:
+ • Atraso de 50%: Desconto de 5% na mensalidade
+ • Atraso de 100%: Desconto de 15% na mensalidade
+
+
+⚠️ CLÁUSULA 10 – RESCISÃO E PENALIDADES
+10.1. RESCISÃO POR INICIATIVA DO LICENCIADO
+ •   Planos mensais: Cancelamento a qualquer tempo, sem multa
+ •   Planos anuais: Cancelamento com 30 dias de antecedência
+ •   Reembolso: Proporcional ao período não utilizado (planos anuais)
+10.2. RESCISÃO POR INICIATIVA DA LICENCIANTE
+Rescisão imediata em caso de:
+ • Inadimplência superior a 30 dias
+ • Violação grave de propriedade intelectual
+ • Uso para fins concorrenciais
+ •   Violação de confidencialidade
+ •   Não conformidade após auditoria
+10.3. CONSEQUÊNCIAS DA RESCISÃO
+ •   Cessação imediata do direito de uso
+ •   Exportação de dados permitida por 30 dias
+ •   Devolução de materiais confidenciais
+ •   Manutenção de sigilo por prazo indeterminado
+10.4. PENALIDADES POR VIOLAÇÃO GRAVE
+ •   Violação de PI: Indenização de 100x o valor mensal
+ •   Concorrência desleal: Indenização de 500x o valor mensal
+ •   Violação de confidencialidade: R$ 50.000,00 + perdas e danos
+ •   Uso indevido: Multa de 50x o valor mensal
+
+🌐 CLÁUSULA 11 – MIGRAÇÃO E PORTABILIDADE
+11.1. EXPORTAÇÃO DE DADOS
+Em caso de rescisão, o LICENCIADO terá direito a:
+ • Exportar dados em formato padrão (JSON/CSV)
+ • Prazo de 30 dias após término da licença
+ • Suporte técnico para migração (planos Pro/Enterprise)
+ • Certificado de exclusão após exportação
+
+11.2. RETENÇÃO DE DADOS
+Após rescisão, a LICENCIANTE:
+ • Manterá dados por 90 dias (recuperação de emergência)
+ • Excluirá definitivamente após prazo
+ • Fornecerá certificado de exclusão se solicitado
+ • Manterá apenas dados necessários para compliance
+🔄 CLÁUSULA 12 – VIGÊNCIA E RENOVAÇÃO
+12.1. PRAZO DE VIGÊNCIA
+ •   Plano Básico: Mensal, renovação automática
+ •   Plano Profissional: 12 meses, renovação automática
+ •   Plano Enterprise: Conforme negociado (1-3 anos)
+12.2. RENOVAÇÃO AUTOMÁTICA
+ •   Renovação automática por períodos iguais
+ •   Cancelamento com 30 dias de antecedência
+ •   Valores atualizados conforme cláusula de reajuste
+ •   Comunicação prévia de renovação (15 dias)
+12.3. UPGRADE/DOWNGRADE DE PLANOS
+ •   Upgrade: Imediato, cobrança proporcional
+ •   Downgrade: Apenas na renovação seguinte
+ •   Migração de dados: Assistida pela equipe técnica
+ •   Funcionalidades: Ajustadas conforme novo plano
+
+⚖️ CLÁUSULA 13 – RESOLUÇÃO DE CONFLITOS
+13.1. MEDIAÇÃO PREFERENCIAL
+Para conflitos de valor até R$ 100.000,00:
+ • 1ª opção: Mediação online via plataforma especializada
+ • Prazo: 30 dias para resolução
+ • Custos: Divididos igualmente entre as partes
+ • Mediador: Especialista em tecnologia/propriedade intelectual
+13.2. ARBITRAGEM ESPECIALIZADA
+Para conflitos superiores a R$ 100.000,00:
+ • Câmara: Centro de Arbitragem e Mediação da Câmara de Comércio Brasil-Canadá
+ • Árbitro: Especialista em direito digital e propriedade intelectual
+ •   Sede: São Paulo/SP ou online
+ •   Idioma: Português
+ •   Lei aplicável: Brasileira
+13.3. FORO SUBSIDIÁRIO
+Na impossibilidade de mediação/arbitragem:
+ • Foro principal: Comarca de domicílio do LICENCIADO
+ • Foro alternativo: Comarca de Belo Horizonte/MG
+ • Escolha: Do LICENCIANTE, conforme conveniência
+ • Renúncia: A qualquer outro foro, por mais privilegiado
+
+
+🔒 CLÁUSULA 14 – FORÇA MAIOR E CASO FORTUITO
+14.1. EVENTOS DE FORÇA MAIOR
+Constituem força maior ou caso fortuito:
+ • Pandemias e emergências sanitárias
+ • Desastres naturais e fenômenos climáticos extremos
+ • Ataques cibernéticos de grande escala
+ • Mudanças legislativas que afetem o software
+ • Falhas em infraestrutura de terceiros (AWS, Google, etc.)
+
+14.2. CONSEQUÊNCIAS
+Durante eventos de força maior:
+ • Suspensão temporária das obrigações afetadas
+ • Comunicação imediata às partes envolvidas
+ • Plano de contingência ativado quando possível
+ • Extensão de prazos proporcionalmente ao período afetado
+
+14.3. RESCISÃO POR FORÇA MAIOR
+Se força maior persistir por mais de 90 dias:
+ • Qualquer parte pode rescindir sem penalidades
+ • Reembolso proporcional de valores pagos antecipadamente
+ •   Manutenção de obrigações de confidencialidade
+
+📋 CLÁUSULA 15 – DISPOSIÇÕES GERAIS
+15.1. INTEGRALIDADE DO CONTRATO
+Este contrato representa a integralidade do acordo entre as partes, revogando qualquer
+entendimento anterior, verbal ou escrito.
+15.2. ALTERAÇÕES
+Alterações somente serão válidas se:
+ • Formalizadas por escrito
+ • Assinadas por ambas as partes
+ • Ou aceitas eletronicamente via plataforma oficial
+15.3. CESSÃO
+ •   LICENCIADO: Vedada cessão sem autorização prévia
+ •   LICENCIANTE: Permitida cessão para empresas do grupo
+ •   Sucessão empresarial: Transferência automática para sucessores
+15.4. NULIDADE PARCIAL
+A nulidade de qualquer cláusula não afetará a validade das demais, que permanecerão em
+pleno vigor.
+15.5. COMUNICAÇÕES OFICIAIS
+ •   Email oficial: contratos@quanton3d.com.br
+ •   Endereço físico: Av. Dom Pedro II, nº 5056, Belo Horizonte/MG
+ •   Prazo de resposta: 5 dias úteis para comunicações contratuais
+
+✍️ CLÁUSULA 16 – ASSINATURA E VIGÊNCIA
+16.1. MODALIDADES DE ASSINATURA
+Este contrato pode ser assinado:
+ • Fisicamente: Com reconhecimento de firma
+ •   Digitalmente: Certificado ICP-Brasil
+ •   Eletronicamente: Via plataforma Quanton3D (DocuSign/similar)
+16.2. INÍCIO DE VIGÊNCIA
+ •   Data de assinatura: Para contratos físicos/digitais
+ •   Data de ativação: Para contratos eletrônicos
+ •   Período de teste: Inicia imediatamente após assinatura
+16.3. ACEITE ELETRÔNICO
+O aceite eletrônico via plataforma Quanton3D tem força de contrato assinado, conforme:
+ • Lei nº 14.063/20 (Assinaturas Eletrônicas)
+ • MP nº 2.200-2/01 (ICP-Brasil)
+ • Marco Civil da Internet (Lei nº 12.965/14)
+
+
+📞 INFORMAÇÕES DE CONTATO
+LICENCIANTE - QUANTON3D:
+ • CNPJ: 11.165.962/0001-17
+ • Endereço: Av. Dom Pedro II, nº 5056, Jardim Montanhês, Belo Horizonte/MG, CEP
+   30750-000
+ • Email comercial: vendas@quanton3d.com.br
+ • Email suporte: suporte@quanton3d.com.br
+ • Telefone: (31) 3555-0000
+ • WhatsApp: (31) 99999-0000
+LICENCIADO:
+ • Nome/Razão Social: _________________________________
+ • CPF/CNPJ: _________________________________
+ • Endereço: _________________________________
+ • Email: _________________________________
+ • Telefone: _________________________________
+✅ ACEITE E ASSINATURA
+Ao assinar este contrato, as partes declaram:
+ • Ter lido e compreendido integralmente todos os termos
+ • Concordar com todas as cláusulas e condições
+ • Ter capacidade jurídica para assumir as obrigações
+ • Reconhecer a validade e eficácia do presente instrumento
+Local e Data: _________________, _____ de _____________ de 2024.
+LICENCIANTE:                     LICENCIADO:
+Quanton3D                      Nome/Razão Social
+Representante Legal                  CPF/CNPJ
+TESTEMUNHAS:
+ 1. _________________________________            2.
+    _________________________________
+    Nome: ________________________             Nome: ________________________
+    CPF: _________________________            CPF: _________________________
+Este contrato foi elaborado em conformidade com a legislação brasileira vigente e as
+melhores práticas do mercado de software B2B. Para dúvidas ou esclarecimentos, entre em
+contato com nossa equipe jurídica.
+© 2024 Quanton3D - Todos os direitos reservados
+Documento gerado automaticamente - Versão 2.0
+

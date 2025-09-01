@@ -1,55 +1,45 @@
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IA Quanton3D - Suporte Técnico</title>
-<style>
-body { font-family: Arial, sans-serif; background: #0a0f2c; color: white; margin:0; padding:20px;}
-.container { max-width: 700px; margin: auto; background: rgba(0,0,0,0.6); padding: 20px; border-radius: 10px;}
-input, select, textarea {
-  background-color: #f9f9f9;
-  color: #000;
-  border: 1px solid #007bff;
-  border-radius: 6px;
-  padding: 10px;
-  font-size: 1.05rem;
-  width: 100%;
-  margin-bottom: 15px;
-}
-label, h1, h2, p { font-size: 1.1rem; }
-button {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 1.05rem;
-}
-.btn-primary { background: #007bff; color: white; }
-.btn-secondary { background: #555; color: white; }
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IA Quanton3D • Suporte Técnico</title>
+  <link rel="stylesheet" href="/static/site.css">
+  <script>
+    if (localStorage.getItem('termo_aceito') !== 'true') {
+      location.href = '/';
+    }
+  </script>
 </head>
 <body>
-<div class="container">
-  <h1>IA Quanton3D® - Suporte Técnico 3D</h1>
-  <form id="form">
-    <label>Telefone (sempre o mesmo)</label>
-    <input type="text" name="telefone" placeholder="Ex.: 5531999999999" required>
-    <label>Descreva seu problema</label>
-    <textarea name="problema" rows="4" placeholder="Ex.: delaminação, falha na primeira camada..." required></textarea>
-    <label>Parâmetros Quanton3D (opcional)</label>
-    <select name="parametros">
-      <option value="">Selecione...</option>
-      <option value="resina1">Resina Spark</option>
-      <option value="resina2">Resina Flex</option>
-    </select>
-    <label>Imagens (opcional)</label>
-    <input type="file" name="imagens" multiple>
-    <button type="submit" class="btn-primary">Enviar</button>
-    <button type="reset" class="btn-secondary">Limpar</button>
-  </form>
-  <div id="resposta"></div>
-</div>
+  <div class="form-wrapper" style="max-width:960px;margin:40px auto;padding:24px;">
+    <h1>IA Quanton3D® • Suporte Técnico 3D</h1>
+    <form>
+      <label>Telefone (sempre o mesmo)</label>
+      <input type="tel" placeholder="Ex.: 5531999999999" required>
+
+      <label>Descreva seu problema</label>
+      <textarea rows="4" placeholder="Ex.: delaminação, base grudada, manchas..." required></textarea>
+
+      <label>Parâmetros Quanton3D (opcional)</label>
+      <select>
+        <option value="">Selecione...</option>
+        <option>Resina Spark</option>
+        <option>Resina Flex</option>
+      </select>
+
+      <label>Imagens (opcional)</label>
+      <input type="file" multiple>
+
+      <div style="display:flex; gap:10px; margin-top:8px;">
+        <button type="submit" class="btn btn--primary">Enviar</button>
+        <button type="reset" class="btn">Limpar</button>
+      </div>
+    </form>
+
+    <h2 style="margin-top:28px;">Respostas</h2>
+    <div id="respostas" class="panel" style="min-height:200px; padding:12px;"></div>
+  </div>
 </body>
 </html>

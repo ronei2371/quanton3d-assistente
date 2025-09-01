@@ -1,68 +1,53 @@
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Termo de Uso - Quanton3D</title>
-  <style>
-    body {
-      margin: 0;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #0a0f2c, #001f3f, #000000);
-      color: #f1f1f1;
-      text-align: left;
-    }
-    .container {
-      background: rgba(20, 20, 20, 0.9);
-      padding: 30px;
-      border-radius: 12px;
-      max-width: 600px;
-      box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
-    }
-    h2 { font-size: 1.8rem; margin-bottom: 15px; color: #00c0ff; }
-    p, li { font-size: 1.1rem; line-height: 1.6; }
-    button {
-      margin-top: 20px;
-      padding: 12px 25px;
-      font-size: 1.1rem;
-      background: #00c04b;
-      border: none;
-      border-radius: 6px;
-      color: white;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-    button:hover { background: #00963a; }
-  </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Termo de Uso • Quanton3D</title>
+  <link rel="stylesheet" href="/static/site.css">
 </head>
 <body>
-  <div class="container">
-    <h2>📌 Termo de Uso – Bot Quanton3D</h2>
-    <p>✅ Ao continuar, você declara que:</p>
-    <ul>
-      <li>Reconhece que o bot é propriedade exclusiva da Quanton3D;</li>
-      <li>O uso é permitido apenas para suporte em impressão 3D;</li>
-      <li>É proibida a cópia, modificação ou redistribuição;</li>
-      <li>As informações são apoio técnico e não substituem decisões profissionais;</li>
-      <li>Violação implica em bloqueio de acesso e medidas legais.</li>
-    </ul>
-    <button onclick="aceitar()">👉 Aceito e Continuar</button>
+  <div id="termo-container" style="display:flex">
+    <div id="termo-panel">
+      <h2>📌 Termo de Uso – Bot Quanton3D</h2>
+      <p style="margin:6px 0 12px 0">✅ Ao continuar, você declara que:</p>
+      <ul style="margin:0 0 14px 22px">
+        <li>Reconhece que o bot é propriedade exclusiva da Quanton3D;</li>
+        <li>O uso é permitido apenas para suporte em impressão 3D;</li>
+        <li>É proibida a cópia, modificação ou redistribuição;</li>
+        <li>As informações são apoio técnico e não substituem decisões profissionais;</li>
+        <li>Violação implica em bloqueio de acesso e medidas legais.</li>
+      </ul>
+
+      <details id="contrato-details">
+        <summary id="ver-contrato" class="btn" style="display:inline-block; padding:8px 12px; cursor:pointer;">📄 Ver contrato completo</summary>
+        <div id="contrato" class="contract" aria-live="polite">Carregando contrato...</div>
+      </details>
+
+      <div class="actions">
+        <button id="aceitar-btn" class="btn" onclick="aceitar()">👉 Aceito e Continuar</button>
+      </div>
+    </div>
   </div>
-  <script>
-    function aceitar() {
-      localStorage.setItem("termo_aceito", "true");
-      window.location.href = "/chat";
-    }
-    window.onload = function() {
-      if (localStorage.getItem("termo_aceito") === "true") {
-        window.location.href = "/chat";
-      }
-    }
-  </script>
+
+<script>
+function aceitar(){
+  localStorage.setItem('termo_aceito', 'true');
+  window.location.href = '/chat';
+}
+async function carregarContrato(){
+  try{
+    const res = await fetch('/static/contrato.txt', {cache:'no-store'});
+    const txt = await res.text();
+    document.getElementById('contrato').textContent = txt;
+  }catch(e){
+    document.getElementById('contrato').textContent = 'Não foi possível carregar o contrato.';
+  }
+}
+document.getElementById('contrato-details').addEventListener('toggle', (e)=>{
+  if(e.target.open){ carregarContrato(); }
+});
+</script>
 </body>
 </html>
