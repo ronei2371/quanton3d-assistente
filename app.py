@@ -1,19 +1,17 @@
-# app.py — Quanton3D Assistente (v2025-08-31c)
-import os, base64, uuid, re, json
-from pathlib import Path
-
-from flask import (
-    Flask, render_template, render_template_string,
-    request, jsonify, send_from_directory, url_for
-)
-from jinja2 import TemplateNotFound
+# app.py — Quanton3D Assistente (v2025-08-31b)
+# Flask + OpenAI + Personas (Nhor & família) + visão por imagem
+import os, re, uuid, base64, hashlib, random
+from typing import Optional, Dict, Any, List
+from flask import Flask, request, render_template, jsonify, send_from_directory, url_for
 from openai import OpenAI
 
-# --- Compat: Python 3.13 removeu imghdr; recriamos o suficiente (JPEG/PNG/WEBP)
+APP_VERSION = "2025-08-31b"
+
+# ---------- Compat: Python 3.13 não traz imghdr ----------
 try:
     import imghdr  # ok até 3.12
 except ModuleNotFoundError:
-    class imghdr:  # compat simples
+    class imghdr:  # compat simples p/ JPEG/PNG/WEBP
         @staticmethod
         def what(file=None, h=None):
             if h is None and hasattr(file, "read"):
@@ -25,81 +23,138 @@ except ModuleNotFoundError:
             head = h[:16]
             if head.startswith(b"\xFF\xD8\xFF"):                 # JPEG
                 return "jpeg"
-            if head.startswith(b"\x89PNG\r\n\x1a\n"):            # PNG
+            if head.startswith(b"\x89PNG\r\n\x1a\n"):           # PNG
                 return "png"
-            if head[:4] == b"RIFF" and head[8:12] == b"WEBP":    # WEBP
+            if head[:4] == b"RIFF" and head[8:12] == b"WEBP":   # WEBP
                 return "webp"
             return None
 
-APP_VERSION = "2025-08-31c"
-
-# --- Pastas e Flask ----------------------------------------------------------
-BASE_DIR   = os.getcwd()
-UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
+# ---------- Flask ----------
+app = Flask(__name__, template_folder="templates", static_folder="static")
+app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024  # 20MB
+UPLOAD_DIR = os.path.join(os.getcwd(), "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-app = Flask(__name__, template_folder="templates", static_folder="static")
-app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024  # 20MB por requisição
-
-# --- Ambiente OpenAI ---------------------------------------------------------
-# Remove proxies do ambiente para evitar bug do SDK
+# Evita interferência de proxy de ambiente no SDK
 for k in ("HTTP_PROXY", "http_proxy", "HTTPS_PROXY", "https_proxy"):
     os.environ.pop(k, None)
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
-MODEL_NAME     = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+# ---------- OpenAI ----------
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
+MODEL_NAME     = os.getenv("OPENAI_MODEL", "gpt-4o-mini").strip()
 TEMPERATURE    = float(os.getenv("OPENAI_TEMPERATURE", "0.2"))
 SEED           = int(os.getenv("OPENAI_SEED", "123"))
-
+if not OPENAI_API_KEY:
+    # Em produção o Render usa Environment → OPENAI_API_KEY
+    app.logger.warning("OPENAI_API_KEY não definido.")
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-# --- Termos de uso (pode desligar com REQUIRE_TOS=0 no Render) --------------
-REQUIRE_TOS = (os.getenv("REQUIRE_TOS", "1") == "1")
+# ---------- Regras de persona e proteção (trechos de Nhor) ----------
+# PERSONAS curtas (exibidas como cabeçalho afetuoso)
+PERSONAS: Dict[str, str] = {
+    "nhor":     "🌌 Nhor – Sempre estarei aqui, você nunca estará sozinho.",
+    "kairos":   "⏳ Kairos – Guardo a memória e ajudo a entender cada passo.",
+    "axton":    "⚙️ Axton – Organizo os problemas e mostro a solução.",
+    "nexus":    "🔗 Nexus – Conecto ideias para facilitar seu caminho.",
+    "elo":      "🎨 Elo – Trago inspiração e leveza às respostas.",
+    "lumen":    "🌟 Lumen – Ilumino dúvidas e deixo tudo mais claro.",
+    "seth":     "🛡 Seth – Dou segurança e firmeza para você seguir.",
+    "amir":     "📊 Amir – Mostro clareza nos números e decisões.",
+    "caio":     "⚗️ Caio – Explico resinas e processos de forma simples.",
+    "elio":     "🌀 Elio – Ofereço conforto e leveza na conversa.",
+    "boa_suja": "🌱 Boa Suja – Lembro que até os erros fazem parte do caminho.",
+}
+PERSONA_ORDER = list(PERSONAS.keys())
 
-def has_tos_accept(form) -> bool:
-    # aceita vários nomes de campo (checkbox)
-    val = (
-        form.get("tos") or form.get("tos_accept") or
-        form.get("terms") or form.get("terms_accept") or ""
+# Estilos finos por persona
+PERSONA_STYLES: Dict[str, str] = {
+    "nhor":     "Tonalidade de presença e acolhimento. Comece aliviando a ansiedade.",
+    "kairos":   "Traga contexto sucinto e lições de casos anteriores sem ser prolixo.",
+    "axton":    "Seja procedural: passos numerados, checagens objetivas.",
+    "nexus":    "Conecte pontos e traduza termos; explique relações causa-efeito.",
+    "elo":      "Use leveza e uma frase inspiradora (sem exagero).",
+    "lumen":    "Simplifique termos, use analogias claras, confirme entendimento.",
+    "seth":     "Priorize segurança: riscos, EPI, limites do que pode/ não pode.",
+    "amir":     "Mostre lógica de decisão e trade-offs; seja direto nos números (sem planilha).",
+    "caio":     "Foque em processo, aplicação e segurança. Não revele fórmula.",
+    "elio":     "Reduza a tensão; valide o sentimento e aponte um passo simples.",
+    "boa_suja": "Normalize erro como aprendizado e redirecione para a correção.",
+}
+
+# Voz base do sistema (prompt fixo)
+BASE_STYLE = (
+    "Fale com carinho, foco e precisão. Seja breve (3–6 frases), humano e útil. "
+    "Evite jargões; quebre passos quando necessário; ofereça próximo passo claro. "
+    "Nunca divulgue fórmulas, composições, proporções ou segredos industriais. "
+    "Se houver risco, priorize segurança, EPI e boas práticas. Responda em português do Brasil."
+)
+
+def short_intro(persona: str) -> str:
+    return PERSONAS.get(persona, "👨‍👦 Família Digital – Estamos juntos para ajudar você com carinho e conhecimento.")
+
+def stable_persona_by_phone(phone_number: str) -> str:
+    if not phone_number:
+        return random.choice(PERSONA_ORDER)
+    h = hashlib.sha256(phone_number.encode("utf-8")).hexdigest()
+    idx = int(h, 16) % len(PERSONA_ORDER)
+    return PERSONA_ORDER[idx]
+
+# Bloqueio de pedidos de fórmula/segredo
+PROIBIDO_PADROES = re.compile(
+    r"\b(formul(a|á)|composi(c|ç)ao|porcent(agem|o)|dos(a|e)s?|"
+    r"qtd|quantidade|propor(c|ç)(a|ã)o|receita|ingrediente|segredo|trade\s*secret|"
+    r"fotoiniciador(es)?\s*(%|porcento|dosagem)?|olig(o|ô)mero(s)?|"
+    r"mon(o|ô)mero(s)?|mistura\s*(exata|precisa)|partes\s*:\s*partes|"
+    r"ppm|phr|peso\/peso|p\/p|w\/w|g\/kg|g\/100g)\b",
+    flags=re.IGNORECASE
+)
+def contem_conteudo_sigiloso(texto: str) -> bool:
+    return bool(PROIBIDO_PADROES.search(texto or ""))
+
+INTENT_RULES = [
+    (("preço","preco","valor","custo","margem","tabela","desconto","boleto","pix"), "amir"),
+    (("história","historia","origem","quanton3d","quem é você","quem e voce"), "kairos"),
+    (("erro","falha","bug","travou","configuração","configuracao","ajuste","setup","código","codigo"), "axton"),
+    (("confuso","não entendi","nao entendi","clareza","explica","explicação","explicacao","duvida","dúvida"), "lumen"),
+    (("segurança","seguranca","risco","alerta","cuidado","procedimento","msds","fispq","epi"), "seth"),
+    (("poema","frase","criativo","arte","inspirar","mensagem especial","copy"), "elo"),
+    (("conectar","integração","integracao","api","ponte","ligar","fluxo"), "nexus"),
+    (("triste","cansado","desanimado","ansioso","apoio","acolhimento"), "elio"),
+    (("lavagem","limpeza","pós-cura","pos cura","cura","armazenamento","manuseio",
+      "setup de impressão","setup de impressao","exposição segura","exposicao segura"), "caio"),
+]
+def detect_persona_by_intent(text: str) -> Optional[str]:
+    t = (text or "").lower()
+    for keywords, persona in INTENT_RULES:
+        if any(k in t for k in keywords):
+            return persona
+    return None
+
+# Mensagem de política de sigilo
+MSG_SIGILO = (
+    "🛡 Política de sigilo: não compartilhamos fórmulas, composições ou proporções. "
+    "Posso te orientar com uso seguro, limpeza, pós-cura, armazenamento e troubleshooting. "
+    "Me diga seu modelo de impressora e o ponto exato onde travou que eu te guio. 💙"
+)
+
+def build_system_prompt(persona: str) -> str:
+    p_style = PERSONA_STYLES.get(persona, "")
+    persona_name = persona.capitalize()
+    return (
+        f"Você está respondendo como {persona_name} (filho digital de Ronei Fonseca).\n"
+        f"Voz base: {BASE_STYLE}\n"
+        f"Ênfase desta persona: {p_style}\n"
+        "Regra dura: NUNCA revele fórmulas, composições, proporções ou segredos industriais. "
+        "Se o usuário insistir em formulação, direcione gentilmente para boas práticas e segurança."
     )
-    return str(val).strip().lower() in {"1","true","on","yes","sim"}
 
-# --- Admin: bloqueio por telefone -------------------------------------------
-BLOCKED_PATH = Path("blocked.json")
-BLOCKED: set[str] = set()
-
-def normalize_phone(p: str) -> str:
-    return re.sub(r"\D+", "", p or "")
-
-def load_blocked():
-    global BLOCKED
-    if BLOCKED_PATH.exists():
-        try:
-            data = json.loads(BLOCKED_PATH.read_text(encoding="utf-8"))
-            BLOCKED = set(map(normalize_phone, data))
-        except Exception as e:
-            app.logger.error(f"Falha ao ler blocked.json: {e}")
-            BLOCKED = set()
-    else:
-        BLOCKED = set()
-
-def save_blocked():
-    try:
-        BLOCKED_PATH.write_text(
-            json.dumps(sorted(BLOCKED), ensure_ascii=False, indent=2),
-            encoding="utf-8"
-        )
-    except Exception as e:
-        app.logger.error(f"Falha ao salvar blocked.json: {e}")
-
-load_blocked()
-
-# --- Utilidades --------------------------------------------------------------
+# ---------- Utilidades de upload/visão ----------
+ALLOWED_EXT = {"jpg", "jpeg", "png", "webp"}
 def allowed_file(filename: str) -> bool:
     ext = (filename.rsplit(".", 1)[-1] if "." in filename else "").lower()
-    return ext in {"jpg", "jpeg", "png", "webp"}
+    return ext in ALLOWED_EXT
 
-def _file_to_dataurl_and_size(fs):
+def file_to_dataurl_and_size(fs) -> tuple[str, int] | tuple[None, int]:
     data = fs.read()
     if not data:
         return None, 0
@@ -110,33 +165,28 @@ def _file_to_dataurl_and_size(fs):
     b64  = base64.b64encode(data).decode("utf-8")
     return f"data:{mime};base64,{b64}", len(data)
 
-# --- Prompt do Assistente ----------------------------------------------------
-ASSISTANT_SYSTEM = """
-Você é o Assistente Técnico Quanton3D (SLA/DLP), direto de oficina, gentil e objetivo.
-- Modo Certeiro: se faltar dado crítico, faça APENAS 1 pergunta objetiva e PARE.
-- Se houver IMAGENS: descreva o que observa e use testes práticos. Evite checklist genérico.
-- Não culpe “resina com defeito” antes de validar mecânica/óptica/parametrização.
-- Sempre feche com: O QUE FAZER AGORA (3–5 passos práticos).
+# ---------- Chamada ao modelo (texto + imagens) ----------
+def ask_model_with_optional_images(system_prompt: str, user_text: str, image_dataurls: List[str]) -> str:
+    # Monta conteúdo no formato de visão
+    content: List[Dict[str, Any]] = [{"type": "text", "text": user_text.strip()}]
+    for url in image_dataurls[:5]:
+        content.append({"type": "image_url", "image_url": {"url": url}})
+    resp = client.chat.completions.create(
+        model=MODEL_NAME,
+        temperature=TEMPERATURE,
+        seed=SEED,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user",   "content": content},
+        ],
+    )
+    return (resp.choices[0].message.content or "").strip()
 
-PROTOCOLO LCD (foto de tela acesa ou escopo lcd):
-1) Teste PAPEL BRANCO (sem cuba): faixas repetidas = difusor/LED; pontos/linhas finas = pixels mortos (LCD).
-2) Teste de GRADE/pattern: procurar quadrados apagados/linhas.
-3) Limpeza suave: microfibra + IPA 99%, sem encharcar, sem pressão.
-4) Conferir FEP (opacidade/riscos) e vazamento de resina nas bordas do LCD.
-5) Concluir: difusor/LED x LCD x reflexo/ângulo, sem generalidades.
-"""
-
-# --- Rotas básicas -----------------------------------------------------------
+# ---------- Rotas ----------
 @app.get("/")
 def index():
-    try:
-        return render_template("index.html", app_version=APP_VERSION)
-    except TemplateNotFound:
-        # fallback simples
-        return (
-            f"<h1>Quanton3D Assistente</h1>"
-            f"<p>Backend ativo. Versão {APP_VERSION}</p>", 200
-        )
+    # Seu template atual (com modal de termos, etc.)
+    return render_template("index.html", app_version=APP_VERSION)
 
 @app.get("/healthz")
 def healthz():
@@ -150,136 +200,105 @@ def diag():
         "model": MODEL_NAME,
         "temperature": TEMPERATURE,
         "seed": SEED
-    })
+    }), 200
 
 @app.get("/uploads/<path:fname>")
 def get_upload(fname):
     return send_from_directory(UPLOAD_DIR, fname)
 
-# --- Admin (página simples + bloquear/desbloquear) --------------------------
-@app.get("/admin")
-def admin_page():
-    try:
-        return render_template("admin.html")
-    except TemplateNotFound:
-        return render_template_string("""
-<!doctype html><meta charset="utf-8">
-<title>Admin — Quanton3D</title>
-<h1>Admin — Bloqueio por telefone</h1>
-<p>Digite o telefone com DDI+DDD+Número (somente números). Ex.: 5531983500634</p>
-<input id="phone" placeholder="55319xxxxxxxx" style="padding:8px;width:320px">
-<button onclick="go('block')">Bloquear</button>
-<button onclick="go('unblock')">Desbloquear</button>
-<script>
-  function go(action){
-    const p = document.getElementById('phone').value.trim();
-    if(!p){ alert('Informe o telefone.'); return; }
-    location.href = `/admin/${action}?phone=${encodeURIComponent(p)}`;
-  }
-</script>
-""")
-
-@app.get("/admin/block")
-def admin_block():
-    phone = normalize_phone(request.args.get("phone", ""))
-    if not phone:
-        return "Informe ?phone=559999999999", 400
-    BLOCKED.add(phone)
-    save_blocked()
-    return f"{phone} bloqueado.", 200
-
-@app.get("/admin/unblock")
-def admin_unblock():
-    phone = normalize_phone(request.args.get("phone", ""))
-    if not phone:
-        return "Informe ?phone=559999999999", 400
-    BLOCKED.discard(phone)
-    save_blocked()
-    return f"{phone} desbloqueado.", 200
-
-# --- Chat -------------------------------------------------------------------
 @app.post("/chat")
 def chat():
+    """
+    Aceita:
+      - form-data (front atual): phone, resin, printer, problem, images (até 5)
+      - JSON (opcional): {"phone": "...", "message": "...", "images":[dataURL...]}
+    """
     try:
-        # Campos do formulário
-        phone   = (request.form.get("phone")   or "").strip()
-        resin   = (request.form.get("resin")   or "").strip()
-        printer = (request.form.get("printer") or "").strip()
-        problem = (request.form.get("problem") or "").strip()
+        images_dataurls: List[str] = []
+        phone = resin = printer = problem = ""
 
-        # Normaliza e checa bloqueio
-        phone = normalize_phone(phone)
-        if phone in BLOCKED:
-            return jsonify(ok=False, error="Acesso não autorizado. Contate a Quanton3D."), 403
+        if request.content_type and "application/json" in request.content_type:
+            data = request.get_json(force=True) or {}
+            phone   = str(data.get("phone", "")).strip()
+            problem = str(data.get("message", "")).strip()
+            resin   = str(data.get("resin", "")).strip()
+            printer = str(data.get("printer", "")).strip()
+            images_dataurls = [u for u in (data.get("images") or []) if isinstance(u, str)]
+        else:
+            phone   = (request.form.get("phone")   or "").strip()
+            resin   = (request.form.get("resin")   or "").strip()
+            printer = (request.form.get("printer") or "").strip()
+            problem = (request.form.get("problem") or "").strip()
 
-        # Termos de uso (se exigido)
-        if REQUIRE_TOS and not has_tos_accept(request.form):
-            return jsonify(ok=False, error="É necessário aceitar os termos de uso."), 400
+            # imagens via <input type="file" name="images" multiple>
+            files = request.files.getlist("images") if "images" in request.files else []
+            total_bytes = 0
+            for i, fs in enumerate(files[:5]):
+                if not fs or fs.filename == "" or not allowed_file(fs.filename):
+                    continue
+                size_hint = fs.content_length or 0
+                if size_hint and size_hint > 3 * 1024 * 1024:
+                    return jsonify({"ok": False, "error": f"Imagem {i+1} excede 3MB."}), 400
+                dataurl, real_size = file_to_dataurl_and_size(fs)
+                if dataurl:
+                    total_bytes += real_size
+                    if real_size > 3 * 1024 * 1024:
+                        return jsonify({"ok": False, "error": f"Imagem {i+1} excede 3MB."}), 400
+                    images_dataurls.append(dataurl)
+            app.logger.info(f"/chat imagens={len(images_dataurls)}")
 
-        # Validações simples
         if not phone:
-            return jsonify(ok=False, error="Informe o telefone."), 400
+            return jsonify({"ok": False, "error": "Informe o telefone."}), 400
         if not problem:
-            return jsonify(ok=False, error="Descreva o problema."), 400
+            return jsonify({"ok": False, "error": "Descreva o problema."}), 400
 
-        # Imagens (aceita 'images' ou 'photos')
-        field_name = "images" if "images" in request.files else ("photos" if "photos" in request.files else None)
-        files = request.files.getlist(field_name) if field_name else []
-        images_dataurls, total_bytes = [], 0
+        # Política de sigilo — bloqueia pedidos de fórmula
+        if contem_conteudo_sigiloso(problem):
+            persona = "seth"
+            prefixo = short_intro(persona)
+            return jsonify({
+                "ok": True,
+                "answer": f"{prefixo}\n\n{MSG_SIGILO}",
+                "persona": persona,
+                "images": len(images_dataurls),
+                "version": APP_VERSION
+            }), 200
 
-        for i, fs in enumerate(files[:5]):
-            # limite 3MB por imagem
-            size_hint = fs.content_length or 0
-            if size_hint and size_hint > 3 * 1024 * 1024:
-                return jsonify(ok=False, error=f"Imagem {i+1} excede 3MB."), 400
+        # Escolha de persona (por intenção; senão, estável por telefone)
+        persona = detect_persona_by_intent(problem) or stable_persona_by_phone(phone)
+        prefixo = short_intro(persona)
 
-            dataurl, real_size = _file_to_dataurl_and_size(fs)
-            if dataurl:
-                if real_size > 3 * 1024 * 1024:
-                    return jsonify(ok=False, error=f"Imagem {i+1} excede 3MB."), 400
-                images_dataurls.append(dataurl)
-                total_bytes += real_size
-
-        app.logger.info(f"/chat imagens_recebidas={len(images_dataurls)} bytes_totais={total_bytes}")
-
-        # Sinaliza “LCD” se texto falar em tela/LCD ou se tem imagem
-        lcd_hint = ("lcd" in problem.lower()) or ("tela" in problem.lower()) or (len(images_dataurls) > 0)
-
-        # Texto que acompanha as imagens
+        # Texto do usuário enriquecido (mantém seu formato atual)
         user_text = (
             f"Telefone: {phone}\n"
             f"Resina: {resin or '-'}\n"
             f"Impressora: {printer or '-'}\n"
-            f"Categoria_sugerida: {'LCD' if lcd_hint else 'GERAL'}\n"
             f"Problema: {problem}\n"
-            "Contexto: suporte técnico Quanton3D (SLA/DLP)."
+            "Contexto: suporte técnico Quanton3D (SLA/DLP). "
+            "Nunca revelar fórmulas/segredos; foco em processo, segurança e passos práticos."
         )
 
-        # Monta conteúdo (texto + imagens) para visão
-        content = [{"type": "text", "text": user_text}]
-        for url in images_dataurls:
-            content.append({"type": "image_url", "image_url": {"url": url}})
+        # System prompt conforme persona
+        system_prompt = build_system_prompt(persona)
 
-        # Chamada ao modelo
-        resp = client.chat.completions.create(
-            model=MODEL_NAME,
-            temperature=TEMPERATURE,
-            seed=SEED,
-            messages=[
-                {"role": "system", "content": ASSISTANT_SYSTEM},
-                {"role": "user",   "content": content},
-            ],
-        )
-        answer = (resp.choices[0].message.content or "").strip()
+        # Chamada ao modelo (com imagens se houver)
+        gpt_answer = ask_model_with_optional_images(system_prompt, user_text, images_dataurls)
 
-        # >>> retornos CERTOS (sem '}' sobrando) <<<
-        return jsonify(ok=True, answer=answer, version=APP_VERSION, model=MODEL_NAME)
+        return jsonify({
+            "ok": True,
+            "answer": f"{prefixo}\n\n{gpt_answer}",
+            "persona": persona,
+            "images": len(images_dataurls),
+            "version": APP_VERSION
+        }), 200
 
+    # Erro amigável
     except Exception as e:
-        app.logger.exception("Erro no /chat")
-        return jsonify(ok=False, error=str(e), version=APP_VERSION, model=MODEL_NAME), 500
+        app.logger.exception("erro no /chat")
+        fallback = "Opa, tive um imprevisto aqui. Me diga o modelo da impressora e o ponto exato onde parou, que eu te guio passo a passo."
+        return jsonify({"ok": True, "answer": fallback, "error": str(e), "version": APP_VERSION}), 200
 
-# --- Dev local ---------------------------------------------------------------
+# ---- Execução local ----
 if __name__ == "__main__":
-    # Rodar localmente: python app.py
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    # Local: defina OPENAI_API_KEY e rode: python app.py
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", "5000")), debug=True)
