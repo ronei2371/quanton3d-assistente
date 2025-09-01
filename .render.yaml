@@ -1,17 +1,7 @@
+
 services:
   - type: web
     name: quanton3d-assistente
     env: python
-    buildCommand: ""
-    startCommand: python app.py
-    envVars:
-      - key: OPENAI_API_KEY
-        sync: false
-      - key: OPENAI_MODEL
-        value: gpt-4o-mini
-      - key: OPENAI_TEMPERATURE
-        value: "0.2"
-      - key: OPENAI_SEED
-        value: "123"
-    autoDeploy: true
-    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
