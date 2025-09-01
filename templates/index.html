@@ -11,6 +11,10 @@
       location.href = '/';
     }
   </script>
+<!-- Quanton3D: CSS claro (força baixar a versão nova) -->
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='site.css') }}?v=3">
+
 </head>
 <body>
   <div class="form-wrapper" style="max-width:960px;margin:40px auto;padding:24px;">
@@ -43,3 +47,10 @@
   </div>
 </body>
 </html>
+<!-- Quanton3D: Gate de Termos (bloqueia o bot até aceitar) -->
+<script>
+  if (localStorage.getItem('termo_aceito') !== 'true') {
+    location.replace('/'); // redireciona para a tela de Termos
+  }
+</script>
+

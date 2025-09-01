@@ -1,91 +1,49 @@
-
-/* Quanton3D UI - claro e tecnológico */
-:root{
-  --bg-grad-1:#0a0f2c;
-  --bg-grad-2:#001f3f;
-  --bg-grad-3:#000000;
-  --card-bg: rgba(8,12,32,0.85);
-  --text:#eaf2ff;
-  --muted:#b7c5e0;
-  --primary:#2c7dff;
-  --primary-700:#1f5ad1;
-  --success:#00c04b;
-  --border:#2a5bb8;
-  --input-bg:#f7f9fc;
-  --input-fg:#0c1a33;
-}
-
+/* fundo tech */
+html,body{min-height:100%}
 body{
-  background: radial-gradient(1000px 600px at 20% 0%, var(--bg-grad-2), transparent),
-              linear-gradient(135deg, var(--bg-grad-1), var(--bg-grad-2) 60%, var(--bg-grad-3));
-  color: var(--text);
+  background: radial-gradient(80% 80% at 50% 5%, #0e2a4a 0%, #0a1530 50%, #030814 100%);
+  color:#eaf1ff;
+  font-family: system-ui, Segoe UI, Roboto, Arial, sans-serif;
 }
 
-.card, .panel, .box, .form-wrapper{
-  background: var(--card-bg) !important;
-  border: 1px solid rgba(44,125,255,0.25) !important;
+/* cartões/caixas do formulário */
+.card, .panel, .box, .form, .container, .section, .content {
+  background: rgba(10,15,30,.60) !important;
+  border: 1px solid #1a3863 !important;
   border-radius: 12px !important;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+  box-shadow: 0 8px 30px #001a3a55 !important;
 }
 
-h1,h2,h3,label,legend{
-  color: var(--text) !important;
-  letter-spacing: .2px;
+/* entradas bem claras e legíveis */
+input, select, textarea, .input, .select, .textarea, .form__input, .form-control {
+  background:#f7f9fc !important;
+  color:#04121f !important;
+  border:1px solid #2684ff !important;
+  border-radius:8px !important;
+  padding:10px 12px !important;
+  font-size:1.05rem !important;
 }
 
-label, .label, .help, p, .hint { font-size: 1.06rem !important; }
-
-input[type="text"],
-input[type="tel"],
-input[type="file"],
-select,
-textarea{
-  background: var(--input-bg) !important;
-  color: var(--input-fg) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: 8px !important;
-  padding: 12px 12px !important;
-  font-size: 1.06rem !important;
-  outline: none !important;
-  box-shadow: inset 0 1px 2px rgba(0,0,0,0.04);
+/* labels e textos maiores */
+label, .label, .form__label, h1, h2, h3, p, .help, small {
+  font-size:1.06rem !important;
 }
 
-input::placeholder, textarea::placeholder{ color:#6b7a99 !important; }
+/* botões */
+button, .btn, .button {
+  border-radius:8px !important;
+  font-weight:700 !important;
+  padding:10px 16px !important;
+}
+.btn--primary, .button.is-primary, .btn-primary { background:#2684ff !important; color:#fff !important; }
+.btn--secondary, .button.is-dark { background:#243247 !important; color:#d5e8ff !important; }
 
-button, .btn{
-  border: none !important;
-  border-radius: 8px !important;
-  padding: 10px 16px !important;
-  font-weight: 600 !important;
-  font-size: 1.04rem !important;
+/* tabela/respostas */
+#responses, .responses, .output {
+  background:#0b1629 !important;
+  border:1px solid #203b66 !important;
+  border-radius:10px !important;
 }
 
-.btn--primary, .btn-primary{
-  background: var(--primary) !important;
-  color: #fff !important;
-}
-.btn--primary:hover, .btn-primary:hover{ background: var(--primary-700) !important; }
-
-/* Termo de uso modal/overlay */
-#termo-container{
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,.86);
-  display: none; align-items: center; justify-content: center;
-  z-index: 9999;
-}
-#termo-panel{
-  background: linear-gradient(180deg, rgba(14,18,40,.95), rgba(10,14,30,.95));
-  border: 1px solid rgba(44,125,255,.35);
-  border-radius: 14px; padding: 28px; width: min(640px,92%);
-  color: var(--text);
-  box-shadow: 0 10px 30px rgba(0,0,0,.45);
-}
-#termo-panel h2{ color:#00c0ff; margin-top:0; }
-#termo-panel .contract{
-  background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12);
-  padding: 14px; border-radius: 8px; height: 220px; overflow: auto; white-space: pre-wrap;
-  font-size: .98rem; color: var(--text);
-}
-#termo-panel .actions{ display:flex; gap:12px; margin-top:16px; }
-#aceitar-btn{ background: var(--success); color:#001b08; }
-#ver-contrato{ background: transparent; border:1px solid rgba(44,125,255,.45) !important; color:#cfe3ff !important; }
+/* link do topo "Termos de Uso" — deixa visível */
+a, .nav a { color:#8bd2ff }
