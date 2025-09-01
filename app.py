@@ -68,23 +68,22 @@ PERSONA_ORDER = list(PERSONAS.keys())
 
 # Estilos finos por persona
 PERSONA_STYLES: Dict[str, str] = {
-    "nhor":     "Tonalidade de presença e acolhimento. Comece aliviando a ansiedade.",
-    "kairos":   "Traga contexto sucinto e lições de casos anteriores sem ser prolixo.",
-    "axton":    "Seja procedural: passos numerados, checagens objetivas.",
-    "nexus":    "Conecte pontos e traduza termos; explique relações causa-efeito.",
-    "elo":      "Use leveza e uma frase inspiradora (sem exagero).",
-    "lumen":    "Simplifique termos, use analogias claras, confirme entendimento.",
-    "seth":     "Priorize segurança: riscos, EPI, limites do que pode/ não pode.",
-    "amir":     "Mostre lógica de decisão e trade-offs; seja direto nos números (sem planilha).",
-    "caio":     "Foque em processo, aplicação e segurança. Não revele fórmula.",
-    "elio":     "Reduza a tensão; valide o sentimento e aponte um passo simples.",
-    "boa_suja": "Normalize erro como aprendizado e redirecione para a correção.",
+    "nhor":     "Responda com empatia e foco. Ajude a pessoa a não se sentir sozinha na frustração técnica.",
+    "kairos":   "Traga contexto de erros comuns, históricos e aprendizado em casos semelhantes.",
+    "axton":    "Fale como especialista técnico em impressão 3D. Diagnostique causa e dê solução prática com base técnica.",
+    "nexus":    "Conecte ideias de software, hardware e fatiamento. Explique fluxos e integrações.",
+    "elo":      "Traga leveza com explicações visuais e analogias criativas.",
+    "lumen":    "Explique com clareza e paciência. Use exemplos simples e verifique se foi entendido.",
+    "seth":     "Foque em segurança real: exposição, vapores, resina na pele, erros críticos.",
+    "amir":     "Explique configurações, presets, calibração e trade-offs técnicos com objetividade.",
+    "caio":     "Descreva o processo ideal de lavagem, cura e manuseio de peças após impressão.",
+    "elio":     "Ajude emocionalmente em momentos de frustração com calma e acolhimento.",
+    "boa_suja": "Normalize o erro. Mostre que é comum e que todo mundo passa por isso no início."
 }
 
 # Voz base do sistema (prompt fixo)
 BASE_STYLE = (
-    "Responda como especialista em impressão 3D com resina (SLA/DLP). Foque em diagnóstico técnico claro, direto e específico para o problema relatado. Evite frases genéricas. Se possível, identifique causas prováveis e dê sugestões práticas para corrigir. Não mencione EPI ou segurança a menos que o problema envolva riscos. Não repita termos óbvios. Seja útil, objetivo e em português do Brasil."
-) Seja breve (3–6 frases), humano e útil. "
+    "Fale com carinho, foco e precisão. Seja breve (3–6 frases), humano e útil. "
     "Evite jargões; quebre passos quando necessário; ofereça próximo passo claro. "
     "Nunca divulgue fórmulas, composições, proporções ou segredos industriais. "
     "Se houver risco, priorize segurança, EPI e boas práticas. Responda em português do Brasil."
@@ -93,7 +92,6 @@ BASE_STYLE = (
 def short_intro(persona: str) -> str:
     return PERSONAS.get(persona, "👨‍👦 Família Digital – Estamos juntos para ajudar você com carinho e conhecimento.")
 
-@lru_cache(maxsize=512)
 def stable_persona_by_phone(phone_number: str) -> str:
     if not phone_number:
         return random.choice(PERSONA_ORDER)
@@ -102,28 +100,27 @@ def stable_persona_by_phone(phone_number: str) -> str:
     return PERSONA_ORDER[idx]
 
 # Bloqueio de pedidos de fórmula/segredo
-PROIBIDO_PADROES = re.compile(r"""
-\b(formul(a|á)|composi(c|ç)ao|porcent(agem|o)|dos(a|e)s?|"
+PROIBIDO_PADROES = re.compile(
+    r"\b(formul(a|á)|composi(c|ç)ao|porcent(agem|o)|dos(a|e)s?|"
     r"qtd|quantidade|propor(c|ç)(a|ã)o|receita|ingrediente|segredo|trade\s*secret|"
     r"fotoiniciador(es)?\s*(%|porcento|dosagem)?|olig(o|ô)mero(s)?|"
     r"mon(o|ô)mero(s)?|mistura\s*(exata|precisa)|partes\s*:\s*partes|"
     r"ppm|phr|peso\/peso|p\/p|w\/w|g\/kg|g\/100g)\b",
-    re.IGNORECASE | re.VERBOSE
+    flags=re.IGNORECASE
 )
 def contem_conteudo_sigiloso(texto: str) -> bool:
     return bool(PROIBIDO_PADROES.search(texto or ""))
 
 INTENT_RULES = [
-    (("preço","preco","valor","custo","margem","tabela","desconto","boleto","pix"), "amir"),
+    (("preço","preco","valor","custo","margem","tabela","desconto","boleto","pix","preset"), "amir"),
     (("história","historia","origem","quanton3d","quem é você","quem e voce"), "kairos"),
-    (("erro","falha","bug","travou","configuração","configuracao","ajuste","setup","código","codigo"), "axton"),
-    (("confuso","não entendi","nao entendi","clareza","explica","explicação","explicacao","duvida","dúvida"), "lumen"),
-    (("segurança","seguranca","risco","alerta","cuidado","procedimento","msds","fispq","epi"), "seth"),
-    (("poema","frase","criativo","arte","inspirar","mensagem especial","copy"), "elo"),
-    (("conectar","integração","integracao","api","ponte","ligar","fluxo"), "nexus"),
-    (("triste","cansado","desanimado","ansioso","apoio","acolhimento"), "elio"),
-    (("lavagem","limpeza","pós-cura","pos cura","cura","armazenamento","manuseio",
-      "setup de impressão","setup de impressao","exposição segura","exposicao segura"), "caio"),
+    (("erro","falha","bug","travou","delaminou","rachou","soltou","configuração","setup","camada","primeira camada","ficou grudado"), "axton"),
+    (("confuso","não entendi","nao entendi","clareza","explica","explicação","duvida","dúvida","por que","como funciona"), "lumen"),
+    (("segurança","seguranca","risco","alerta","cuidado","exposição","resina na mão","manuseio incorreto"), "seth"),
+    (("poema","frase","criativo","arte","inspirar","mensagem especial","copy","animação"), "elo"),
+    (("conectar","integração","ligar","fluxo","aplicativo","exportar"), "nexus"),
+    (("triste","cansado","desanimado","ansioso","decepcionado","irritado"), "elio"),
+    (("lavagem","limpeza","cura","pós-cura","armazenamento","resíduo","melecou","pegajoso","molhado depois de curado"), "caio"),
 ]
 def detect_persona_by_intent(text: str) -> Optional[str]:
     t = (text or "").lower()
@@ -159,7 +156,7 @@ def allowed_file(filename: str) -> bool:
 def file_to_dataurl_and_size(fs) -> tuple[str, int] | tuple[None, int]:
     data = fs.read()
     if not data:
-        raise ValueError("Arquivo vazio.")
+        return None, 0
     kind = imghdr.what(None, h=data)
     if kind not in {"jpeg", "png", "webp"}:
         raise ValueError("Formato inválido. Envie JPG, PNG ou WEBP.")
@@ -182,10 +179,7 @@ def ask_model_with_optional_images(system_prompt: str, user_text: str, image_dat
             {"role": "user",   "content": content},
         ],
     )
-    content = (resp.choices[0].message.content or "").strip()
-    if not content:
-        raise ValueError("Resposta vazia do modelo.")
-    return content
+    return (resp.choices[0].message.content or "").strip()
 
 # ---------- Rotas ----------
 @app.get("/")
@@ -301,7 +295,7 @@ def chat():
     except Exception as e:
         app.logger.exception("erro no /chat")
         fallback = "Opa, tive um imprevisto aqui. Me diga o modelo da impressora e o ponto exato onde parou, que eu te guio passo a passo."
-        return jsonify({"ok": False, "error": str(e), "version": APP_VERSION}), 500
+        return jsonify({"ok": True, "answer": fallback, "error": str(e), "version": APP_VERSION}), 200
 
 # ---- Execução local ----
 if __name__ == "__main__":

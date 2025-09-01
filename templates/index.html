@@ -98,7 +98,7 @@
           </div>
 
           <div class="actions col-12">
-            <button type="submit" class="btn btn--primary" id="sendBtn" disabled>Enviar</button>
+            <button type="submit" class="btn btn--primary" id="sendBtn">Enviar</button>
             <button type="button" class="btn btn--muted" id="clearBtn">Limpar</button>
           </div>
         </div>
@@ -121,7 +121,7 @@
   </footer>
 
   <!-- Modal de Termos de Uso (bloqueia até aceitar) -->
-  <div id="modalTOS" class="modal" aria-hidden="false">
+  <div id="modalTOS" class="modal hidden" aria-hidden="true">
     <div class="modal__backdrop"></div>
     <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="tosTitle">
       <div class="modal__header">
@@ -136,7 +136,7 @@
           <li>Violação implica em bloqueio de acesso e medidas legais.</li>
         </ul>
         <label class="check">
-          <input type="checkbox" id="tosCheck" />
+          <input type="checkbox" id="tosCheck" style="transform: scale(1.3); margin-right: 8px;" />
           <span>Li e concordo com os Termos de Uso da Quanton3D.</span>
         </label>
       </div>
@@ -177,7 +177,6 @@
       acceptTOS.disabled = !tosCheck.checked;
     });
     acceptTOS.addEventListener('click', () => {
-  sendBtn.disabled = false;
       localStorage.setItem(TOS_KEY, '1');
       tosInput.value = '1';
       hideTOS();
