@@ -21,7 +21,79 @@
     .input, .select, .textarea { font-size: 16px; }
     /* botão de termos no topo fica mais visível */
     .link--terms { background: rgba(255,255,255,.18); padding: 6px 10px; border-radius: 8px; }
+  
+/* ---------- UI upgrades ---------- */
+:root {
+  --bg: #0c1116;
+  --card: #141a22;
+  --ink: #e8f0ff;
+  --muted: #9bb1c9;
+  --accent: #3ba0ff;
+  --accent-2: #00d4ff;
+}
+html, body { background: var(--bg); color: var(--ink); }
+.container { filter: none; transition: filter .2s ease; }
+.container.locked { filter: blur(2px); pointer-events: none; }
+.label, .hint, .card__title { color: var(--ink); }
+.input, .select, .textarea {
+  background: #19212b; border: 1px solid #2a3442; color: var(--ink);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.02);
+  border-radius: 10px; padding: 10px 12px;
+}
+.input::placeholder, .textarea::placeholder { color: var(--muted); }
+.select { appearance: none; }
+.btn--primary { background: linear-gradient(90deg, var(--accent), var(--accent-2)); border: 0; }
+.btn--ghost { border-color: #2a3442; color: var(--ink); }
+.brand__title, .brand__subtitle { letter-spacing: .3px; }
+body { font-size: 17px; line-height: 1.45; }
+.label--big { font-size: 16px; }
+#chat { font-size: 17px; }
+.msg { border-radius: 12px; }
+.msg--bot { background: #111822; border: 1px solid #243043; }
+.msg--user { background: #0f1620; border: 1px solid #233042; }
+
+/* Modal (Termos) full-screen with tech background */
+#termo-container {
+  position: fixed; inset: 0; display: none; z-index: 9999;
+  background:
+    radial-gradient(1200px 600px at 80% -20%, rgba(0,212,255,0.25), transparent 60%),
+    radial-gradient(1000px 600px at -10% 110%, rgba(59,160,255,0.25), transparent 60%),
+    linear-gradient(180deg, rgba(12,17,22,0.95), rgba(12,17,22,0.98));
+  backdrop-filter: blur(4px);
+}
+.termo__panel {
+  background: #0f1620; border: 1px solid #223044;
+  border-radius: 14px; padding: 28px; max-width: 720px;
+  color: var(--ink); box-shadow: 0 10px 40px rgba(0,0,0,.45);
+}
+.termo__title { font-size: 26px; margin: 0 0 6px; }
+.termo__lead { color: var(--muted); margin: 0 0 12px; }
+.termo__list { margin: 10px 0 16px 20px; }
+.termo__btn { padding: 12px 18px; font-weight: 700; border-radius: 10px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2)); border: none; color: #001018; cursor: pointer; }
+</style>
+
+  <script>
+    (function(){
+      try {
+        if (localStorage.getItem('q3d_tos_ok') !== '1') {
+          window.location.replace('/termos');
+        }
+      } catch(e) {
+        window.location.replace('/termos');
+      }
+    })();
+  </script>
+
+
+  <style>
+    .input, .select, .textarea { background: #ffffff; color:#0e1a2a; border:1px solid #cfd8e3; border-radius:10px; }
+    .label, .label--big { color:#0e1a2a; }
+    .btn { font-size: 16px; }
+    body, .chat { font-size: 16px; }
+    .card__title { font-size: 20px; }
   </style>
+
 </head>
 <body>
   <!-- Topo -->
@@ -33,7 +105,7 @@
         <p class="brand__subtitle">Suporte Técnico 3D</p>
       </div>
       <div class="topbar__spacer"></div>
-      <a class="link--terms" href="#" id="openTOS">Termos de Uso</a>
+      
     </div>
   </header>
 
@@ -136,7 +208,7 @@
           <li>Violação implica em bloqueio de acesso e medidas legais.</li>
         </ul>
         <label class="check">
-          <input type="checkbox" id="tosCheck" style="transform: scale(1.3); margin-right: 8px;" />
+          <input type="checkbox" id="tosCheck" />
           <span>Li e concordo com os Termos de Uso da Quanton3D.</span>
         </label>
       </div>
@@ -315,35 +387,58 @@
     });
   </script>
 
-<!-- Termo de Uso - aparece antes do chat -->
-<div id="termo-container" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-background-color: rgba(0, 0, 0, 0.85); color: white; display: flex; justify-content: center; align-items: center; z-index: 9999;">
-  <div style="background-color: #1e1e1e; padding: 30px; border-radius: 10px; max-width: 600px; text-align: left;">
-    <h2>📌 Termo de Uso – Bot Quanton3D</h2>
-    <p>✅ Ao continuar, você declara que:</p>
-    <ul>
-      <li>Reconhece que o bot é propriedade exclusiva da Quanton3D;</li>
-      <li>O uso é permitido apenas para suporte em impressão 3D;</li>
-      <li>É proibida a cópia, modificação ou redistribuição;</li>
-      <li>As informações são apoio técnico e não substituem decisões profissionais;</li>
-      <li>Violação implica em bloqueio de acesso e medidas legais.</li>
-    </ul>
-    <button onclick="aceitarTermo()" style="margin-top: 20px; padding: 10px 20px; background-color: #00c04b; border: none; color: white; font-weight: bold; border-radius: 5px; cursor: pointer;">👉 Aceito e Continuar</button>
+<!-- Termo de Uso - overlay inicial -->
+<div id="termo-container">
+  <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;padding:20px;">
+    <div class="termo__panel">
+      <h2 class="termo__title">📌 Termo de Uso – Bot Quanton3D</h2>
+      <p class="termo__lead">Ao continuar, você declara que:</p>
+      <ul class="termo__list">
+        <li>Reconhece que o bot é propriedade exclusiva da Quanton3D;</li>
+        <li>O uso é permitido apenas para suporte em impressão 3D;</li>
+        <li>É proibida a cópia, modificação ou redistribuição;</li>
+        <li>As informações são apoio técnico e não substituem decisões profissionais;</li>
+        <li>Violação implica em bloqueio de acesso e medidas legais.</li>
+      </ul>
+      <button id="termoAccept" class="termo__btn">👉 Aceito e Continuar</button>
+    </div>
   </div>
 </div>
-
 <script>
-function aceitarTermo() {
-  localStorage.setItem("termo_aceito", "true");
-  document.getElementById("termo-container").style.display = "none";
-}
-window.onload = function() {
-  if (localStorage.getItem("termo_aceito") !== "true") {
-    document.getElementById("termo-container").style.display = "flex";
-  } else {
-    document.getElementById("termo-container").style.display = "none";
+  const container = document.querySelector('.container');
+  const chatCard = document.getElementById('chatCard');
+  const sendBtn = document.getElementById('sendBtn');
+  const termo = document.getElementById('termo-container');
+  const acceptBtn = document.getElementById('termoAccept');
+
+  function lockUI(lock) {
+    if (lock) {
+      container.classList.add('locked');
+      if (sendBtn) sendBtn.disabled = true;
+    } else {
+      container.classList.remove('locked');
+      if (sendBtn) sendBtn.disabled = false;
+    }
   }
-}
+
+  // Primeira carga: exigir aceite
+  const TOS_KEY = 'q3d_tos_ok';
+  const accepted = localStorage.getItem(TOS_KEY) === '1';
+  if (!accepted) {
+    termo.style.display = 'block';
+    lockUI(true);
+  } else {
+    termo.style.display = 'none';
+    lockUI(false);
+  }
+
+  if (acceptBtn) {
+    acceptBtn.addEventListener('click', () => {
+      localStorage.setItem(TOS_KEY, '1');
+      termo.style.display = 'none';
+      lockUI(false);
+    });
+  }
 </script>
 
 </body>

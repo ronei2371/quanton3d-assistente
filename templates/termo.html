@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Termo de Uso – Bot Quanton3D</title>
+  <style>
+    :root { --bg1:#0e0f14; --bg2:#1a1f2b; --panel:#121521; --accent:#00e091; --text:#eaf2ff; }
+    * { box-sizing: border-box; }
+    body { margin:0; min-height:100vh; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; color:var(--text);
+           background: radial-gradient(1200px 600px at 20% -10%, #1a2540 0%, transparent 60%),
+                       radial-gradient(1000px 500px at 120% 20%, #23335b 0%, transparent 60%),
+                       linear-gradient(160deg, var(--bg1), var(--bg2)); }
+    .wrap { display:flex; min-height:100vh; align-items:center; justify-content:center; padding:24px; }
+    .card { width:min(720px, 100%); background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+            border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:28px 24px; backdrop-filter: blur(6px); }
+    h1 { font-size: clamp(22px, 4.5vw, 34px); margin:0 0 8px; letter-spacing:.4px; }
+    .lead { font-size: clamp(15px, 2.6vw, 18px); opacity:.9; margin:0 0 16px; }
+    ul { margin: 12px 0 0 18px; line-height:1.55; font-size: clamp(14px, 2.4vw, 17px); }
+    .actions { display:flex; gap:12px; margin-top:22px; }
+    .btn { border:none; padding:14px 18px; border-radius:12px; cursor:pointer; font-weight:700; font-size:16px; }
+    .btn--accept { background:var(--accent); color:#002917; }
+    .btn--decline { background:#222736; color:#cbd7ff; }
+    .small { font-size:13px; opacity:.8; margin-top:8px; }
+    .brand { display:flex; align-items:center; gap:10px; margin-bottom:14px; opacity:.9; font-weight:600; }
+    .brand img { height:28px; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="brand">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Quanton3D">
+        <span>Quanton3D — Assistente Técnico</span>
+      </div>
+      <h1>📌 Termo de Uso – Bot Quanton3D</h1>
+      <p class="lead">Antes de continuar, confirme que está de acordo com os termos a seguir.</p>
+      <ul>
+        <li>Reconhece que o bot é propriedade exclusiva da Quanton3D;</li>
+        <li>O uso é permitido apenas para suporte em impressão 3D;</li>
+        <li>É proibida a cópia, modificação ou redistribuição;</li>
+        <li>As informações são apoio técnico e não substituem decisões profissionais;</li>
+        <li>Violação implica em bloqueio de acesso e medidas legais.</li>
+      </ul>
+      <div class="actions">
+        <button class="btn btn--accept" onclick="aceitar()">👉 Aceito e Continuar</button>
+        <button class="btn btn--decline" onclick="sair()">Não aceito</button>
+      </div>
+      <div class="small">Ao aceitar, um registro local é salvo neste navegador para não perguntar novamente.</div>
+    </div>
+  </div>
+  <script>
+    function aceitar(){
+      try { localStorage.setItem('q3d_tos_ok','1'); } catch(e){}
+      window.location.href = "{{ url_for('index') }}";
+    }
+    function sair(){
+      alert('Sem aceitar os Termos de Uso, o acesso ao bot não é permitido.');
+    }
+  </script>
+</body>
+</html>

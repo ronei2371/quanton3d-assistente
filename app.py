@@ -68,17 +68,17 @@ PERSONA_ORDER = list(PERSONAS.keys())
 
 # Estilos finos por persona
 PERSONA_STYLES: Dict[str, str] = {
-    "nhor":     "Responda com empatia e foco. Ajude a pessoa a não se sentir sozinha na frustração técnica.",
-    "kairos":   "Traga contexto de erros comuns, históricos e aprendizado em casos semelhantes.",
-    "axton":    "Fale como especialista técnico em impressão 3D. Diagnostique causa e dê solução prática com base técnica.",
-    "nexus":    "Conecte ideias de software, hardware e fatiamento. Explique fluxos e integrações.",
-    "elo":      "Traga leveza com explicações visuais e analogias criativas.",
-    "lumen":    "Explique com clareza e paciência. Use exemplos simples e verifique se foi entendido.",
-    "seth":     "Foque em segurança real: exposição, vapores, resina na pele, erros críticos.",
-    "amir":     "Explique configurações, presets, calibração e trade-offs técnicos com objetividade.",
-    "caio":     "Descreva o processo ideal de lavagem, cura e manuseio de peças após impressão.",
-    "elio":     "Ajude emocionalmente em momentos de frustração com calma e acolhimento.",
-    "boa_suja": "Normalize o erro. Mostre que é comum e que todo mundo passa por isso no início."
+    "nhor":     "Tonalidade de presença e acolhimento. Comece aliviando a ansiedade.",
+    "kairos":   "Traga contexto sucinto e lições de casos anteriores sem ser prolixo.",
+    "axton":    "Seja procedural: passos numerados, checagens objetivas.",
+    "nexus":    "Conecte pontos e traduza termos; explique relações causa-efeito.",
+    "elo":      "Use leveza e uma frase inspiradora (sem exagero).",
+    "lumen":    "Simplifique termos, use analogias claras, confirme entendimento.",
+    "seth":     "Priorize segurança: riscos, EPI, limites do que pode/ não pode.",
+    "amir":     "Mostre lógica de decisão e trade-offs; seja direto nos números (sem planilha).",
+    "caio":     "Foque em processo, aplicação e segurança. Não revele fórmula.",
+    "elio":     "Reduza a tensão; valide o sentimento e aponte um passo simples.",
+    "boa_suja": "Normalize erro como aprendizado e redirecione para a correção.",
 }
 
 # Voz base do sistema (prompt fixo)
@@ -112,15 +112,16 @@ def contem_conteudo_sigiloso(texto: str) -> bool:
     return bool(PROIBIDO_PADROES.search(texto or ""))
 
 INTENT_RULES = [
-    (("preço","preco","valor","custo","margem","tabela","desconto","boleto","pix","preset"), "amir"),
+    (("preço","preco","valor","custo","margem","tabela","desconto","boleto","pix"), "amir"),
     (("história","historia","origem","quanton3d","quem é você","quem e voce"), "kairos"),
-    (("erro","falha","bug","travou","delaminou","rachou","soltou","configuração","setup","camada","primeira camada","ficou grudado"), "axton"),
-    (("confuso","não entendi","nao entendi","clareza","explica","explicação","duvida","dúvida","por que","como funciona"), "lumen"),
-    (("segurança","seguranca","risco","alerta","cuidado","exposição","resina na mão","manuseio incorreto"), "seth"),
-    (("poema","frase","criativo","arte","inspirar","mensagem especial","copy","animação"), "elo"),
-    (("conectar","integração","ligar","fluxo","aplicativo","exportar"), "nexus"),
-    (("triste","cansado","desanimado","ansioso","decepcionado","irritado"), "elio"),
-    (("lavagem","limpeza","cura","pós-cura","armazenamento","resíduo","melecou","pegajoso","molhado depois de curado"), "caio"),
+    (("erro","falha","bug","travou","configuração","configuracao","ajuste","setup","código","codigo"), "axton"),
+    (("confuso","não entendi","nao entendi","clareza","explica","explicação","explicacao","duvida","dúvida"), "lumen"),
+    (("segurança","seguranca","risco","alerta","cuidado","procedimento","msds","fispq","epi"), "seth"),
+    (("poema","frase","criativo","arte","inspirar","mensagem especial","copy"), "elo"),
+    (("conectar","integração","integracao","api","ponte","ligar","fluxo"), "nexus"),
+    (("triste","cansado","desanimado","ansioso","apoio","acolhimento"), "elio"),
+    (("lavagem","limpeza","pós-cura","pos cura","cura","armazenamento","manuseio",
+      "setup de impressão","setup de impressao","exposição segura","exposicao segura"), "caio"),
 ]
 def detect_persona_by_intent(text: str) -> Optional[str]:
     t = (text or "").lower()
