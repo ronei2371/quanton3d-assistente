@@ -1,0 +1,80 @@
+
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>⚡ Como se candidatar – Quanton3D</title>
+  <link rel="stylesheet" href="site.css?v=6">
+  <style>
+    body{margin:0;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;
+      padding:24px;background: radial-gradient(80% 80% at 50% 5%, #0e2a4a 0%, #0a1530 50%, #030814 100%);color:#eaf1ff;font-family:system-ui,Segoe UI,Roboto,Arial}
+    .card{width:min(960px,96vw);background:rgba(10,15,30,.60);border:1px solid #1a3863;border-radius:12px;
+      box-shadow:0 8px 30px #001a3a55;padding:20px}
+    h1{margin:0 0 8px}
+    .grid{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+    .grid > div{display:flex;flex-direction:column}
+    .full{grid-column:1/-1}
+    input, select, textarea{
+      background:#f7f9fc;color:#04121f;border:1px solid #2684ff;border-radius:8px;
+      padding:10px 12px;font-size:1.05rem
+    }
+    label{font-size:1.06rem;margin-bottom:6px}
+    .actions{display:flex;gap:10px;margin-top:10px}
+    .btn{border:0;border-radius:8px;padding:10px 16px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block}
+    .btn-primary{background:#2684ff;color:#fff}
+    .btn-secondary{background:#243247;color:#d5e8ff}
+    small{opacity:.85}
+    @media (max-width:720px){.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>⚡ Como se candidatar</h1>
+    <p>Preencha e envie sua candidatura pelo WhatsApp. (Processo simples e rápido.)</p>
+
+    <div class="grid">
+      <div><label>Nome completo</label><input id="nome"></div>
+      <div><label>WhatsApp</label><input id="zap" placeholder="Ex.: 5531999999999"></div>
+      <div class="full"><label>Cidade/Estado</label><input id="cidade"></div>
+      <div class="full"><label>Experiência com resina</label>
+        <select id="xp">
+          <option>Iniciante</option><option>Intermediário</option>
+          <option>Avançado</option><option>Profissional</option>
+        </select>
+      </div>
+      <div class="full"><label>Quais impressoras você possui?</label><textarea id="impressoras" rows="2"></textarea></div>
+      <div class="full"><label>Por que quer ser parceiro/colaborador Quanton3D?</label><textarea id="motivo" rows="3"></textarea></div>
+      <div class="full"><label>Disponibilidade (dias/horários)</label><textarea id="disp" rows="2"></textarea></div>
+    </div>
+
+    <div class="actions">
+      <a id="btnWa" class="btn btn-primary" target="_blank" rel="noopener">Enviar pelo WhatsApp</a>
+      <a class="btn btn-secondary" href="/chat">Voltar ao bot</a>
+    </div>
+
+    <script>
+      // >>> Substitua este número pelo seu WhatsApp oficial, quando puder
+      const NUMERO = "5531999999999";
+      const btn = document.getElementById('btnWa');
+      function montarMsg(){
+        const v = id => encodeURIComponent((document.getElementById(id).value||"").trim());
+        const msg = `Olá Quanton3D, quero me candidatar.%0A`+
+                    `Nome: ${v('nome')}%0A`+
+                    `WhatsApp: ${v('zap')}%0A`+
+                    `Cidade: ${v('cidade')}%0A`+
+                    `Experiência: ${document.getElementById('xp').value}%0A`+
+                    `Impressoras: ${v('impressoras')}%0A`+
+                    `Motivo: ${v('motivo')}%0A`+
+                    `Disponibilidade: ${v('disp')}`;
+        btn.href = `https://wa.me/${NUMERO}?text=${msg}`;
+      }
+      document.querySelectorAll('input,textarea,select').forEach(el=>{
+        el.addEventListener('input', montarMsg);
+      });
+      montarMsg();
+    </script>
+  </div>
+</body>
+</html>
+const NUMERO = "31983340053"; // Rone MF

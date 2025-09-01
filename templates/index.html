@@ -7,32 +7,35 @@
   <title>IA Quanton3D — Suporte Técnico 3D</title>
 
   <!-- CSS claro (cache-busted) -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='site.css') }}?v=5">
+  <link rel="stylesheet" href="{{ url_for('static', filename='site.css') }}?v=6">
+
+  <!-- Emergency override (garante inputs claros mesmo se outro CSS sobrepuser) -->
   <style>
-    /* Emergency override for inputs in case another stylesheet overrides */
     input, select, textarea {
-      background:#f7f9fc !important;
-      color:#04121f !important;
-      border:1px solid #2684ff !important;
-      border-radius:8px !important;
-      padding:10px 12px !important;
-      font-size:1.05rem !important;
+      background:#f7f9fc !important; color:#04121f !important;
+      border:1px solid #2684ff !important; border-radius:8px !important;
+      padding:10px 12px !important; font-size:1.05rem !important;
     }
     label, h1, h2, h3, p, small { font-size:1.06rem !important; }
   </style>
 </head>
 <body>
-  <!-- Gate de Termos (V3) -->
+  <!-- Gate de Termos: só entra se aceitou a versão v6 -->
   <script>
-    if (localStorage.getItem('q3d_terms_v3') !== 'true') {
+    if (localStorage.getItem('q3d_terms_v6') !== 'true') {
       location.replace('/'); // volta para o termo
     }
   </script>
 
   <div class="container card" style="max-width: 960px; margin: 28px auto; padding: 18px;">
-    <h1>IA Quanton3D® — Suporte Técnico 3D</h1>
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+      <h1 style="margin:0;">IA Quanton3D® — Suporte Técnico 3D</h1>
+      <p style="margin:0;">
+        <a class="btn btn-secondary" href="/static/apply.html">⚡ Como se candidatar</a>
+      </p>
+    </div>
 
-    <form id="diagnostico-form">
+    <form id="diagnostico-form" style="margin-top:14px;">
       <label>Telefone (sempre o mesmo)</label>
       <input type="tel" name="telefone" placeholder="Ex.: 5531999999999" required>
 
