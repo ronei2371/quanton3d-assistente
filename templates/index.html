@@ -98,7 +98,7 @@
           </div>
 
           <div class="actions col-12">
-            <button type="submit" class="btn btn--primary" id="sendBtn">Enviar</button>
+            <button type="submit" class="btn btn--primary" id="sendBtn" disabled>Enviar</button>
             <button type="button" class="btn btn--muted" id="clearBtn">Limpar</button>
           </div>
         </div>
@@ -121,7 +121,7 @@
   </footer>
 
   <!-- Modal de Termos de Uso (bloqueia até aceitar) -->
-  <div id="modalTOS" class="modal hidden" aria-hidden="true">
+  <div id="modalTOS" class="modal" aria-hidden="false">
     <div class="modal__backdrop"></div>
     <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="tosTitle">
       <div class="modal__header">
@@ -177,6 +177,7 @@
       acceptTOS.disabled = !tosCheck.checked;
     });
     acceptTOS.addEventListener('click', () => {
+  sendBtn.disabled = false;
       localStorage.setItem(TOS_KEY, '1');
       tosInput.value = '1';
       hideTOS();
