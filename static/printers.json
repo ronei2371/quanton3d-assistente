@@ -1,13 +1,18 @@
 [
-  { "brand": "ELEGOO",  "model": "MARS" },
-  { "brand": "ELEGOO",  "model": "MARS 2 PRO" },
-  { "brand": "ELEGOO",  "model": "MARS 3" },
-  { "brand": "ELEGOO",  "model": "SATURN" },
-  { "brand": "ELEGOO",  "model": "SATURN 2" },
-  { "brand": "ELEGOO",  "model": "SATURN 3" },
-  { "brand": "ELEGOO",  "model": "SATURN 3 ULTRA" },
-  { "brand": "ELEGOO",  "model": "SATURN 4 ULTRA" },
-  { "brand": "Anycubic","model": "Photon Mono" },
-  { "brand": "Anycubic","model": "Photon M3" },
-  { "brand": "Creality","model": "Halot One" }
+  {
+    "id": "",
+    "name": "(selecione opcionalmente)"
+  },
+  {
+    "id": "ElegooMars3",
+    "name": "Elegoo Mars 3"
+  },
+  {
+    "id": "Anycubic4K",
+    "name": "Anycubic Mono 4K"
+  },
+  {
+    "id": "PhotonM3",
+    "name": "Photon M3"
+  }
 ]
