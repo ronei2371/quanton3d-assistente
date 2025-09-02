@@ -68,7 +68,7 @@ def home():
 def chat():
     return render_template("index.html", app_version=APP_VERSION)
 
-@app.get("/apply")   # candidatura (template; se não existir, sirva estático)
+@app.get("/apply")   # candidatura (template; se não existir, serve estático /static/apply.html)
 def apply_page():
     try:
         return render_template("apply.html")
@@ -93,20 +93,24 @@ def _read_images_from_request() -> List[str]:
         try:
             b = f.read()
             if b:
+                import imghdr
+                kind = imghdr.what(None, b) or "png"
                 b64 = base64.b64encode(b).decode("utf-8")
-                images.append("data:image/png;base64," + b64)
+                images.append(f"data:image/{kind};base64," + b64)
         except Exception:
             pass
 
     return images[:5]  # limite de segurança
 
 # ================= POST /chat (API) =================
-# Dica: mantemos um endpoint separado para evitar conflito com GET /chat
+# Mantemos endpoint separado para não conflitar com GET /chat
 @app.route("/chat", methods=["POST"], endpoint="chat_post")
 def api_chat():
-    phone   = (request.form.get("phone") or (request.get_json(silent=True) or {}).get("phone") or "").strip()
-    problem = (request.form.get("problem") or (request.get_json(silent=True) or {}).get("problem") or "").strip()
-    persona = (request.form.get("persona") or (request.get_json(silent=True) or {}).get("persona") or "caio").strip().lower()
+    # aceita form-data e JSON
+    payload = request.get_json(silent=True) or {}
+    phone   = (request.form.get("phone") or payload.get("phone") or "").strip()
+    problem = (request.form.get("problem") or payload.get("problem") or "").strip()
+    persona = (request.form.get("persona") or payload.get("persona") or "caio").strip().lower()
 
     # bloqueio por telefone
     if phone in load_blocked():
