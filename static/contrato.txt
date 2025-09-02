@@ -1,0 +1,6 @@
+Contrato de Uso — Quanton3D (resumo)
+1) O bot é propriedade exclusiva da Quanton3D.
+2) Uso permitido apenas para suporte e diagnóstico em impressão 3D.
+3) É vedada a cópia, redistribuição ou engenharia reversa sem autorização.
+4) As respostas servem como apoio técnico e não substituem decisões profissionais.
+5) Violações podem implicar bloqueio de acesso e medidas legais.

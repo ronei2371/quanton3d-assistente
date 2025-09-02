@@ -1,55 +1,41 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>IA Quanton3D — Suporte Técnico 3D</title>
-  <link rel="stylesheet" href="/static/site.css?v=7">
-  <style>
-    #terms-overlay{position:fixed;inset:0;background:rgba(5,10,22,.92);display:flex;align-items:center;justify-content:center;z-index:9999}
-    #terms-card{width:min(780px,92vw);background:#0c0e18;border:1px solid #0ea5ff30;border-radius:14px;box-shadow:0 8px 40px #00c2ff2a,inset 0 0 0 1px #ffffff08;padding:24px;color:#e9eef6}
-    #terms-card h1{margin:0 0 10px;color:#74d0ff}
-    #terms-card p, #terms-card li{font-size:1.05rem;line-height:1.65}
-    #terms-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
-    .btn{border:0;border-radius:8px;padding:10px 16px;font-weight:700;cursor:pointer}
-    .btn-primary{background:#00c04b;color:#fff}
-    .btn-outline{background:transparent;color:#8bd2ff;border:1px solid #177bd1}
-    #terms-contract{display:none;margin-top:12px;background:#0b1224;border:1px solid #24406b;border-radius:10px;padding:12px;max-height:260px;overflow:auto;white-space:pre-wrap}
-  </style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>IA Quanton3D® — Suporte Técnico 3D</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='site.css') }}?v=7">
 </head>
 <body>
-  <script>
-    // Gate v7: se não aceitou, mostra overlay
-    (function(){
-      const accepted = localStorage.getItem('q3d_terms_v7') === 'true';
-      if (!accepted) document.documentElement.classList.add('needs-terms');
-    })();
-  </script>
-
-  <p style="text-align:right; margin:6px 12px 0">
-    <a class="btn btn-secondary" href="/static/apply.html">⚡ Como se candidatar</a>
+  <!-- Botão de candidatura -->
+  <p style="text-align:right;margin:6px 0 0">
+    <a class="btn btn-secondary" href="/apply">⚡ Como se candidatar</a>
   </p>
 
-  <div class="container card" style="max-width: 960px; margin: 16px auto;">
+  <div class="container">
     <h1>IA Quanton3D® — Suporte Técnico 3D</h1>
-    <form>
+
+    <form id="diagnostico-form">
       <label>Telefone (sempre o mesmo)</label>
-      <input type="tel" placeholder="Ex.: 5531999999999" required>
+      <input type="tel" name="telefone" placeholder="Ex.: 5531999999999" required>
+
       <label>Descreva seu problema</label>
-      <textarea rows="4" placeholder="Ex.: delaminação, base grudada, manchas..." required></textarea>
-      <div style="display:flex; gap:10px; margin-top:10px;">
+      <textarea name="problema" rows="4" placeholder="Ex.: delaminação, base grudada, manchas..." required></textarea>
+
+      <div style="display:flex;gap:10px;margin-top:10px;">
         <button type="submit" class="btn btn-primary">Enviar</button>
         <button type="reset" class="btn btn-secondary">Limpar</button>
       </div>
     </form>
-    <h2 style="margin-top:20px">Respostas</h2>
-    <div id="respostas" class="responses" style="min-height:150px; padding:12px;"></div>
+
+    <h2 style="margin-top:20px;">Respostas</h2>
+    <div id="respostas" class="responses" style="min-height:160px;padding:12px;"></div>
   </div>
 
-  <div id="terms-overlay" style="display:none;">
-    <div id="terms-card">
-      <h1>📌 Termo de Uso – Bot Quanton3D®</h1>
+  <!-- Overlay de Termos -->
+  <div id="overlay-termos" class="overlay" style="display:none;">
+    <div class="modal">
+      <h2>📌 Termo de Uso – Bot Quanton3D®</h2>
       <p>Ao continuar, você declara que:</p>
       <ul>
         <li>Reconhece que o bot é propriedade exclusiva da Quanton3D;</li>
@@ -58,39 +44,61 @@
         <li>As respostas são apoio técnico e não substituem decisões profissionais;</li>
         <li>Violação implica bloqueio de acesso e medidas legais.</li>
       </ul>
-      <div id="terms-actions">
-        <button class="btn btn-primary" id="terms-accept">👉 Aceito e Continuar</button>
-        <button class="btn btn-outline" id="terms-view">📄 Ver contrato completo</button>
-        <a class="btn btn-outline" href="/static/apply.html">⚡ Como se candidatar</a>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-primary" id="btn-aceito">✅ Aceito e Continuar</button>
+        <button class="btn btn-secondary" id="btn-contrato">📄 Ver contrato completo</button>
+        <a class="btn btn-secondary" href="/apply">⚡ Como se candidatar</a>
       </div>
-      <pre id="terms-contract"></pre>
+      <pre id="contrato" class="contrato" style="display:none;"></pre>
     </div>
   </div>
 
-  <script>
-    (function(){
-      const show = () => document.getElementById('terms-overlay').style.display = 'flex';
-      const hide = () => document.getElementById('terms-overlay').style.display = 'none';
-      const accepted = localStorage.getItem('q3d_terms_v7') === 'true';
-      if (!accepted) show();
-      else hide();
+<script>
+// Gate de termos v7
+(function() {
+  const KEY = 'q3d_terms_v7';
+  const accepted = localStorage.getItem(KEY) === 'true';
+  const overlay = document.getElementById('overlay-termos');
+  if (!accepted) {
+    overlay.style.display = 'grid';
+  }
+  document.getElementById('btn-aceito').onclick = function() {
+    localStorage.setItem(KEY, 'true');
+    overlay.style.display = 'none';
+  };
+  document.getElementById('btn-contrato').onclick = async function() {
+    const el = document.getElementById('contrato');
+    if (el.style.display === 'block') { el.style.display = 'none'; return; }
+    try {
+      const r = await fetch('/static/contrato.txt?v=7');
+      el.textContent = await r.text();
+    } catch(e) {
+      el.textContent = 'Contrato não encontrado. Crie static/contrato.txt';
+    }
+    el.style.display = 'block';
+  };
+})();
 
-      document.getElementById('terms-accept').onclick = () => {
-        localStorage.setItem('q3d_terms_v7', 'true');
-        hide();
-      };
-      document.getElementById('terms-view').onclick = async () => {
-        const el = document.getElementById('terms-contract');
-        if (el.style.display === 'block') { el.style.display = 'none'; return; }
-        try {
-          const r = await fetch('/static/contrato.txt?v=7');
-          el.textContent = await r.text();
-        } catch(e) {
-          el.textContent = 'Contrato não encontrado. Coloque /static/contrato.txt no servidor.';
-        }
-        el.style.display = 'block';
-      };
-    })();
-  </script>
+// Envio do formulário para POST /chat
+const form = document.getElementById('diagnostico-form');
+const box  = document.getElementById('respostas');
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const phone   = form.telefone.value.trim();
+  const problem = form.problema.value.trim();
+  box.textContent = 'Enviando...';
+  try {
+    const resp = await fetch('/chat', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ phone, problem, persona: 'caio' })
+    });
+    const data = await resp.json();
+    box.textContent = (data.answer || data.error || 'Sem resposta');
+  } catch (err) {
+    box.textContent = 'Erro ao enviar: ' + err;
+  }
+});
+</script>
 </body>
 </html>
