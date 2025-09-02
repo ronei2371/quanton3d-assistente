@@ -4,101 +4,221 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>IA Quanton3D® — Suporte Técnico 3D</title>
+
+  <!-- CSS claro + cache-bust -->
   <link rel="stylesheet" href="{{ url_for('static', filename='site.css') }}?v=7">
+
+  <style>
+    /* Overlay simples de Termos */
+    .overlay{
+      position:fixed;inset:0;background:rgba(3,8,20,.75);backdrop-filter:blur(2px);
+      display:flex;align-items:center;justify-content:center;z-index:9999
+    }
+    .ov-card{
+      width:min(840px,94vw);background:#0d1427;border:1px solid #1a3863;border-radius:14px;
+      box-shadow:0 10px 40px #001a3a66;padding:20px;color:#eaf1ff
+    }
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .hidden{display:none}
+    .help{font-size:.92rem;opacity:.85}
+    .pill{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid #2c5aa5;opacity:.9}
+  </style>
+
+  <script>
+    // Gate de Termos (v7)
+    if (localStorage.getItem('q3d_terms_v7') !== 'true') {
+      document.addEventListener('DOMContentLoaded', () => {
+        const ov = document.getElementById('terms-overlay');
+        ov.classList.remove('hidden');
+        document.getElementById('btn-aceito').onclick = () => {
+          localStorage.setItem('q3d_terms_v7','true');
+          document.getElementById('terms-overlay').classList.add('hidden');
+        };
+        document.getElementById('btn-ver-contrato').onclick = async () => {
+          const el = document.getElementById('contrato');
+          if (el.style.display === 'block'){ el.style.display='none'; return; }
+          try{
+            const r = await fetch('/static/contrato.txt?v=7');
+            el.textContent = await r.text();
+          }catch(e){ el.textContent = 'Contrato não encontrado em /static/contrato.txt'; }
+          el.style.display='block';
+        };
+      });
+    }
+  </script>
 </head>
+
 <body>
-  <!-- Botão de candidatura -->
-  <p style="text-align:right;margin:6px 0 0">
-    <a class="btn btn-secondary" href="/apply">⚡ Como se candidatar</a>
-  </p>
-
-  <div class="container">
-    <h1>IA Quanton3D® — Suporte Técnico 3D</h1>
-
-    <form id="diagnostico-form">
-      <label>Telefone (sempre o mesmo)</label>
-      <input type="tel" name="telefone" placeholder="Ex.: 5531999999999" required>
-
-      <label>Descreva seu problema</label>
-      <textarea name="problema" rows="4" placeholder="Ex.: delaminação, base grudada, manchas..." required></textarea>
-
-      <div style="display:flex;gap:10px;margin-top:10px;">
-        <button type="submit" class="btn btn-primary">Enviar</button>
-        <button type="reset" class="btn btn-secondary">Limpar</button>
-      </div>
-    </form>
-
-    <h2 style="margin-top:20px;">Respostas</h2>
-    <div id="respostas" class="responses" style="min-height:160px;padding:12px;"></div>
-  </div>
-
-  <!-- Overlay de Termos -->
-  <div id="overlay-termos" class="overlay" style="display:none;">
-    <div class="modal">
+  <!-- Overlay Termos -->
+  <div id="terms-overlay" class="overlay hidden" aria-modal="true" role="dialog">
+    <div class="ov-card">
       <h2>📌 Termo de Uso – Bot Quanton3D®</h2>
       <p>Ao continuar, você declara que:</p>
       <ul>
         <li>Reconhece que o bot é propriedade exclusiva da Quanton3D;</li>
-        <li>O uso é permitido apenas para suporte em impressão 3D;</li>
-        <li>É proibida a cópia, modificação ou redistribuição;</li>
-        <li>As respostas são apoio técnico e não substituem decisões profissionais;</li>
+        <li>Uso permitido apenas para suporte em impressão 3D;</li>
+        <li>Proibida a cópia, modificação ou redistribuição;</li>
+        <li>Respostas são apoio técnico e não substituem decisões profissionais;</li>
         <li>Violação implica bloqueio de acesso e medidas legais.</li>
       </ul>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button class="btn btn-primary" id="btn-aceito">✅ Aceito e Continuar</button>
-        <button class="btn btn-secondary" id="btn-contrato">📄 Ver contrato completo</button>
+      <div class="row" style="margin-top:8px">
+        <button id="btn-aceito" class="btn btn-primary">✅ Aceito e Continuar</button>
+        <button id="btn-ver-contrato" class="btn btn-secondary">📄 Ver contrato completo</button>
         <a class="btn btn-secondary" href="/apply">⚡ Como se candidatar</a>
       </div>
-      <pre id="contrato" class="contrato" style="display:none;"></pre>
+      <pre id="contrato" class="hidden" style="margin-top:10px;display:none;white-space:pre-wrap;background:#0b1629;border:1px solid #203b66;border-radius:10px;padding:10px"></pre>
     </div>
   </div>
 
-<script>
-// Gate de termos v7
-(function() {
-  const KEY = 'q3d_terms_v7';
-  const accepted = localStorage.getItem(KEY) === 'true';
-  const overlay = document.getElementById('overlay-termos');
-  if (!accepted) {
-    overlay.style.display = 'grid';
-  }
-  document.getElementById('btn-aceito').onclick = function() {
-    localStorage.setItem(KEY, 'true');
-    overlay.style.display = 'none';
-  };
-  document.getElementById('btn-contrato').onclick = async function() {
-    const el = document.getElementById('contrato');
-    if (el.style.display === 'block') { el.style.display = 'none'; return; }
-    try {
-      const r = await fetch('/static/contrato.txt?v=7');
-      el.textContent = await r.text();
-    } catch(e) {
-      el.textContent = 'Contrato não encontrado. Crie static/contrato.txt';
-    }
-    el.style.display = 'block';
-  };
-})();
+  <div class="container">
+    <p style="text-align:right;margin:0">
+      <a class="btn btn-secondary" href="/apply">⚡ Como se candidatar</a>
+    </p>
 
-// Envio do formulário para POST /chat
-const form = document.getElementById('diagnostico-form');
-const box  = document.getElementById('respostas');
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const phone   = form.telefone.value.trim();
-  const problem = form.problema.value.trim();
-  box.textContent = 'Enviando...';
-  try {
-    const resp = await fetch('/chat', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ phone, problem, persona: 'caio' })
+    <h1>IA Quanton3D® — Suporte Técnico 3D</h1>
+
+    <form id="diagnostico-form" autocomplete="off">
+      <label>Telefone (sempre o mesmo)</label>
+      <input id="telefone" name="telefone" type="tel" placeholder="Ex.: 5531999999999" required>
+
+      <label>Descreva seu problema</label>
+      <textarea id="problema" name="problema" rows="4" placeholder="Ex.: delaminação, base grudada, manchas..." required></textarea>
+
+      <details id="det-params" class="full">
+        <summary class="pill">Parâmetros Quanton3D (opcional)</summary>
+        <div class="row" style="margin-top:8px">
+          <div style="flex:1;min-width:220px">
+            <label>Tipo de impressora</label>
+            <select id="printer"></select>
+          </div>
+          <div style="flex:1;min-width:220px">
+            <label>Resina</label>
+            <select id="resin"></select>
+          </div>
+          <div style="flex:1;min-width:220px">
+            <label>Modo</label>
+            <select id="mode">
+              <option value="">Usar só como contexto</option>
+              <option value="params">Somente parâmetros da Quanton3D</option>
+            </select>
+          </div>
+        </div>
+        <p class="help">Se escolher “Somente parâmetros”, o bot ignora a descrição e foca em parâmetros. Caso contrário, impressora/resina serão usados apenas como contexto.</p>
+      </details>
+
+      <label>Imagens (opcional, até 5 — máx 3MB cada)</label>
+      <input id="imagens" name="imagens" type="file" multiple accept="image/*">
+
+      <div class="row">
+        <button id="btnEnviar" class="btn btn-primary" type="submit">Enviar</button>
+        <button id="btnLimpar" class="btn btn-secondary" type="reset">Limpar</button>
+      </div>
+    </form>
+
+    <h2 style="margin-top:22px">Respostas</h2>
+    <div id="respostas" class="responses" style="min-height:160px;padding:12px;border-radius:10px;border:1px solid #203b66;background:#0b1629"></div>
+  </div>
+
+  <script>
+    // --- carregar listas (se existirem) ---
+    async function loadJSON(url, fallback) {
+      try { const r = await fetch(url); if (!r.ok) throw 0; return await r.json(); }
+      catch { return fallback; }
+    }
+    async function bootLists(){
+      const printers = await loadJSON('/static/printers.json?v=7', [
+        { id:'', name:'(selecione opcionalmente)' },
+        { id:'ElegooMars3', name:'Elegoo Mars 3' },
+        { id:'AnycubicMono4K', name:'Anycubic Mono 4K' },
+        { id:'PhotonM3', name:'Photon M3' }
+      ]);
+      const resins = await loadJSON('/static/resins.json?v=7', [
+        { id:'', name:'(selecione opcionalmente)' },
+        { id:'Spark', name:'Spark (translúcida)' },
+        { id:'ABS-Like', name:'ABS-Like' },
+        { id:'Dental', name:'Dental' }
+      ]);
+      const selP = document.getElementById('printer');
+      const selR = document.getElementById('resin');
+      selP.innerHTML = printers.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+      selR.innerHTML = resins.map(r=>`<option value="${r.id}">${r.name}</option>`).join('');
+    }
+    bootLists();
+
+    // --- helper: ler imagens (base64) ---
+    function readImages(files){
+      return new Promise((resolve)=>{
+        const list = [];
+        if(!files || !files.length){ resolve(list); return; }
+        const max = Math.min(files.length, 5);
+        let done = 0;
+        for(let i=0;i<max;i++){
+          const f = files[i];
+          if (f.size > 3*1024*1024){ continue; }
+          const rd = new FileReader();
+          rd.onload = () => { list.push(rd.result); done++; if(done>=max) resolve(list); };
+          rd.onerror = () => { done++; if(done>=max) resolve(list); };
+          rd.readAsDataURL(f);
+        }
+      });
+    }
+
+    // --- envio ---
+    const form = document.getElementById('diagnostico-form');
+    const respostas = document.getElementById('respostas');
+    const btnEnviar = document.getElementById('btnEnviar');
+    const tel = document.getElementById('telefone');
+    const prob = document.getElementById('problema');
+    const imgInput = document.getElementById('imagens');
+
+    form.addEventListener('submit', async (ev)=>{
+      ev.preventDefault();
+      const phone = tel.value.trim();
+      let problem = prob.value.trim();
+      const printer = document.getElementById('printer').value;
+      const resin   = document.getElementById('resin').value;
+      const mode    = document.getElementById('mode').value;
+
+      if (!phone){ alert('Informe o telefone.'); return; }
+      if (!problem && mode!=='params'){ alert('Descreva seu problema ou use "Somente parâmetros".'); return; }
+
+      // Se o módulo de parâmetros estiver aberto, injete contexto
+      const det = document.getElementById('det-params');
+      if (det.open) {
+        if (mode === 'params') {
+          problem = `Solicitar parâmetros Quanton3D${printer?` | Impressora: ${printer}`:''}${resin?` | Resina: ${resin}`:''}.`;
+        } else {
+          problem += `\n[Contexto] Impressora: ${printer||'-'} | Resina: ${resin||'-'}`;
+        }
+      }
+
+      btnEnviar.disabled = true; btnEnviar.textContent = 'Enviando…';
+      respostas.textContent = 'Processando…';
+
+      const images = await readImages(imgInput.files);
+
+      try{
+        const r = await fetch('/chat', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ phone, problem, persona:'caio', images })
+        });
+        const data = await r.json();
+        const ts = new Date().toLocaleString();
+        respostas.innerHTML = `
+          <div><strong>${ts}</strong></div>
+          <pre style="white-space:pre-wrap;margin:8px 0 0">${(data.answer || data.error || 'Sem resposta')}</pre>
+        `;
+      }catch(err){
+        respostas.textContent = 'Erro ao enviar: ' + err;
+      }finally{
+        // limpa apenas a pergunta e as imagens (mantém telefone)
+        prob.value = '';
+        imgInput.value = '';
+        btnEnviar.disabled = false; btnEnviar.textContent = 'Enviar';
+        respostas.scrollIntoView({behavior:'smooth', block:'start'});
+      }
     });
-    const data = await resp.json();
-    box.textContent = (data.answer || data.error || 'Sem resposta');
-  } catch (err) {
-    box.textContent = 'Erro ao enviar: ' + err;
-  }
-});
-</script>
+  </script>
 </body>
 </html>
