@@ -2,7 +2,7 @@
 # Flask + OpenAI + Personas (Nhor & família) + visão por imagem
 import os, re, uuid, base64, hashlib, random
 from typing import Optional, Dict, Any, List
-from flask import Flask, request, render_template, jsonify, send_from_directory, url_for
+from flask import Flask, render_template, request, render_template, jsonify, send_from_directory, url_for
 from openai import OpenAI
 
 APP_VERSION = "2025-08-31b"
@@ -302,3 +302,13 @@ def chat():
 if __name__ == "__main__":
     # Local: defina OPENAI_API_KEY e rode: python app.py
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", "5000")), debug=True)
+
+
+@app.route('/')
+def termos():
+    return render_template('termo.html')
+
+
+@app.route('/chat')
+def chat():
+    return render_template('index.html')
