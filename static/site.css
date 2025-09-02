@@ -1,5 +1,5 @@
 
-/* fundo tech */
+/* Quanton3D - UI clara v7 */
 html,body{min-height:100%}
 body{
   background: radial-gradient(80% 80% at 50% 5%, #0e2a4a 0%, #0a1530 50%, #030814 100%);
@@ -7,16 +7,13 @@ body{
   font-family: system-ui, Segoe UI, Roboto, Arial, sans-serif;
   margin:0;
 }
-
-/* cartões/containers */
 .container, .card, .panel, .box, .section, .content {
   background: rgba(10,15,30,.60) !important;
   border: 1px solid #1a3863 !important;
   border-radius: 12px !important;
   box-shadow: 0 8px 30px #001a3a55 !important;
+  padding: 16px;
 }
-
-/* entradas claras e legíveis */
 input, select, textarea, .input, .select, .textarea, .form-control {
   background:#f7f9fc !important;
   color:#04121f !important;
@@ -28,24 +25,16 @@ input, select, textarea, .input, .select, .textarea, .form-control {
   box-sizing:border-box;
   margin:6px 0 12px 0;
 }
-
-/* labels e textos um pouco maiores */
 label, .label, h1, h2, h3, p, .help, small { font-size:1.06rem !important; }
-
-/* botões */
 button, .btn, .button {
   border-radius:8px !important; font-weight:700 !important; padding:10px 16px !important; cursor:pointer; border:0;
 }
 .btn-primary, .btn--primary { background:#2684ff !important; color:#fff !important; }
 .btn-secondary, .btn--secondary { background:#243247 !important; color:#d5e8ff !important; }
-.btn-outline { background:transparent !important; color:#8bd2ff !important; border:1px solid #177bd1 !important; }
-
-/* área de respostas */
+.btn-outline { background:transparent !important; color:#8bd2ff !important; border:1px solid #177bd1 !important;}
 .responses, #respostas {
   background:#0b1629 !important;
   border:1px solid #203b66 !important;
   border-radius:10px !important;
 }
-
-/* links visíveis */
 a, .nav a { color:#8bd2ff !important; }
