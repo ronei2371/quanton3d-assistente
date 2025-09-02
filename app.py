@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import os, json, base64
+import os, json, base64, re
 from pathlib import Path
 from datetime import datetime
 from typing import List
@@ -7,7 +7,7 @@ from typing import List
 from flask import Flask, render_template, request, jsonify
 
 # ================= Config =================
-APP_VERSION   = "1.0.0"
+APP_VERSION   = "1.0.1"
 MODEL_NAME    = (os.getenv("OPENAI_MODEL") or "gpt-4o").strip()
 OPENAI_APIKEY = os.getenv("OPENAI_API_KEY", "").strip()
 ADMIN_TOKEN   = os.getenv("ADMIN_TOKEN", "").strip()  # opcional
@@ -61,14 +61,14 @@ def admin_unblock():
 # ================= Páginas =================
 @app.route("/")
 def home():
-    # index.html pode ter overlay de Termos (q3d_terms_v7)
+    # index.html pode ter overlay de Termos (q3d_terms_v7/v8)
     return render_template("index.html", app_version=APP_VERSION)
 
 @app.route("/chat")  # interface do bot
 def chat():
     return render_template("index.html", app_version=APP_VERSION)
 
-@app.get("/apply")   # candidatura (template; se não existir, serve estático /static/apply.html)
+@app.get("/apply")   # candidatura (template; se não existir, sirva estático)
 def apply_page():
     try:
         return render_template("apply.html")
@@ -93,24 +93,22 @@ def _read_images_from_request() -> List[str]:
         try:
             b = f.read()
             if b:
-                import imghdr
-                kind = imghdr.what(None, b) or "png"
                 b64 = base64.b64encode(b).decode("utf-8")
-                images.append(f"data:image/{kind};base64," + b64)
+                images.append("data:image/png;base64," + b64)
         except Exception:
             pass
 
     return images[:5]  # limite de segurança
 
 # ================= POST /chat (API) =================
-# Mantemos endpoint separado para não conflitar com GET /chat
+# Dica: mantemos um endpoint separado para evitar conflito com GET /chat
 @app.route("/chat", methods=["POST"], endpoint="chat_post")
 def api_chat():
-    # aceita form-data e JSON
-    payload = request.get_json(silent=True) or {}
-    phone   = (request.form.get("phone") or payload.get("phone") or "").strip()
-    problem = (request.form.get("problem") or payload.get("problem") or "").strip()
-    persona = (request.form.get("persona") or payload.get("persona") or "caio").strip().lower()
+    # Coleta dados
+    json_body = request.get_json(silent=True) or {}
+    phone   = (request.form.get("phone") or json_body.get("phone") or "").strip()
+    problem = (request.form.get("problem") or json_body.get("problem") or "").strip()
+    persona = (request.form.get("persona") or json_body.get("persona") or "caio").strip().lower()
 
     # bloqueio por telefone
     if phone in load_blocked():
@@ -122,9 +120,32 @@ def api_chat():
         return jsonify({"ok": False, "error": "Descreva o problema."}), 400
 
     images_dataurls = _read_images_from_request()
+    pl = (problem or "").lower()
 
-    # --------- FAST-PATH: Amarelamento após cura (responde com números) ---------
-    pl = problem.lower()
+    # ---------- FAST-PATH: suportes duros / difíceis de remover ----------
+    if (("suporte" in pl or "suportes" in pl) and
+        any(k in pl for k in ("duro", "duros", "rígido", "rigido", "difícil", "dificil", "remover", "remoc"))):
+        resposta = (
+            "Suportes duros / difíceis de remover — protocolo prático:\n"
+            "1) Exposição normal: reduza ~10% e teste; se necessário, ajuste em passos de 0.1–0.2 s. "
+            "(Não altere a exposição das camadas de base.)\n"
+            "2) Contato no modelo (slicer):\n"
+            "   • Tip (touchpoint): 0.25–0.35 mm (peças finas) | 0.35–0.45 mm (peças maiores)\n"
+            "   • Penetração/Depth: 0.05–0.15 mm   • Neck: 0.6–1.2 mm\n"
+            "   • Densidade: 25–40% (aumente o espaçamento entre suportes)\n"
+            "   • Prefira 'Light' e use 'Medium/Heavy' só onde for crítico\n"
+            "3) Remoção: lave em IPA 30–60 s, seque superficialmente e remova ANTES da cura final. "
+            "Opcional: água morna 40–50 °C por 1–2 min para amolecer a interface.\n"
+            "4) Cura final: 60–90 s total, girando a peça (evite excesso).\n"
+            "5) Calibração Quanton3D: use o gabarito para fixar a exposição que não 'solda' os suportes."
+        )
+        return jsonify({
+            "ok": True, "answer": resposta, "persona": "caio",
+            "images": len(images_dataurls), "version": APP_VERSION
+        }), 200
+    # ---------------------------------------------------------------------
+
+    # ---------- FAST-PATH: amarelamento após cura ----------
     if any(k in pl for k in ("amarel", "amarela", "amarelamento")):
         resposta = (
             "Para reduzir amarelamento na pós-cura:\n"
@@ -137,7 +158,7 @@ def api_chat():
             "ok": True, "answer": resposta, "persona": "caio",
             "images": len(images_dataurls), "version": APP_VERSION
         }), 200
-    # ---------------------------------------------------------------------------
+    # ---------------------------------------------------------------------
 
     # Sem chave? responda gracioso
     if not OPENAI_APIKEY:
@@ -148,8 +169,9 @@ def api_chat():
     # --------- Monta prompt (persona + política) ----------
     persona_name = "Caio — especialista em resinas e SLA, fala de forma direta."
     policy = (
-        "REGRAS: Responda de forma objetiva, sem 'EPI' salvo se o usuário pedir. "
-        "Se pedir tempo, traga FAIXAS NUMÉRICAS. Quando relevante, traga checklist curto."
+        "REGRAS: Responda de forma objetiva. Se pedir tempo, traga FAIXAS NUMÉRICAS. "
+        "Evite falar de EPI, a menos que o usuário peça explicitamente. "
+        "Não sugerir 'tipo de resina' para 'suportes duros' e não confundir com 'configuração de base/raft'."
     )
     system_msg = f"{persona_name}\n{policy}"
 
@@ -174,11 +196,21 @@ def api_chat():
     except Exception as e:
         return jsonify({"ok": False, "error": f"OpenAI error: {e}"}), 500
 
-    # (Opcional) filtro para remover EPI se o usuário não pediu explicitamente
+    # (Opcional) filtros de higiene da resposta do GPT
     if "epi" not in pl and "luva" not in pl and "óculos" not in pl and "oculos" not in pl:
         lines = [ln for ln in content.splitlines()
                  if not any(k in ln.lower() for k in ("epi", "luva", "óculos", "oculos"))]
         content = "\n".join(lines).strip() or content
+
+    if "suporte" in pl or "suportes" in pl:
+        clean = []
+        for ln in content.splitlines():
+            low = ln.lower()
+            # remove dicas que não ajudam para "suportes duros"
+            if re.search(r"\btipo de resina\b|resina.*dureza|configura(ç|c)ão de base|raft\b", low):
+                continue
+            clean.append(ln)
+        content = "\n".join(clean).strip() or content
 
     return jsonify({
         "ok": True,
