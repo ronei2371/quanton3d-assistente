@@ -1,18 +1,6 @@
-[
-  {
-    "id": "",
-    "name": "(selecione opcionalmente)"
-  },
-  {
-    "id": "ElegooMars3",
-    "name": "Elegoo Mars 3"
-  },
-  {
-    "id": "Anycubic4K",
-    "name": "Anycubic Mono 4K"
-  },
-  {
-    "id": "PhotonM3",
-    "name": "Photon M3"
-  }
+﻿[
+  { "id": "",              "name": "(selecione opcionalmente)" },
+  { "id": "ElegooMars3",   "name": "Elegoo Mars 3" },
+  { "id": "AnycubicMono4K","name": "Anycubic Photon Mono 4K" },
+  { "id": "PhotonM3",      "name": "Photon M3" }
 ]

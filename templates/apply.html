@@ -1,63 +1,39 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>⚡ Como se candidatar – Quanton3D</title>
-  <link rel="stylesheet" href="/static/site.css?v=7">
-  <style>
-    body{margin:0;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;
-      padding:24px;background: radial-gradient(80% 80% at 50% 5%, #0e2a4a 0%, #0a1530 50%, #030814 100%);color:#eaf1ff;font-family:system-ui,Segoe UI,Roboto,Arial}
-    .card{width:min(960px,96vw);background:rgba(10,15,30,.60);border:1px solid #1a3863;border-radius:12px;
-      box-shadow:0 8px 30px #001a3a55;padding:20px}
-    h1{margin:0 0 12px}
-    input, textarea{background:#f7f9fc;color:#04121f;border:1px solid #2684ff;border-radius:8px;padding:10px 12px;font-size:1.05rem;width:100%;box-sizing:border-box}
-    label{font-size:1.06rem;margin:10px 0 6px}
-    .btn{border:0;border-radius:8px;padding:10px 16px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block}
-    .btn-primary{background:#2684ff;color:#fff}
-    .btn-secondary{background:#243247;color:#d5e8ff}
-  </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='site.css') }}?v=9">
 </head>
-<body>
-  <div class="card">
+<body style="margin:0;background:#0a1530;color:#eaf1ff;font-family:system-ui,Segoe UI,Roboto,Arial">
+  <div style="max-width:920px;margin:24px auto;padding:16px;background:#101a36;border:1px solid #1a3863;border-radius:12px">
     <h1>⚡ Como se candidatar</h1>
-    <p>Preencha os campos e clique em “Enviar pelo WhatsApp”.</p>
-
-    <label>Nome</label>
-    <input id="nome" placeholder="Seu nome">
-
-    <label>WhatsApp</label>
-    <input id="zap" placeholder="5599999999999">
-
-    <label>Cidade/Estado</label>
-    <input id="cidade" placeholder="Cidade/UF">
-
-    <label>Por que quer ser parceiro/colaborador Quanton3D?</label>
-    <textarea id="motivo" rows="3" placeholder="Conte rapidamente..."></textarea>
-
-    <div style="display:flex;gap:10px;margin-top:12px;">
-      <a id="btnwa" class="btn btn-primary" target="_blank" rel="noopener">Enviar pelo WhatsApp</a>
-      <a class="btn btn-secondary" href="/chat">Voltar ao bot</a>
-    </div>
-    <p style="opacity:.8;margin-top:8px">Ao enviar, você concorda com os termos do serviço.</p>
+    {% if ok is true %}
+      <p style="background:#0f3b23;border:1px solid #1fb66a;padding:10px;border-radius:8px">✅ Recebemos sua candidatura. Obrigado!</p>
+      <p><a class="btn btn-secondary" href="{{ url_for('chat') }}">← Voltar ao bot</a></p>
+    {% elif ok is false and erros %}
+      <div style="background:#3b0f16;border:1px solid #b61f43;padding:10px;border-radius:8px">
+        <strong>Corrija os itens:</strong>
+        <ul>{% for e in erros %}<li>{{ e }}</li>{% endfor %}</ul>
+      </div>
+    {% endif %}
+    <form method="post" action="{{ url_for('apply_page') }}" novalidate>
+      <label>Nome completo *</label><input name="nome" required style="width:100%">
+      <label>WhatsApp *</label><input name="whatsapp" required style="width:100%" value="5531983340053">
+      <label>Email</label><input name="email" type="email" style="width:100%">
+      <label>Cidade/Estado</label><input name="cidade" style="width:100%">
+      <label>Experiência (resina)</label>
+      <select name="experiencia" style="width:100%">
+        <option value="">Selecione…</option><option>Iniciante</option><option>Intermediário</option><option>Avançado</option><option>Profissional</option>
+      </select>
+      <label>Quais impressoras você possui?</label><textarea name="impressoras" rows="2" style="width:100%"></textarea>
+      <label>Por que quer ser parceiro/colaborador Quanton3D?</label><textarea name="motivo" rows="3" style="width:100%"></textarea>
+      <label>Disponibilidade (dias/horários)</label><textarea name="disponibilidade" rows="2" style="width:100%"></textarea>
+      <label><input type="checkbox" name="termos" required> Li e concordo com os termos</label><br/>
+      <div style="margin-top:10px"><button class="btn btn-primary" type="submit">Enviar candidatura</button>
+      <a class="btn btn-secondary" href="{{ url_for('chat') }}" role="button">Cancelar</a></div>
+    </form>
   </div>
-
-  <script>
-    const NUMERO = "5531999999999"; // troque para o seu quando quiser
-    const btn = document.getElementById('btnwa');
-    function mount(){
-      const nome = encodeURIComponent(document.getElementById('nome').value || '');
-      const zap  = encodeURIComponent(document.getElementById('zap').value || '');
-      const cid  = encodeURIComponent(document.getElementById('cidade').value || '');
-      const mot  = encodeURIComponent(document.getElementById('motivo').value || '');
-      const msg  = `Olá Quanton3D, quero me candidatar.%0A` +
-                   `Nome: ${nome}%0AWhatsApp: ${zap}%0ACidade: ${cid}%0AMotivo: ${mot}`;
-      btn.href = `https://wa.me/${NUMERO}?text=${msg}`;
-    }
-    ['nome','zap','cidade','motivo'].forEach(id=>{
-      document.getElementById(id).addEventListener('input', mount);
-    });
-    mount();
-  </script>
 </body>
 </html>

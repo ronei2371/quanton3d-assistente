@@ -1,15 +1,22 @@
-# Quanton3D – Patch Core (rotas + admin + fast-path)
-Arquivos:
-- app.py
-- templates/apply.html
-- blocked.json (lista vazia)
-- requirements.txt
+QUANTON3D - Patch: Fast-path 'Suportes Duros' + Higiene de Resposta
+==================================================================
 
-URLs de teste (ajuste o domínio se necessário):
-- Health: https://quanton3d-assistente.onrender.com/healthz
-- Bot (GET): https://quanton3d-assistente.onrender.com/chat
-- Raiz: https://quanton3d-assistente.onrender.com/
-- Candidatura: https://quanton3d-assistente.onrender.com/apply
-- Admin listar (GET): https://quanton3d-assistente.onrender.com/admin/blocked
-- Admin bloquear (POST): https://quanton3d-assistente.onrender.com/admin/block?phone=55319...
-- Admin desbloquear (POST): https://quanton3d-assistente.onrender.com/admin/unblock?phone=55319...
+O que este patch faz:
+- Adiciona fast-path para 'suportes duros / difíceis de remover' com valores numéricos e protocolo prático.
+- Mantém fast-path de 'amarelamento'.
+- Mantém /healthz, GET / e GET /chat (UI), POST /chat (endpoint separado), /apply (com fallback), admin block.
+- Filtra 'tipo de resina' e 'configuração de base/raft' quando o tema é suporte.
+
+Como aplicar:
+1) Copie este app.py para a raiz do projeto (C:\projeto\app.py), substituindo o atual.
+2) Commit & push:
+   cd C:\projeto
+   git add app.py
+   git commit -m "patch: fast-path suportes duros + filtros + v1.0.1"
+   git push origin main
+3) Render: Manual Deploy → Deploy latest commit (ou Save, rebuild, and deploy se mudou Settings).
+
+Testes:
+- /healthz → ok
+- /chat (UI) → envie "meus suportes estão duros" → deve responder o protocolo numérico imediatamente.
+- Caso use overlay de termos, a UI deve aparecer após aceitar.
